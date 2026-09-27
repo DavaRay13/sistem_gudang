@@ -87,8 +87,8 @@ export const ReceivingHandshakeModal: React.FC<ReceivingHandshakeModalProps> = (
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title="Serah Terima Fisik Barang"
-      subtitle={`DO: ${request.do_number} • Ref: ${request.request_number}`}
+      title="Penerimaan Barang Datang"
+      subtitle={`No. Surat Jalan: ${request.do_number} • No. Permintaan: ${request.request_number}`}
       maxWidth="lg"
     >
       <form onSubmit={handleSubmit} className="space-y-4">
@@ -97,9 +97,9 @@ export const ReceivingHandshakeModal: React.FC<ReceivingHandshakeModalProps> = (
         <div className="p-3.5 rounded-2xl bg-blue-50/70 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-900/40 text-xs text-blue-900 dark:text-blue-200 flex items-start gap-2.5">
           <ShieldCheck className="w-5 h-5 text-blue-600 shrink-0 mt-0.5" />
           <div className="space-y-0.5 leading-relaxed">
-            <span className="font-bold block">Two-Way Handshake:</span>
+            <span className="font-bold block">Pemeriksaan Barang:</span>
             <p className="text-slate-600 dark:text-slate-300">
-              Hitung fisik yang diterima. Stok toko Anda bertambah sesuai <strong>Qty Diterima Fisik</strong>. Selisih otomatis dicatat ke loss ledger.
+              Hitung barang fisik yang Anda terima. Stok toko akan bertambah sesuai <strong>Jumlah Diterima</strong>. Jika ada yang kurang atau rusak, selisihnya akan otomatis dicatat.
             </p>
           </div>
         </div>
@@ -107,7 +107,7 @@ export const ReceivingHandshakeModal: React.FC<ReceivingHandshakeModalProps> = (
         {/* Item Rows Verification */}
         <div className="space-y-2.5">
           <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">
-            Verifikasi Kuantiti Aktual per Barang:
+            Cek Jumlah Barang yang Diterima:
           </span>
 
           <div className="space-y-2.5">
@@ -132,7 +132,7 @@ export const ReceivingHandshakeModal: React.FC<ReceivingHandshakeModalProps> = (
                         {masterItem?.name || `Item #${item.item_id}`}
                       </span>
                       <span className="text-[10px] text-slate-500 block">
-                        SKU: {masterItem?.sku || '-'} • Dikirim: <strong className="text-slate-700 dark:text-slate-300">{item.qty_dispatched} {masterItem?.unit}</strong>
+                        Kode: {masterItem?.sku || '-'} • Dikirim: <strong className="text-slate-700 dark:text-slate-300">{item.qty_dispatched} {masterItem?.unit}</strong>
                       </span>
                     </div>
 
@@ -147,7 +147,7 @@ export const ReceivingHandshakeModal: React.FC<ReceivingHandshakeModalProps> = (
 
                   {/* Touch Stepper [-] [counter] [+] */}
                   <div className="flex items-center justify-between pt-1 border-t border-slate-200/60 dark:border-slate-700/60">
-                    <span className="text-xs font-semibold text-slate-500">Qty Diterima:</span>
+                    <span className="text-xs font-semibold text-slate-500">Jumlah Diterima:</span>
                     
                     <div className="flex items-center gap-2">
                       <button

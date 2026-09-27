@@ -56,7 +56,7 @@ export const StoreDashboard: React.FC<StoreDashboardProps> = ({ onNavigate }) =>
           <div className="space-y-2 max-w-xl">
             <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-[10px] font-bold uppercase tracking-wider border border-emerald-400/30">
               <Store className="w-3 h-3" />
-              <span>{currentLocation?.name} (Spoke)</span>
+              <span>{currentLocation?.name}</span>
             </div>
 
             <h1 className="text-xl sm:text-2xl lg:text-3xl font-black tracking-tight leading-tight">
@@ -64,7 +64,7 @@ export const StoreDashboard: React.FC<StoreDashboardProps> = ({ onNavigate }) =>
             </h1>
 
             <p className="text-xs sm:text-sm text-emerald-200/80 leading-relaxed">
-              Ajukan permintaan barang ke gudang pusat dan lakukan verifikasi serah terima fisik kurir.
+              Minta tambah stok barang ke gudang pusat dan konfirmasi penerimaan barang saat kiriman tiba.
             </p>
           </div>
 
@@ -74,7 +74,7 @@ export const StoreDashboard: React.FC<StoreDashboardProps> = ({ onNavigate }) =>
               className="flex items-center justify-center gap-1.5 py-2.5 px-4 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white shadow-sm active:scale-95 transition-all"
             >
               <PlusCircle className="w-4 h-4" />
-              <span>Ajukan Request (TR)</span>
+              <span>Minta Tambah Stok</span>
             </button>
 
             <button
@@ -99,7 +99,7 @@ export const StoreDashboard: React.FC<StoreDashboardProps> = ({ onNavigate }) =>
                 Ada {inTransitRequests.length} Pengiriman Sedang Di Jalan Menuju Toko Anda
               </h4>
               <p className="text-xs text-blue-100 mt-0.5 leading-relaxed font-mono">
-                DO: {inTransitRequests.map(r => r.do_number).join(', ')}
+                No. Pengiriman: {inTransitRequests.map(r => r.do_number).join(', ')}
               </p>
             </div>
           </div>
@@ -110,7 +110,7 @@ export const StoreDashboard: React.FC<StoreDashboardProps> = ({ onNavigate }) =>
               className="w-full sm:w-auto flex items-center justify-center gap-2 py-2 px-4 rounded-xl text-xs font-bold text-slate-900 bg-white hover:bg-slate-100 shadow-sm active:scale-95 transition-all"
             >
               <CheckSquare className="w-4 h-4 text-emerald-600" />
-              <span>Verifikasi & Konfirmasi Serah Terima Fisik</span>
+              <span>Periksa & Konfirmasi Barang Datang</span>
             </button>
           </div>
         </div>
@@ -121,21 +121,21 @@ export const StoreDashboard: React.FC<StoreDashboardProps> = ({ onNavigate }) =>
         <StatCard
           title="Stok Toko"
           value={formatNumber(totalLocalStock)}
-          subtitle="Unit fisik di cabang"
+          subtitle="Total barang di toko"
           icon={Package}
           color="emerald"
         />
 
         <StatCard
-          title="Stok Rendah"
-          value={`${lowStockItems.length} SKU`}
-          subtitle="Di bawah safety stock"
+          title="Stok Menipis"
+          value={`${lowStockItems.length} Barang`}
+          subtitle="Perlu segera ditambah"
           icon={ShieldAlert}
           color="amber"
         />
 
         <StatCard
-          title="Di Perjalanan"
+          title="Sedang Dikirim"
           value={`${inTransitRequests.length} Kiriman`}
           subtitle="Menuju toko Anda"
           icon={Truck}
@@ -143,9 +143,9 @@ export const StoreDashboard: React.FC<StoreDashboardProps> = ({ onNavigate }) =>
         />
 
         <StatCard
-          title="Pending TR"
+          title="Menunggu Gudang"
           value={pendingRequests.length}
-          subtitle="Menunggu gudang"
+          subtitle="Permintaan baru"
           icon={Clock}
           color="indigo"
         />
@@ -157,16 +157,16 @@ export const StoreDashboard: React.FC<StoreDashboardProps> = ({ onNavigate }) =>
           <div>
             <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
               <Package className="w-4 h-4 text-emerald-600" />
-              <span>Stok Etalase Toko ({filteredItems.length} SKU)</span>
+              <span>Daftar Stok di Toko ({filteredItems.length} Barang)</span>
             </h3>
-            <p className="text-[11px] text-slate-500 dark:text-slate-400">Saldo fisik di cabang ini</p>
+            <p className="text-[11px] text-slate-500 dark:text-slate-400">Jumlah fisik barang di cabang ini</p>
           </div>
 
           <div className="relative w-full sm:w-72">
             <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
             <input
               type="text"
-              placeholder="Cari SKU atau nama barang..."
+              placeholder="Cari kode atau nama barang..."
               value={searchTerm}
               onChange={e => setSearchTerm(e.target.value)}
               className="w-full pl-9 pr-3.5 py-2 text-xs rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/80 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500"

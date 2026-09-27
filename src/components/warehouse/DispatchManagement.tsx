@@ -28,7 +28,7 @@ export const DispatchManagement: React.FC = () => {
 
   const handleDispatch = async (req: TransferRequest) => {
     if (!currentUser) return;
-    if (confirm(`Konfirmasi pengiriman fisik barang untuk ${req.request_number}? Stok Gudang akan dipotong dan nomor Surat Jalan DO diterbitkan.`)) {
+    if (confirm(`Kirim barang untuk permintaan ${req.request_number}? Stok gudang akan berkurang dan Surat Jalan dibuat otomatis.`)) {
       try {
         await dispatchRequest(req.id, currentUser.id);
       } catch {
@@ -55,10 +55,10 @@ export const DispatchManagement: React.FC = () => {
         <div>
           <h2 className="text-lg sm:text-xl font-black text-slate-900 dark:text-white flex items-center gap-2">
             <Truck className="w-5 h-5 text-brand-600" />
-            <span>Pengiriman & Surat Jalan (DO)</span>
+            <span>Pengiriman Barang & Surat Jalan</span>
           </h2>
           <p className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400">
-            Proses dispatch fisik dan pantau status barang in-transit di jalan
+            Kirim barang yang sudah disetujui dan pantau barang di jalan
           </p>
         </div>
 
@@ -78,7 +78,7 @@ export const DispatchManagement: React.FC = () => {
         <div className="flex items-center justify-between">
           <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
             <span className="w-2 h-2 rounded-full bg-indigo-500" />
-            <span>Siap Di-Dispatch ({readyToDispatch.length})</span>
+            <span>Siap Dikirim ({readyToDispatch.length})</span>
           </h3>
         </div>
 
@@ -118,7 +118,7 @@ export const DispatchManagement: React.FC = () => {
                   {/* Rincian Ringkas */}
                   <div className="p-2.5 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-100 dark:border-slate-700/60 text-xs space-y-1">
                     <span className="text-[10px] font-bold text-slate-400 uppercase">
-                      Total: {totalItems} Unit ({req.items.length} SKU)
+                      Total: {totalItems} Unit ({req.items.length} Barang)
                     </span>
                     {req.items.slice(0, 3).map(item => {
                       const mItem = itemMap.get(item.item_id);
@@ -141,7 +141,7 @@ export const DispatchManagement: React.FC = () => {
                     className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-xs font-bold text-white bg-brand-600 hover:bg-brand-500 shadow-md active:scale-95 transition-all"
                   >
                     <Send className="w-4 h-4" />
-                    <span>Kirim Sekarang & Terbitkan DO</span>
+                    <span>Kirim Barang & Buat Surat Jalan</span>
                   </button>
                 </div>
               );
@@ -155,7 +155,7 @@ export const DispatchManagement: React.FC = () => {
         <div className="flex items-center justify-between">
           <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
             <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
-            <span>Sedang In-Transit ({activeInTransit.length})</span>
+            <span>Sedang Dalam Pengiriman ({activeInTransit.length})</span>
           </h3>
         </div>
 
@@ -163,7 +163,7 @@ export const DispatchManagement: React.FC = () => {
           <div className="p-6 text-center bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-sm">
             <CheckCircle2 className="w-8 h-8 text-emerald-500 mx-auto mb-1.5" />
             <p className="text-xs text-slate-400">
-              Tidak ada pengiriman in-transit saat ini.
+              Tidak ada pengiriman yang sedang di jalan saat ini.
             </p>
           </div>
         ) : (

@@ -92,7 +92,7 @@ export function getStatusBadgeConfig(status: TransferRequestStatus): {
       };
     case 'DISCREPANCY':
       return {
-        label: 'Selisih (Discrepancy)',
+        label: 'Ada Selisih / Kerusakan',
         bgClass: 'bg-rose-50 dark:bg-rose-950/40',
         textClass: 'text-rose-700 dark:text-rose-300',
         borderClass: 'border-rose-200 dark:border-rose-800',
@@ -124,15 +124,15 @@ export function getTransactionTypeBadge(type: TransactionType): {
 } {
   switch (type) {
     case 'PURCHASE_INBOUND':
-      return { label: 'Inbound Supplier', bgClass: 'bg-emerald-100 dark:bg-emerald-900/40', textClass: 'text-emerald-800 dark:text-emerald-300' };
+      return { label: 'Barang Masuk (Pemasok)', bgClass: 'bg-emerald-100 dark:bg-emerald-900/40', textClass: 'text-emerald-800 dark:text-emerald-300' };
     case 'TRANSFER_DISPATCH':
-      return { label: 'Mutasi Keluar (Dispatch)', bgClass: 'bg-blue-100 dark:bg-blue-900/40', textClass: 'text-blue-800 dark:text-blue-300' };
+      return { label: 'Barang Keluar (Dikirim)', bgClass: 'bg-blue-100 dark:bg-blue-900/40', textClass: 'text-blue-800 dark:text-blue-300' };
     case 'TRANSFER_RECEIVE':
-      return { label: 'Mutasi Masuk (Receive)', bgClass: 'bg-indigo-100 dark:bg-indigo-900/40', textClass: 'text-indigo-800 dark:text-indigo-300' };
+      return { label: 'Barang Masuk (Diterima Toko)', bgClass: 'bg-indigo-100 dark:bg-indigo-900/40', textClass: 'text-indigo-800 dark:text-indigo-300' };
     case 'DAMAGE_LOSS':
-      return { label: 'Kerusakan / Selisih', bgClass: 'bg-rose-100 dark:bg-rose-900/40', textClass: 'text-rose-800 dark:text-rose-300' };
+      return { label: 'Barang Rusak / Hilang', bgClass: 'bg-rose-100 dark:bg-rose-900/40', textClass: 'text-rose-800 dark:text-rose-300' };
     case 'MANUAL_ADJUSTMENT':
-      return { label: 'Penyesuaian Manual', bgClass: 'bg-amber-100 dark:bg-amber-900/40', textClass: 'text-amber-800 dark:text-amber-300' };
+      return { label: 'Koreksi Stok Manual', bgClass: 'bg-amber-100 dark:bg-amber-900/40', textClass: 'text-amber-800 dark:text-amber-300' };
     default:
       return { label: type, bgClass: 'bg-slate-100 dark:bg-slate-800', textClass: 'text-slate-800 dark:text-slate-200' };
   }

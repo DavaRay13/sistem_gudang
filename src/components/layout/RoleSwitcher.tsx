@@ -9,7 +9,7 @@ export const RoleSwitcher: React.FC = () => {
     <div className="flex items-center gap-1.5 p-1 bg-slate-100 dark:bg-slate-800/80 rounded-xl border border-slate-200/80 dark:border-slate-700/80">
       <div className="flex items-center gap-1 px-2 text-xs font-semibold text-slate-500 dark:text-slate-400">
         <UserCheck className="w-3.5 h-3.5 text-brand-500" />
-        <span className="hidden xl:inline">Role Switcher:</span>
+        <span className="hidden xl:inline">Pilih Akun:</span>
       </div>
 
       <div className="flex items-center gap-1 overflow-x-auto">

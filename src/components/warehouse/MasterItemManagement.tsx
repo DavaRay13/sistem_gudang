@@ -110,10 +110,10 @@ export const MasterItemManagement: React.FC = () => {
         <div>
           <h2 className="text-lg sm:text-xl font-black text-slate-900 dark:text-white flex items-center gap-2">
             <Package className="w-5 h-5 text-brand-600" />
-            <span>Master SKU & Stok</span>
+            <span>Daftar Barang & Stok</span>
           </h2>
           <p className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400">
-            {items.length} SKU terdaftar di Gudang Pusat
+            {items.length} jenis barang terdaftar di Gudang Pusat
           </p>
         </div>
 
@@ -122,7 +122,7 @@ export const MasterItemManagement: React.FC = () => {
             onClick={handleExportExcel}
             disabled={items.length === 0}
             className="flex items-center gap-1 px-3 py-2 rounded-xl text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-500 shadow-sm active:scale-95 disabled:opacity-50 transition-all"
-            title="Export Data SKU & Stok ke Excel"
+            title="Download Data Barang & Stok ke Excel"
           >
             <Download className="w-4 h-4" />
             <span>Excel</span>
@@ -137,7 +137,7 @@ export const MasterItemManagement: React.FC = () => {
             className="flex items-center gap-1 px-3 py-2 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/80 shadow-sm active:scale-95 disabled:opacity-50 transition-all"
           >
             <ArrowDownRight className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-            <span>Inbound</span>
+            <span>Stok Masuk</span>
           </button>
 
           <button
@@ -145,7 +145,7 @@ export const MasterItemManagement: React.FC = () => {
             className="flex items-center gap-1 px-3 py-2 rounded-xl text-xs font-bold text-white bg-brand-600 hover:bg-brand-500 shadow-sm active:scale-95 transition-all"
           >
             <Plus className="w-4 h-4" />
-            <span>+ SKU</span>
+            <span>+ Barang Baru</span>
           </button>
         </div>
       </div>
@@ -156,7 +156,7 @@ export const MasterItemManagement: React.FC = () => {
           <Search className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
           <input
             type="text"
-            placeholder="Cari SKU atau nama barang..."
+            placeholder="Cari kode atau nama barang..."
             value={searchTerm}
             onChange={e => setSearchTerm(e.target.value)}
             className="w-full pl-9 pr-3.5 py-2.5 text-xs rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500 shadow-sm"
@@ -246,7 +246,7 @@ export const MasterItemManagement: React.FC = () => {
                       className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-800 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 active:scale-95 transition-all shrink-0"
                     >
                       <ArrowDownRight className="w-3.5 h-3.5" />
-                      <span>Inbound</span>
+                      <span>Tambah Stok</span>
                     </button>
                   </div>
                 </div>
@@ -254,21 +254,21 @@ export const MasterItemManagement: React.FC = () => {
                 {/* Central Warehouse Quantities */}
                 <div className="grid grid-cols-3 gap-1.5 p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-700/60 text-center">
                   <div>
-                    <span className="text-[10px] text-slate-400 uppercase font-semibold block">Gudang Bebas</span>
+                    <span className="text-[10px] text-slate-400 uppercase font-semibold block">Tersedia</span>
                     <span className="text-base font-bold font-mono tabular-nums text-brand-600 dark:text-brand-400">
                       {formatNumber(hubInv.stock_available)}
                     </span>
                   </div>
 
                   <div>
-                    <span className="text-[10px] text-slate-400 uppercase font-semibold block">Terkunci</span>
+                    <span className="text-[10px] text-slate-400 uppercase font-semibold block">Disiapkan</span>
                     <span className="text-base font-bold font-mono tabular-nums text-indigo-600 dark:text-indigo-400">
                       {formatNumber(hubInv.stock_reserved)}
                     </span>
                   </div>
 
                   <div>
-                    <span className="text-[10px] text-slate-400 uppercase font-semibold block">In-Transit</span>
+                    <span className="text-[10px] text-slate-400 uppercase font-semibold block">Di Jalan</span>
                     <span className="text-base font-bold font-mono tabular-nums text-blue-600 dark:text-blue-400">
                       {formatNumber(hubInv.stock_in_transit)}
                     </span>
@@ -300,19 +300,19 @@ export const MasterItemManagement: React.FC = () => {
       <Modal
         isOpen={isAddItemOpen}
         onClose={() => setIsAddItemOpen(false)}
-        title="Daftarkan Master SKU Baru"
-        subtitle="Barang akan terdaftar di katalog pusat dan dapat diminta toko"
+        title="Tambah Data Barang Baru"
+        subtitle="Barang baru akan terdaftar di katalog dan bisa diminta oleh toko cabang"
         maxWidth="md"
       >
         <form onSubmit={handleCreateItem} className="space-y-4">
           <div>
             <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">
-              Kode SKU (Unique Barcode/ID)
+              Kode Barang / Barcode
             </label>
             <input
               type="text"
               required
-              placeholder="Contoh: SKU-ELK-001"
+              placeholder="Contoh: BRG-ELK-001"
               value={formData.sku}
               onChange={e => setFormData({ ...formData, sku: e.target.value })}
               className="w-full px-3.5 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs font-mono font-bold uppercase focus:ring-2 focus:ring-brand-500 focus:outline-none"
@@ -350,7 +350,7 @@ export const MasterItemManagement: React.FC = () => {
 
             <div>
               <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">
-                Satuan / UoM
+                Satuan (Contoh: PCS, BOX)
               </label>
               <input
                 type="text"
@@ -390,7 +390,7 @@ export const MasterItemManagement: React.FC = () => {
 
             <div>
               <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">
-                Minimum Safety Stock
+                Batas Minimum Stok Aman
               </label>
               <input
                 type="number"
@@ -425,7 +425,7 @@ export const MasterItemManagement: React.FC = () => {
               disabled={isSubmitting}
               className="w-full sm:w-auto px-5 py-3 rounded-xl text-xs font-bold text-white bg-brand-600 hover:bg-brand-500 shadow-md active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
             >
-              {isSubmitting ? 'Menyimpan...' : 'Simpan Master SKU'}
+              {isSubmitting ? 'Menyimpan...' : 'Simpan Data Barang'}
             </button>
           </div>
         </form>

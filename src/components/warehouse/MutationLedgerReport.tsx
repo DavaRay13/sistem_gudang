@@ -124,10 +124,10 @@ export const MutationLedgerReport: React.FC = () => {
         <div>
           <h2 className="text-lg sm:text-xl font-black text-slate-900 dark:text-white flex items-center gap-2">
             <BookOpen className="w-5 h-5 text-brand-600" />
-            <span>Buku Besar Mutasi</span>
+            <span>Riwayat Keluar Masuk Barang</span>
           </h2>
           <p className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400">
-            {filteredMutations.length} catatan mutasi terverifikasi
+            {filteredMutations.length} catatan keluar masuk barang
           </p>
         </div>
 
@@ -153,33 +153,33 @@ export const MutationLedgerReport: React.FC = () => {
       {/* KPI Cards Grid (2 cols mobile, 4 cols desktop) */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         <StatCard
-          title="Inbound"
+          title="Barang Masuk"
           value={`${formatNumber(totalInboundQty)}`}
-          subtitle="Dari Supplier"
+          subtitle="Dari Pemasok"
           icon={ArrowDownRight}
           color="emerald"
         />
 
         <StatCard
-          title="Dispatch"
+          title="Barang Keluar"
           value={`${formatNumber(totalDispatchQty)}`}
-          subtitle="Keluar ke Toko"
+          subtitle="Dikirim ke Toko"
           icon={ArrowUpRight}
           color="indigo"
         />
 
         <StatCard
-          title="Loss / Rusak"
+          title="Rusak / Hilang"
           value={`${formatNumber(totalDamageLossQty)}`}
-          subtitle="Selisih serah terima"
+          subtitle="Selisih saat diterima"
           icon={AlertTriangle}
           color="rose"
         />
 
         <StatCard
-          title="Fulfillment"
+          title="Tingkat Pemenuhan"
           value={`${fulfillmentRate}%`}
-          subtitle="Rasio pemenuhan"
+          subtitle="Permintaan terpenuhi"
           icon={CheckCircle}
           color="blue"
         />
@@ -191,7 +191,7 @@ export const MutationLedgerReport: React.FC = () => {
           <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
           <input
             type="text"
-            placeholder="Cari SKU, nama barang, kode referensi, atau catatan..."
+            placeholder="Cari kode barang, nama, nomor referensi, atau catatan..."
             value={searchTerm}
             onChange={e => setSearchTerm(e.target.value)}
             className="w-full pl-9 pr-3.5 py-2 text-xs rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/80 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500"
@@ -216,10 +216,10 @@ export const MutationLedgerReport: React.FC = () => {
             className="px-2.5 py-1.5 text-xs font-medium rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/80 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500"
           >
             <option value="ALL">Semua Tipe</option>
-            <option value="PURCHASE_INBOUND">Inbound</option>
-            <option value="TRANSFER_DISPATCH">Dispatch</option>
-            <option value="TRANSFER_RECEIVE">Receive</option>
-            <option value="DAMAGE_LOSS">Loss/Rusak</option>
+            <option value="PURCHASE_INBOUND">Barang Masuk</option>
+            <option value="TRANSFER_DISPATCH">Barang Keluar</option>
+            <option value="TRANSFER_RECEIVE">Diterima Toko</option>
+            <option value="DAMAGE_LOSS">Rusak / Hilang</option>
           </select>
 
           <select

@@ -65,19 +65,19 @@ export const InboundStockModal: React.FC<InboundStockModalProps> = ({
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title="Stock Inbound (Penerimaan Barang Masuk)"
-      subtitle="Menambah saldo fisik stok Gudang Pusat dari Supplier / Vendor"
+      title="Penerimaan Barang Masuk (Stok Baru)"
+      subtitle="Tambah stok baru ke Gudang Pusat dari Pemasok / Supplier"
       maxWidth="lg"
     >
       <form onSubmit={handleSubmit} className="space-y-4">
         {/* Pilih Barang */}
         <div>
           <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">
-            Pilih Barang / SKU
+            Pilih Barang
           </label>
           {items.length === 0 ? (
             <div className="p-3 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-xl text-xs text-amber-700 dark:text-amber-300">
-              Belum ada master barang. Silakan tambahkan master barang terlebih dahulu.
+              Belum ada data barang. Silakan tambahkan barang terlebih dahulu.
             </div>
           ) : (
             <select
@@ -98,7 +98,7 @@ export const InboundStockModal: React.FC<InboundStockModalProps> = ({
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">
-              Kuantiti Masuk
+              Jumlah Barang Masuk
             </label>
             <div className="relative">
               <input
@@ -135,7 +135,7 @@ export const InboundStockModal: React.FC<InboundStockModalProps> = ({
         {/* Supplier */}
         <div>
           <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">
-            Nama Supplier / Pabrik
+            Nama Pemasok / Pabrik Supplier
           </label>
           <div className="relative">
             <input
@@ -152,7 +152,7 @@ export const InboundStockModal: React.FC<InboundStockModalProps> = ({
         {/* Catatan / Nomor PO */}
         <div>
           <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">
-            Nomor PO / Catatan Penerimaan
+            Nomor Surat / Catatan Penerimaan
           </label>
           <div className="relative">
             <textarea
@@ -170,8 +170,8 @@ export const InboundStockModal: React.FC<InboundStockModalProps> = ({
         <div className="p-3 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-900 rounded-xl text-xs text-emerald-800 dark:text-emerald-300 flex items-start gap-2">
           <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
           <div>
-            <span className="font-bold">Append-Only Ledger: </span>
-            Aksi ini akan otomatis mencatat mutasi <code className="px-1 py-0.5 bg-emerald-100 dark:bg-emerald-900 rounded font-mono text-[10px]">PURCHASE_INBOUND</code> ke buku besar audit tanpa overwrite.
+            <span className="font-bold">Pencatatan Otomatis: </span>
+            Stok masuk ini akan otomatis tercatat ke riwayat mutasi barang tanpa risiko data hilang.
           </div>
         </div>
 
@@ -190,7 +190,7 @@ export const InboundStockModal: React.FC<InboundStockModalProps> = ({
             className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-500 shadow-md shadow-emerald-500/20 disabled:opacity-50 transition-all"
           >
             <ArrowDownRight className="w-4 h-4" />
-            <span>Simpan Inbound Stok</span>
+            <span>Simpan & Tambah Stok</span>
           </button>
         </div>
       </form>

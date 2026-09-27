@@ -47,10 +47,10 @@ export const StoreRequestList: React.FC<StoreRequestListProps> = ({ initialFilte
         <div>
           <h2 className="text-lg sm:text-xl font-black text-slate-900 dark:text-white flex items-center gap-2">
             <ClipboardList className="w-5 h-5 text-emerald-600" />
-            <span>Riwayat Transfer Request (TR)</span>
+            <span>Riwayat Permintaan Barang</span>
           </h2>
           <p className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400">
-            {storeRequests.length} dokumen permohonan cabang Anda
+            {storeRequests.length} permohonan dari toko Anda
           </p>
         </div>
 
@@ -61,11 +61,12 @@ export const StoreRequestList: React.FC<StoreRequestListProps> = ({ initialFilte
           className="w-full sm:w-auto px-3 py-2 rounded-xl text-xs font-semibold border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
         >
           <option value="ALL">Semua Status</option>
-          <option value="IN_TRANSIT">Sedang Dikirim (In-Transit)</option>
-          <option value="PENDING">Menunggu Otorisasi</option>
-          <option value="APPROVED">Disetujui</option>
-          <option value="COMPLETED">Selesai (100% Cocok)</option>
-          <option value="DISCREPANCY">Terdapat Selisih (Loss)</option>
+          <option value="IN_TRANSIT">Sedang Dalam Pengiriman</option>
+          <option value="PENDING">Menunggu Persetujuan Gudang</option>
+          <option value="APPROVED">Disetujui Penuh</option>
+          <option value="PARTIAL">Disetujui Sebagian</option>
+          <option value="COMPLETED">Selesai (Sesuai)</option>
+          <option value="DISCREPANCY">Ada Selisih / Kerusakan</option>
           <option value="REJECTED">Ditolak</option>
         </select>
       </div>
@@ -75,7 +76,7 @@ export const StoreRequestList: React.FC<StoreRequestListProps> = ({ initialFilte
         <div className="p-8 text-center bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-sm">
           <ClipboardList className="w-10 h-10 text-slate-300 dark:text-slate-600 mx-auto mb-2" />
           <h3 className="text-sm font-bold text-slate-800 dark:text-slate-200">
-            Tidak Ada Dokumen
+            Tidak Ada Data Permintaan
           </h3>
           <p className="text-xs text-slate-400 mt-1">
             Belum ada permintaan barang pada filter ini.
@@ -126,7 +127,7 @@ export const StoreRequestList: React.FC<StoreRequestListProps> = ({ initialFilte
 
                   {/* Quick Summary of items */}
                   <div className="text-xs text-slate-600 dark:text-slate-300">
-                    <span className="font-semibold">{req.items.length} SKU Barang</span> ({totalRequested} unit diminta)
+                    <span className="font-semibold">{req.items.length} Jenis Barang</span> ({totalRequested} unit diminta)
                   </div>
 
                   {/* If In-Transit: Prominent Receive Button on Mobile */}

@@ -46,12 +46,12 @@ export const RequestApprovalQueue: React.FC = () => {
     for (const item of req.items) {
       const stock = getWarehouseStock(item.item_id);
       if (stock < item.qty_requested) {
-        alert(`Stok tidak cukup untuk SKU ID ${item.item_id}. Silakan gunakan opsi Setujui Parsial.`);
+        alert(`Stok di gudang tidak mencukupi. Silakan gunakan opsi Setujui Sebagian.`);
         return;
       }
     }
 
-    if (confirm(`Setujui penuh ${req.request_number}? Stok gudang akan otomatis dikunci (Reserved).`)) {
+    if (confirm(`Setujui seluruh permintaan barang ${req.request_number}? Stok gudang akan disiapkan untuk dikirim.`)) {
       authorizeRequest(req.id, currentUser.id, 'APPROVE_FULL');
     }
   };
@@ -127,10 +127,10 @@ export const RequestApprovalQueue: React.FC = () => {
         <div>
           <h2 className="text-lg sm:text-xl font-black text-slate-900 dark:text-white flex items-center gap-2">
             <ClipboardList className="w-5 h-5 text-brand-600" />
-            <span>Antrean Otorisasi (TR)</span>
+            <span>Persetujuan Permintaan Stok</span>
           </h2>
           <p className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400">
-            {pendingRequests.length} permohonan stok dari toko cabang menunggu keputusan
+            {pendingRequests.length} permintaan stok dari toko cabang menunggu keputusan
           </p>
         </div>
 
@@ -164,10 +164,10 @@ export const RequestApprovalQueue: React.FC = () => {
         <div className="p-8 text-center bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-sm">
           <CheckCircle2 className="w-10 h-10 text-emerald-500 mx-auto mb-2" />
           <h3 className="text-sm font-bold text-slate-800 dark:text-slate-200">
-            Tidak Ada Antrean Pending
+            Tidak Ada Permintaan Menunggu
           </h3>
           <p className="text-xs text-slate-400 mt-1">
-            Semua permintaan barang cabang telah diotorisasi.
+            Semua permintaan barang dari toko sudah diproses.
           </p>
         </div>
       ) : (
@@ -256,7 +256,7 @@ export const RequestApprovalQueue: React.FC = () => {
                   {hasShortage && (
                     <div className="p-2.5 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900 text-[11px] text-amber-800 dark:text-amber-300 flex items-center gap-1.5">
                       <AlertCircle className="w-4 h-4 text-amber-600 shrink-0" />
-                      <span>Stok gudang kurang. Gunakan <strong>Setujui Parsial</strong>.</span>
+                      <span>Stok gudang tidak cukup. Gunakan <strong>Setujui Sebagian</strong>.</span>
                     </div>
                   )}
                 </div>
@@ -276,7 +276,7 @@ export const RequestApprovalQueue: React.FC = () => {
                     className="flex items-center justify-center gap-1 py-2.5 rounded-xl text-xs font-bold text-purple-700 dark:text-purple-400 bg-purple-50 dark:bg-purple-950/40 hover:bg-purple-100 border border-purple-200 dark:border-purple-900 active:scale-95 transition-transform"
                   >
                     <AlertTriangle className="w-3.5 h-3.5" />
-                    <span>Parsial</span>
+                    <span>Sebagian</span>
                   </button>
 
                   <button
@@ -284,7 +284,7 @@ export const RequestApprovalQueue: React.FC = () => {
                     className="flex items-center justify-center gap-1 py-2.5 rounded-xl text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-500 shadow-sm active:scale-95 transition-transform"
                   >
                     <CheckCircle2 className="w-3.5 h-3.5" />
-                    <span>Approve</span>
+                    <span>Setujui</span>
                   </button>
                 </div>
               </div>
@@ -300,7 +300,7 @@ export const RequestApprovalQueue: React.FC = () => {
           setModalType(null);
           setActiveRequest(null);
         }}
-        title={modalType === 'PARTIAL' ? 'Otorisasi Sebagian (Partial)' : 'Tolak Permintaan (Reject TR)'}
+        title={modalType === 'PARTIAL' ? 'Setujui Sebagian Barang' : 'Tolak Permintaan Barang'}
         subtitle={`Dokumen: ${activeRequest?.request_number}`}
         maxWidth="md"
       >

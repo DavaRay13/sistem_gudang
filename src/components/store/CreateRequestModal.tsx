@@ -107,8 +107,8 @@ export const CreateRequestModal: React.FC<CreateRequestModalProps> = ({
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title="Buat Transfer Request (TR)"
-      subtitle={`Pengajuan dari ${currentLocation?.name}`}
+      title="Ajukan Permintaan Stok Barang"
+      subtitle={`Pengajuan kebutuhan dari ${currentLocation?.name}`}
       maxWidth="lg"
     >
       <form onSubmit={handleSubmit} className="space-y-4">
@@ -117,7 +117,7 @@ export const CreateRequestModal: React.FC<CreateRequestModalProps> = ({
         <div>
           <div className="flex items-center justify-between mb-2">
             <label className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
-              Barang & Kuantiti Permintaan:
+              Pilih Barang & Jumlah yang Diminta:
             </label>
             <button
               type="button"
@@ -126,7 +126,7 @@ export const CreateRequestModal: React.FC<CreateRequestModalProps> = ({
               className="flex items-center gap-1 text-xs font-bold text-brand-600 dark:text-brand-400 active:scale-95"
             >
               <Plus className="w-4 h-4" />
-              <span>+ Tambah Baris</span>
+              <span>+ Tambah Barang</span>
             </button>
           </div>
 
@@ -233,7 +233,7 @@ export const CreateRequestModal: React.FC<CreateRequestModalProps> = ({
         {conflictingItems.length > 0 && (
           <div className="p-3 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-xl text-[11px] text-amber-800 dark:text-amber-300 flex items-start gap-2">
             <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
-            <span>Toko Anda memiliki request pending untuk barang yang sama. Pengajuan tetap diproses jika mendesak.</span>
+            <span>Toko Anda masih memiliki permintaan yang sedang menunggu untuk barang yang sama. Pengajuan tetap diproses jika mendesak.</span>
           </div>
         )}
 
@@ -262,7 +262,7 @@ export const CreateRequestModal: React.FC<CreateRequestModalProps> = ({
             className="w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-500 shadow-md shadow-emerald-500/20 disabled:opacity-50 active:scale-95 transition-all"
           >
             <Send className="w-4 h-4" />
-            <span>Kirim Transfer Request ({formatRupiah(totalEstimatedValue)})</span>
+            <span>Kirim Permintaan Stok ({formatRupiah(totalEstimatedValue)})</span>
           </button>
         </div>
       </form>

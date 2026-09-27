@@ -59,26 +59,26 @@ export const Sidebar: React.FC<SidebarProps> = ({
     },
     {
       id: 'warehouse_master_items' as NavigationTab,
-      label: 'Master Barang & Inbound',
+      label: 'Daftar Barang & Stok Masuk',
       icon: Package,
     },
     {
       id: 'warehouse_approval_queue' as NavigationTab,
-      label: 'Antrean Otorisasi',
+      label: 'Persetujuan Permintaan',
       icon: ClipboardList,
       badge: pendingRequestsCount > 0 ? pendingRequestsCount : undefined,
       badgeColor: 'bg-amber-500 text-white',
     },
     {
       id: 'warehouse_dispatch' as NavigationTab,
-      label: 'Pengiriman & Surat Jalan',
+      label: 'Kirim Barang & Surat Jalan',
       icon: Send,
       badge: approvedForDispatchCount > 0 ? approvedForDispatchCount : undefined,
       badgeColor: 'bg-indigo-500 text-white',
     },
     {
       id: 'warehouse_mutation_ledger' as NavigationTab,
-      label: 'Buku Besar Mutasi',
+      label: 'Riwayat Keluar Masuk',
       icon: BookOpen,
     },
     {
@@ -91,24 +91,24 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const storeMenuItems = [
     {
       id: 'store_dashboard' as NavigationTab,
-      label: 'Dasbor Cabang',
+      label: 'Dasbor Toko',
       icon: LayoutDashboard,
       badge: lowStockCount > 0 ? lowStockCount : undefined,
       badgeColor: 'bg-rose-500 text-white',
     },
     {
       id: 'store_create_request' as NavigationTab,
-      label: 'Ajukan Permintaan (TR)',
+      label: 'Minta Tambah Stok',
       icon: PlusCircle,
     },
     {
       id: 'store_request_history' as NavigationTab,
-      label: 'Status & Riwayat Request',
+      label: 'Riwayat Permintaan',
       icon: ClipboardList,
     },
     {
       id: 'store_receiving' as NavigationTab,
-      label: 'Penerimaan & Handshake',
+      label: 'Penerimaan Barang',
       icon: CheckSquare,
       badge: inTransitCount > 0 ? inTransitCount : undefined,
       badgeColor: 'bg-blue-500 text-white animate-pulse',
@@ -211,10 +211,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <div className="p-3 rounded-xl bg-gradient-to-br from-slate-50 to-indigo-50/30 dark:from-slate-800/40 dark:to-indigo-950/20 border border-slate-200/60 dark:border-slate-800">
             <div className="flex items-center gap-2 text-xs font-semibold text-slate-700 dark:text-slate-300">
               <AlertCircle className="w-4 h-4 text-brand-500 shrink-0" />
-              <span>Two-Way Handshake</span>
+              <span>Serah Terima Aman</span>
             </div>
             <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 leading-normal">
-              Stok in-transit dipotong dari gudang dan ditambahkan ke toko hanya saat serah terima diverifikasi.
+              Stok yang dikirim baru akan masuk ke toko setelah pihak toko mengecek dan menekan konfirmasi terima.
             </p>
           </div>
         </div>

@@ -40,31 +40,31 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({
     },
     {
       id: 'warehouse_master_items' as NavigationTab,
-      label: 'Stok SKU',
+      label: 'Stok',
       icon: Package,
     },
     {
       id: 'warehouse_approval_queue' as NavigationTab,
-      label: 'Otorisasi',
+      label: 'Persetujuan',
       icon: ClipboardList,
       badge: pendingRequestsCount > 0 ? pendingRequestsCount : undefined,
       badgeColor: 'bg-amber-500 text-white',
     },
     {
       id: 'warehouse_dispatch' as NavigationTab,
-      label: 'Dispatch',
+      label: 'Kirim',
       icon: Send,
       badge: approvedForDispatchCount > 0 ? approvedForDispatchCount : undefined,
       badgeColor: 'bg-indigo-500 text-white',
     },
     {
       id: 'warehouse_mutation_ledger' as NavigationTab,
-      label: 'Mutasi',
+      label: 'Riwayat',
       icon: BookOpen,
     },
     {
       id: 'warehouse_user_management' as NavigationTab,
-      label: 'User',
+      label: 'Staf',
       icon: Users,
     },
   ];
@@ -79,7 +79,7 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({
     },
     {
       id: 'store_create_request' as NavigationTab,
-      label: 'Buat TR',
+      label: 'Minta Stok',
       icon: PlusCircle,
     },
     {
@@ -89,7 +89,7 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({
     },
     {
       id: 'store_receiving' as NavigationTab,
-      label: 'Terima',
+      label: 'Terima Barang',
       icon: CheckSquare,
       badge: inTransitCount > 0 ? inTransitCount : undefined,
       badgeColor: 'bg-blue-500 text-white animate-pulse',

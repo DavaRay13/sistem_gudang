@@ -47,15 +47,15 @@ export const WarehouseDashboard: React.FC<WarehouseDashboardProps> = ({ onNaviga
           <div className="space-y-2 max-w-xl">
             <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-brand-500/20 text-brand-300 text-[10px] font-bold uppercase tracking-wider border border-brand-400/30">
               <Warehouse className="w-3 h-3" />
-              <span>Hub Master Gudang Pusat</span>
+              <span>Gudang Pusat</span>
             </div>
             
             <h1 className="text-xl sm:text-2xl lg:text-3xl font-black tracking-tight leading-tight">
-              Distribusi Stok Multi-Toko
+              Distribusi Stok Antar Toko
             </h1>
             
             <p className="text-xs sm:text-sm text-indigo-200/80 leading-relaxed">
-              Sistem logistik <span className="font-semibold text-white">Two-Way Handshake</span> dan alokasi stok terpadu ke 3 toko cabang.
+              Sistem distribusi stok dan konfirmasi serah terima barang terpadu ke 3 toko cabang.
             </p>
           </div>
 
@@ -65,7 +65,7 @@ export const WarehouseDashboard: React.FC<WarehouseDashboardProps> = ({ onNaviga
               className="flex items-center justify-center gap-1.5 py-2.5 px-4 rounded-xl text-xs font-bold bg-brand-600 hover:bg-brand-500 text-white shadow-sm active:scale-95 transition-all"
             >
               <ClipboardList className="w-4 h-4" />
-              <span>Otorisasi ({pendingRequests.length})</span>
+              <span>Persetujuan ({pendingRequests.length})</span>
             </button>
 
             <button
@@ -73,7 +73,7 @@ export const WarehouseDashboard: React.FC<WarehouseDashboardProps> = ({ onNaviga
               className="flex items-center justify-center gap-1.5 py-2.5 px-4 rounded-xl text-xs font-bold bg-white/10 hover:bg-white/20 text-white border border-white/20 active:scale-95 transition-all"
             >
               <ArrowDownRight className="w-4 h-4 text-emerald-400" />
-              <span>Inbound Stok</span>
+              <span>Tambah Stok Masuk</span>
             </button>
           </div>
         </div>
@@ -82,33 +82,33 @@ export const WarehouseDashboard: React.FC<WarehouseDashboardProps> = ({ onNaviga
       {/* KPI Cards Grid (2 cols mobile, 4 cols desktop) */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         <StatCard
-          title="Stok Bebas"
+          title="Stok Tersedia"
           value={formatNumber(totalAvailableStock)}
-          subtitle={`${items.length} SKU master`}
+          subtitle={`${items.length} jenis barang`}
           icon={Package}
           color="emerald"
         />
 
         <StatCard
-          title="Reserved"
+          title="Disiapkan Kirim"
           value={formatNumber(totalReservedStock)}
-          subtitle="Terkunci kirim"
+          subtitle="Menunggu diantar"
           icon={Boxes}
           color="indigo"
         />
 
         <StatCard
-          title="In-Transit"
+          title="Sedang Dikirim"
           value={formatNumber(totalInTransitStock)}
-          subtitle={`${inTransitShipments.length} DO aktif`}
+          subtitle={`${inTransitShipments.length} pengiriman aktif`}
           icon={Truck}
           color="blue"
         />
 
         <StatCard
-          title="Antrean TR"
+          title="Permintaan Masuk"
           value={pendingRequests.length}
-          subtitle={`${readyDispatch.length} siap kirim`}
+          subtitle={`${readyDispatch.length} siap dikirim`}
           icon={Clock}
           color="amber"
         />
@@ -119,7 +119,7 @@ export const WarehouseDashboard: React.FC<WarehouseDashboardProps> = ({ onNaviga
         <div className="flex items-center justify-between">
           <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
             <Store className="w-4 h-4 text-brand-600" />
-            <span>Ketersediaan Stok di 3 Cabang Toko (Spokes)</span>
+            <span>Ketersediaan Stok di 3 Toko Cabang</span>
           </h3>
           <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
             Realtime
@@ -154,7 +154,7 @@ export const WarehouseDashboard: React.FC<WarehouseDashboardProps> = ({ onNaviga
                   </span>
                 ) : (
                   <span className="text-[10px] text-slate-400">
-                    Pengiriman nihil
+                    Tidak ada kiriman
                   </span>
                 )}
               </div>
@@ -170,19 +170,19 @@ export const WarehouseDashboard: React.FC<WarehouseDashboardProps> = ({ onNaviga
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2 text-xs font-bold text-amber-800 dark:text-amber-300">
               <ShieldAlert className="w-4 h-4 text-amber-600" />
-              <span>Stok Gudang Menipis ({lowStockItems.length} SKU)</span>
+              <span>Stok Gudang Menipis ({lowStockItems.length} Barang)</span>
             </div>
             <button
               onClick={() => onNavigate('warehouse_master_items')}
               className="text-xs font-bold text-brand-600 dark:text-brand-400 hover:underline"
             >
-              Inbound &rarr;
+              Tambah Stok &rarr;
             </button>
           </div>
 
           {lowStockItems.length === 0 ? (
             <p className="text-xs text-slate-500 dark:text-slate-400 py-3 text-center">
-              Seluruh SKU berada di atas batas safety stock aman.
+              Semua stok barang masih aman di atas batas minimum.
             </p>
           ) : (
             <div className="space-y-2">
@@ -207,7 +207,7 @@ export const WarehouseDashboard: React.FC<WarehouseDashboardProps> = ({ onNaviga
           <div className="flex items-center justify-between">
             <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
               <ClipboardList className="w-4 h-4 text-brand-600" />
-              <span>Permintaan Transfer Terkini</span>
+              <span>Permintaan Barang Masuk Terkini</span>
             </h3>
             <button
               onClick={() => onNavigate('warehouse_approval_queue')}
