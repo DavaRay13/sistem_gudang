@@ -5,13 +5,13 @@ import { Modal } from '../common/Modal';
 import { InboundStockModal } from './InboundStockModal';
 import { 
   Package, Plus, ArrowDownRight, Search, 
-  ShieldAlert, Boxes, Download
+  ShieldAlert, Boxes, Download, Trash2
 } from 'lucide-react';
 import { formatNumber, formatRupiah } from '../../utils/formatters';
 import { exportMasterItemsToExcel } from '../../utils/exportHelpers';
 
 export const MasterItemManagement: React.FC = () => {
-  const { items, inventories, addNewItem } = useInventory();
+  const { items, inventories, addNewItem, deleteItem } = useInventory();
   const { locations, currentUser } = useAuth();
 
   const [searchTerm, setSearchTerm] = useState('');
@@ -21,6 +21,21 @@ export const MasterItemManagement: React.FC = () => {
   const [isAddItemOpen, setIsAddItemOpen] = useState(false);
   const [isInboundOpen, setIsInboundOpen] = useState(false);
   const [selectedInboundItemId, setSelectedInboundItemId] = useState<number | undefined>(undefined);
+  const [itemToDelete, setItemToDelete] = useState<any>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const handleDeleteItem = async () => {
+    if (!itemToDelete) return;
+    setIsDeleting(true);
+    try {
+      await deleteItem(itemToDelete.id);
+      setItemToDelete(null);
+    } catch {
+      // Toast handles error
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
   // Form State New Item
   const [formData, setFormData] = useState<{
@@ -243,13 +258,24 @@ export const MasterItemManagement: React.FC = () => {
                       </div>
                     </div>
 
-                    <button
-                      onClick={() => openInboundForItem(item.id)}
-                      className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-800 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 active:scale-95 transition-all shrink-0"
-                    >
-                      <ArrowDownRight className="w-3.5 h-3.5" />
-                      <span>Tambah Stok</span>
-                    </button>
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      <button
+                        onClick={() => openInboundForItem(item.id)}
+                        className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-800 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 active:scale-95 transition-all"
+                        title="Tambah Stok Masuk"
+                      >
+                        <ArrowDownRight className="w-3.5 h-3.5" />
+                        <span>Tambah Stok</span>
+                      </button>
+
+                      <button
+                        onClick={() => setItemToDelete(item)}
+                        className="p-1.5 rounded-xl text-xs font-medium text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-900/60 hover:bg-rose-100 dark:hover:bg-rose-900/60 active:scale-95 transition-all"
+                        title="Hapus Barang / SKU"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
                   </div>
                 </div>
 
@@ -431,6 +457,46 @@ export const MasterItemManagement: React.FC = () => {
             </button>
           </div>
         </form>
+      </Modal>
+
+      {/* Modal Konfirmasi Hapus Barang */}
+      <Modal
+        isOpen={Boolean(itemToDelete)}
+        onClose={() => setItemToDelete(null)}
+        title="Hapus Data Barang & SKU"
+        subtitle="Konfirmasi penghapusan data master barang dari katalog"
+        maxWidth="md"
+      >
+        <div className="space-y-4">
+          <div className="p-4 rounded-2xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 text-xs text-rose-800 dark:text-rose-200 space-y-2">
+            <p className="font-bold text-sm text-rose-700 dark:text-rose-300">Peringatan Penghapusan!</p>
+            <p>
+              Apakah Anda yakin ingin menghapus barang <strong className="font-mono font-bold text-slate-900 dark:text-white">[{itemToDelete?.sku}] {itemToDelete?.name}</strong>?
+            </p>
+            <p className="text-slate-600 dark:text-slate-400 text-[11px] leading-relaxed">
+              Tindakan ini akan menghapus data barang beserta seluruh catatan saldo stok barang ini di Gudang Pusat dan seluruh Toko Cabang.
+            </p>
+          </div>
+
+          <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-100 dark:border-slate-800">
+            <button
+              type="button"
+              onClick={() => setItemToDelete(null)}
+              className="px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all"
+            >
+              Batal
+            </button>
+            <button
+              type="button"
+              disabled={isDeleting}
+              onClick={handleDeleteItem}
+              className="px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-rose-600 hover:bg-rose-500 shadow-md active:scale-95 disabled:opacity-50 transition-all flex items-center gap-1.5"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+              <span>{isDeleting ? 'Menghapus...' : 'Ya, Hapus Barang'}</span>
+            </button>
+          </div>
+        </div>
       </Modal>
 
       {/* Modal Inbound */}

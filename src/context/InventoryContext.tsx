@@ -25,6 +25,7 @@ interface InventoryContextType {
   
   // Actions
   addNewItem: (data: Omit<Item, 'id' | 'created_at'>) => Promise<Item>;
+  deleteItem: (itemId: number) => Promise<void>;
   inboundStock: (itemId: number, qty: number, notes: string, userId: string, supplierName?: string) => Promise<void>;
   createRequest: (toLocationId: number, requestedByUserId: string, itemsData: Array<{ itemId: number; qtyRequested: number }>, notes?: string) => Promise<TransferRequest>;
   authorizeRequest: (requestId: number, adminUserId: string, decision: 'APPROVE_FULL' | 'APPROVE_PARTIAL' | 'REJECT', options?: { approvedItems?: Array<{ itemId: number; qtyApproved: number }>; rejectionNotes?: string }) => Promise<void>;
@@ -148,6 +149,17 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     }
   };
 
+  const deleteItem = async (itemId: number): Promise<void> => {
+    try {
+      await SupabaseService.deleteItem(itemId);
+      await refreshData();
+      showToast('success', 'Barang Dihapus', 'Data barang dan saldo stok berhasil dihapus.');
+    } catch (err: any) {
+      showToast('error', 'Gagal Menghapus Barang', err.message);
+      throw err;
+    }
+  };
+
   const inboundStock = async (itemId: number, qty: number, notes: string, userId: string, supplierName?: string): Promise<void> => {
     try {
       await SupabaseService.inboundStock(itemId, qty, notes, userId, supplierName);
@@ -257,6 +269,7 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         showToast,
         removeToast,
         addNewItem,
+        deleteItem,
         inboundStock,
         createRequest,
         authorizeRequest,

@@ -203,6 +203,41 @@ export class SupabaseService {
     return StorageRepository.saveItem(itemData);
   }
 
+  static async deleteItem(itemId: number): Promise<void> {
+    if (isSupabaseConfigured && supabase) {
+      try {
+        // Hapus saldo inventori terkait terlebih dahulu
+        await supabase.from('inventories').delete().eq('item_id', itemId);
+
+        // Hapus master item
+        const { error } = await supabase.from('items').delete().eq('id', itemId);
+        if (error) {
+          if (error.code === '23503') {
+            throw new Error('Barang tidak dapat dihapus karena masih tercatat di riwayat dokumen/mutasi.');
+          }
+          throw error;
+        }
+
+        // Sinkronisasi local storage
+        try {
+          StorageRepository.deleteItem(itemId);
+        } catch {
+          // ignore
+        }
+        return;
+      } catch (err: any) {
+        console.warn('Supabase deleteItem error:', err.message);
+        if (err.message?.includes('Failed to fetch') || err.name === 'TypeError') {
+          console.warn('Supabase network unreachable, falling back to Local Storage');
+          StorageRepository.deleteItem(itemId);
+          return;
+        }
+        throw err;
+      }
+    }
+    StorageRepository.deleteItem(itemId);
+  }
+
   // --- INVENTORIES (SALDO STOK PER LOKASI) ---
   static async getInventories(): Promise<Inventory[]> {
     if (isSupabaseConfigured && supabase) {

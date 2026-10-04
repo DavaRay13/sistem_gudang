@@ -143,6 +143,14 @@ export class StorageRepository {
     return newItem;
   }
 
+  static deleteItem(itemId: number): void {
+    const items = this.getItems().filter(i => i.id !== itemId);
+    setStorage(STORAGE_KEYS.ITEMS, items);
+
+    const inventories = this.getInventories().filter(inv => inv.item_id !== itemId);
+    setStorage(STORAGE_KEYS.INVENTORIES, inventories);
+  }
+
   // --- INVENTORIES ---
   static getInventories(): Inventory[] {
     return getStorage<Inventory[]>(STORAGE_KEYS.INVENTORIES, INITIAL_INVENTORIES);
