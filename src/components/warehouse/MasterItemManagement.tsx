@@ -44,8 +44,10 @@ export const MasterItemManagement: React.FC = () => {
   const categories = ['ALL', ...Array.from(new Set(items.map(i => i.category || 'Umum')))];
 
   const filteredItems = items.filter(item => {
-    const matchSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                        item.sku.toLowerCase().includes(searchTerm.toLowerCase());
+    const itemName = item?.name || '';
+    const itemSku = item?.sku || '';
+    const matchSearch = itemName.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                        itemSku.toLowerCase().includes(searchTerm.toLowerCase());
     const matchCategory = selectedCategory === 'ALL' || item.category === selectedCategory;
     return matchSearch && matchCategory;
   });

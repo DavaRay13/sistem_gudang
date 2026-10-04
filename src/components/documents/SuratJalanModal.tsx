@@ -49,10 +49,10 @@ export const SuratJalanModal: React.FC<SuratJalanModalProps> = ({
             <div>
               <div className="flex items-center gap-2">
                 <div className="w-8 h-8 rounded-lg bg-slate-900 text-white flex items-center justify-center font-black text-sm">
-                  NX
+                  SG
                 </div>
                 <h2 className="text-xl font-black uppercase tracking-wider text-slate-900">
-                  NEXUS LOGISTICS & DISTRIBUTION
+                  SISTEM GUDANG LOGISTIK & DISTRIBUSI
                 </h2>
               </div>
               <p className="text-xs text-slate-600 mt-1 max-w-sm">

@@ -145,15 +145,18 @@ export class SupabaseService {
   static async createItem(itemData: Omit<Item, 'id' | 'created_at'>): Promise<Item> {
     if (isSupabaseConfigured && supabase) {
       try {
+        const safePrice = Number(itemData.price);
+        const safeSafetyStock = Number(itemData.safety_stock);
+
         const { data, error } = await supabase
           .from('items')
           .insert({
-            sku: itemData.sku.trim().toUpperCase(),
-            name: itemData.name.trim(),
+            sku: (itemData.sku || '').trim().toUpperCase(),
+            name: (itemData.name || '').trim(),
             category: itemData.category || 'Umum',
-            unit: itemData.unit || 'PCS',
-            price: Number(itemData.price) || 0,
-            safety_stock: Number(itemData.safety_stock) || 0,
+            unit: (itemData.unit || 'PCS').trim().toUpperCase(),
+            price: Number.isFinite(safePrice) ? Math.max(0, safePrice) : 0,
+            safety_stock: Number.isFinite(safeSafetyStock) ? Math.max(0, Math.floor(safeSafetyStock)) : 0,
           })
           .select()
           .single();
@@ -166,16 +169,18 @@ export class SupabaseService {
         }
 
         // Inisialisasi saldo inventori 0 untuk semua lokasi (Hub & Cabang)
-        const { data: locations } = await supabase.from('locations').select('id');
-        if (locations && locations.length > 0) {
-          const invRows = locations.map(loc => ({
-            location_id: loc.id,
-            item_id: data.id,
-            stock_available: 0,
-            stock_reserved: 0,
-            stock_in_transit: 0,
-          }));
-          await supabase.from('inventories').upsert(invRows, { onConflict: 'location_id,item_id' });
+        if (data?.id) {
+          const { data: locations } = await supabase.from('locations').select('id');
+          if (locations && locations.length > 0) {
+            const invRows = locations.map(loc => ({
+              location_id: loc.id,
+              item_id: data.id,
+              stock_available: 0,
+              stock_reserved: 0,
+              stock_in_transit: 0,
+            }));
+            await supabase.from('inventories').upsert(invRows, { onConflict: 'location_id,item_id' });
+          }
         }
 
         const createdItem = data as Item;
@@ -404,31 +409,36 @@ export class SupabaseService {
     }
 
     try {
-      // 1. Cek apakah items sudah ada
-      const { data: existingItems } = await supabase.from('items').select('id');
-      if (existingItems && existingItems.length > 0) {
-        return { success: true, message: 'Database sudah memiliki data barang.' };
+      // 1. Ambil data items yang sudah ada
+      const { data: existingItems } = await supabase.from('items').select('id, sku');
+      const existingSkus = new Set((existingItems || []).map((i: any) => (i.sku || '').toUpperCase()));
+
+      const itemsToInsert = SAMPLE_DATA_PRESET.items.filter(i => !existingSkus.has(i.sku.toUpperCase()));
+
+      let allItems = existingItems || [];
+
+      // 2. Insert items yang belum ada
+      if (itemsToInsert.length > 0) {
+        const { data: newlyCreated, error: itmErr } = await supabase
+          .from('items')
+          .insert(
+            itemsToInsert.map(i => ({
+              sku: i.sku.toUpperCase(),
+              name: i.name,
+              category: i.category,
+              unit: i.unit,
+              price: i.price,
+              safety_stock: i.safety_stock,
+            }))
+          )
+          .select();
+
+        if (itmErr) throw itmErr;
+        allItems = [...allItems, ...(newlyCreated || [])];
       }
 
-      // 2. Insert items
-      const { data: createdItems, error: itmErr } = await supabase
-        .from('items')
-        .insert(
-          SAMPLE_DATA_PRESET.items.map(i => ({
-            sku: i.sku,
-            name: i.name,
-            category: i.category,
-            unit: i.unit,
-            price: i.price,
-            safety_stock: i.safety_stock,
-          }))
-        )
-        .select();
-
-      if (itmErr) throw itmErr;
-
       // Map SKU ke item_id baru
-      const skuToIdMap = new Map((createdItems || []).map((ci: any) => [ci.sku, ci.id]));
+      const skuToIdMap = new Map(allItems.map((ci: any) => [ci.sku.toUpperCase(), ci.id]));
 
       // 3. Insert saldo inventori
       const invPayload = SAMPLE_DATA_PRESET.inventories.map(inv => {
@@ -449,7 +459,7 @@ export class SupabaseService {
 
       if (invErr) throw invErr;
 
-      return { success: true, message: `Berhasil memuat ${createdItems?.length || 0} SKU sampel ke Supabase.` };
+      return { success: true, message: `Berhasil memuat ${allItems?.length || 0} SKU sampel ke Supabase.` };
     } catch (err: any) {
       console.error('Error seeding sample data to Supabase:', err);
       StorageRepository.loadSampleData();

@@ -11,7 +11,7 @@ export default defineConfig({
       includeAssets: ['pwa-icon.svg'],
       manifest: {
         name: 'Sistem Manajemen Gudang & Distribusi',
-        short_name: 'Gudang',
+        short_name: 'Sistem Gudang',
         description: 'Sistem Distribusi Stok Hub-and-Spoke 1 Gudang Pusat ke 3 Toko Cabang',
         theme_color: '#4f46e5',
         background_color: '#f8fafc',

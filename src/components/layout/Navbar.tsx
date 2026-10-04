@@ -41,7 +41,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onToggleMobileMenu }) => {
           <div className="min-w-0">
             <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
               <span className="font-extrabold text-sm text-slate-900 dark:text-white tracking-tight truncate font-display">
-                Nexus<span className="text-indigo-600 dark:text-indigo-400">WMS</span>
+                Sistem<span className="text-indigo-600 dark:text-indigo-400">Gudang</span>
               </span>
               <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider shrink-0 ${
                 isWarehouseAdmin 

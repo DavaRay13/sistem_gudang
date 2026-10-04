@@ -65,7 +65,7 @@ export const LoginPage: React.FC = () => {
           <Package2 className="w-8 h-8" />
         </div>
         <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight font-display">
-          Nexus<span className="text-indigo-400">WMS</span>
+          Sistem<span className="text-indigo-400">Gudang</span>
         </h1>
         <p className="text-xs sm:text-sm text-slate-400 mt-1 max-w-sm mx-auto">
           Sistem Distribusi Gudang Pusat & Manajemen Toko Cabang

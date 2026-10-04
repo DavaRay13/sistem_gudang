@@ -102,7 +102,8 @@ export class StorageRepository {
 
   static saveItem(itemData: Omit<Item, 'id' | 'created_at'>): Item {
     const items = this.getItems();
-    const existingIndex = items.findIndex(i => i.sku.toLowerCase() === itemData.sku.toLowerCase());
+    const incomingSku = (itemData.sku || '').trim().toLowerCase();
+    const existingIndex = items.findIndex(i => (i.sku || '').trim().toLowerCase() === incomingSku);
     
     if (existingIndex >= 0) {
       throw new Error(`SKU "${itemData.sku}" sudah terdaftar! Gunakan SKU yang berbeda.`);
