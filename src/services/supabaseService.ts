@@ -158,7 +158,12 @@ export class SupabaseService {
           .select()
           .single();
 
-        if (error) throw error;
+        if (error) {
+          if (error.code === '23505') {
+            throw new Error(`SKU "${itemData.sku}" sudah terdaftar di database! Gunakan SKU yang berbeda.`);
+          }
+          throw error;
+        }
 
         // Inisialisasi saldo inventori 0 untuk semua lokasi (Hub & Cabang)
         const { data: locations } = await supabase.from('locations').select('id');
@@ -174,12 +179,12 @@ export class SupabaseService {
         }
 
         const createdItem = data as Item;
-        try {
-          // Keep local storage synchronized
-          StorageRepository.saveItem(itemData);
-        } catch {
-          // SKU may already be in local storage, safe to ignore
-        }
+    try {
+      // Keep local storage synchronized
+      StorageRepository.saveItem(itemData);
+    } catch {
+      // SKU may already be in local storage or ID conflict, safe to ignore
+    }
         return createdItem;
       } catch (err: any) {
         console.warn('Supabase createItem error:', err.message);
@@ -220,9 +225,17 @@ export class SupabaseService {
 
         if (error) throw error;
         if (data && !data.success) throw new Error(data.message || 'Gagal inbound stok');
+        
+        // Sync local storage if present
+        try {
+          StorageRepository.addStockInbound(itemId, qty, notes, userId, supplierName);
+        } catch {
+          // safe to ignore
+        }
         return;
       } catch (err: any) {
-        console.warn('Supabase inboundStock error, falling back:', err.message);
+        console.warn('Supabase inboundStock error:', err.message);
+        throw err;
       }
     }
     StorageRepository.addStockInbound(itemId, qty, notes, userId, supplierName);

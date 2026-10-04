@@ -41,8 +41,110 @@ export const WarehouseDashboard: React.FC<WarehouseDashboardProps> = ({ onNaviga
 
   return (
     <div className="space-y-4">
-      {/* Welcome Hero Card */}
-      <div className="p-5 sm:p-6 rounded-2xl bg-gradient-to-br from-brand-900 via-indigo-950 to-slate-900 text-white shadow-lg border border-indigo-800/40">
+      {/* ========================================================= */}
+      {/* MOBILE-ONLY REDESIGNED VIEW (Matches Mobile Screen Mockup) */}
+      {/* ========================================================= */}
+      <div className="sm:hidden space-y-4">
+        {/* Mobile Hub Status Card */}
+        <div className="p-5 rounded-3xl bg-[#0c1220] border border-slate-800 text-white shadow-xl relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-44 h-44 bg-indigo-600/10 rounded-full blur-2xl pointer-events-none" />
+          
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h2 className="text-base font-bold tracking-tight text-white">Hub Distribusi Pusat</h2>
+              <p className="text-[11px] text-slate-400 font-mono">
+                Logistik Multi-Cabang • Live Status
+              </p>
+            </div>
+            <span className="w-2.5 h-2.5 rounded-full bg-indigo-400 animate-pulse shadow-[0_0_8px_#818cf8]" />
+          </div>
+
+          {/* 3 Balanced Metrics */}
+          <div className="grid grid-cols-3 gap-2 py-3 border-y border-slate-800/80">
+            <div>
+              <span className="block text-[10px] text-slate-400 font-medium">Stok Bebas</span>
+              <span className="block text-xl font-black font-mono tracking-tight text-white mt-0.5">
+                {formatNumber(totalAvailableStock)}
+              </span>
+              <span className="text-[9px] text-emerald-400 font-semibold block">Siap Alokasi</span>
+            </div>
+            <div>
+              <span className="block text-[10px] text-slate-400 font-medium">Reservasi</span>
+              <span className="block text-xl font-black font-mono tracking-tight text-indigo-400 mt-0.5">
+                {formatNumber(totalReservedStock)}
+              </span>
+              <span className="text-[9px] text-slate-500 block">Siap Antar</span>
+            </div>
+            <div>
+              <span className="block text-[10px] text-slate-400 font-medium">In-Transit</span>
+              <span className="block text-xl font-black font-mono tracking-tight text-cyan-400 mt-0.5">
+                {formatNumber(totalInTransitStock)}
+              </span>
+              <span className="text-[9px] text-cyan-500 block">Di Perjalanan</span>
+            </div>
+          </div>
+
+          {/* In-Transit Alert Strip */}
+          {inTransitShipments.length > 0 && (
+            <button
+              type="button"
+              onClick={() => onNavigate('warehouse_dispatch')}
+              className="w-full mt-3.5 p-3 rounded-2xl bg-slate-800/70 hover:bg-slate-800 border border-slate-700/60 flex items-center justify-between active:scale-98 transition-all text-left"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-xl bg-cyan-950/80 border border-cyan-700/50 flex items-center justify-center text-cyan-400">
+                  <Truck className="w-4 h-4" />
+                </div>
+                <div>
+                  <span className="text-xs font-bold text-slate-200 block">Armada Pengiriman Aktif</span>
+                  <span className="text-[10px] text-slate-400 font-mono">
+                    {inTransitShipments.length} DO menuju toko cabang
+                  </span>
+                </div>
+              </div>
+              <span className="text-xs font-mono font-bold text-cyan-400 bg-cyan-950/80 px-2 py-0.5 rounded-full border border-cyan-800/40">
+                Pantau
+              </span>
+            </button>
+          )}
+        </div>
+
+        {/* Quick Action Buttons (Prominent Tactile Buttons) */}
+        <div>
+          <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-2 px-1">
+            Aksi Utama Gudang
+          </span>
+          <div className="grid grid-cols-2 gap-3">
+            <button
+              type="button"
+              onClick={() => onNavigate('warehouse_approval_queue')}
+              className="py-3.5 px-4 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white active:scale-95 transition-all flex items-center justify-center gap-2 shadow-lg shadow-indigo-600/25 group relative"
+            >
+              <ClipboardList className="w-4 h-4 text-indigo-100 group-hover:scale-110 transition-transform" />
+              <span className="text-xs font-bold">Persetujuan</span>
+              {pendingRequests.length > 0 && (
+                <span className="absolute -top-1.5 -right-1.5 px-2 py-0.5 rounded-full text-[9px] font-black bg-amber-500 text-white ring-2 ring-slate-900 shadow-sm">
+                  {pendingRequests.length}
+                </span>
+              )}
+            </button>
+
+            <button
+              type="button"
+              onClick={() => onNavigate('warehouse_dispatch')}
+              className="py-3.5 px-4 rounded-2xl bg-slate-800/90 hover:bg-slate-750 border border-slate-700 active:scale-95 transition-all flex items-center justify-center gap-2 shadow-sm group"
+            >
+              <Truck className="w-4 h-4 text-indigo-400 group-hover:scale-110 transition-transform" />
+              <span className="text-xs font-bold text-white">Kirim DO</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* ========================================================= */}
+      {/* DESKTOP VIEW (Visible on sm: screens and wider)            */}
+      {/* ========================================================= */}
+      <div className="hidden sm:block p-5 sm:p-6 rounded-2xl bg-gradient-to-br from-brand-900 via-indigo-950 to-slate-900 text-white shadow-lg border border-indigo-800/40">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
           <div className="space-y-2 max-w-xl">
             <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-brand-500/20 text-brand-300 text-[10px] font-bold uppercase tracking-wider border border-brand-400/30">

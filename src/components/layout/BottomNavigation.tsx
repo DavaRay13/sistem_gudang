@@ -4,7 +4,7 @@ import { useInventory } from '../../context/InventoryContext';
 import { NavigationTab } from './Sidebar';
 import { 
   LayoutDashboard, Package, ClipboardList, Send, 
-  BookOpen, CheckSquare, PlusCircle, Users
+  BookOpen, CheckSquare, PlusCircle
 } from 'lucide-react';
 
 interface BottomNavigationProps {
@@ -62,11 +62,6 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({
       label: 'Riwayat',
       icon: BookOpen,
     },
-    {
-      id: 'warehouse_user_management' as NavigationTab,
-      label: 'Staf',
-      icon: Users,
-    },
   ];
 
   const storeTabs = [
@@ -89,18 +84,18 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({
     },
     {
       id: 'store_receiving' as NavigationTab,
-      label: 'Terima Barang',
+      label: 'Terima',
       icon: CheckSquare,
       badge: inTransitCount > 0 ? inTransitCount : undefined,
-      badgeColor: 'bg-blue-500 text-white animate-pulse',
+      badgeColor: 'bg-emerald-500 text-white animate-pulse',
     },
   ];
 
   const tabs = isWarehouseAdmin ? warehouseTabs : storeTabs;
 
   return (
-    <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 dark:bg-slate-900/95 backdrop-blur-lg border-t border-slate-200/80 dark:border-slate-800 pb-safe shadow-[0_-4px_20px_rgba(0,0,0,0.06)]">
-      <div className="max-w-lg mx-auto flex items-center justify-around px-2 py-1.5">
+    <div className="lg:hidden fixed bottom-3 left-3 right-3 z-40 max-w-md mx-auto pointer-events-none">
+      <nav className="pointer-events-auto bg-slate-900/90 dark:bg-[#0c1220]/95 backdrop-blur-2xl border border-slate-700/60 dark:border-slate-800 rounded-3xl px-3 py-2 shadow-2xl shadow-black/60 flex items-center justify-around transition-all">
         {tabs.map(tab => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.id;
@@ -109,32 +104,37 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({
             <button
               key={tab.id}
               onClick={() => onSelectTab(tab.id)}
-              className={`relative flex flex-col items-center justify-center py-1 px-2.5 rounded-2xl transition-all duration-150 active:scale-95 ${
+              className={`relative flex flex-col items-center justify-center py-1.5 px-3 rounded-2xl transition-all duration-200 active:scale-90 ${
                 isActive
                   ? isWarehouseAdmin
-                    ? 'text-brand-600 dark:text-brand-400 font-bold'
-                    : 'text-emerald-600 dark:text-emerald-400 font-bold'
-                  : 'text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 font-medium'
+                    ? 'text-indigo-400 font-bold'
+                    : 'text-emerald-400 font-bold'
+                  : 'text-slate-400 hover:text-slate-200 font-medium'
               }`}
             >
-              <div className="relative">
-                <Icon className={`w-5 h-5 transition-transform ${isActive ? 'scale-110' : ''}`} />
+              {/* Active Glow Pill on Top */}
+              {isActive && (
+                <span className={`absolute -top-1.5 w-6 h-1 rounded-full ${
+                  isWarehouseAdmin ? 'bg-indigo-400 shadow-[0_0_8px_#818cf8]' : 'bg-emerald-400 shadow-[0_0_8px_#34d399]'
+                }`} />
+              )}
+
+              <div className="relative mt-0.5">
+                <Icon className={`w-5 h-5 transition-transform duration-200 ${isActive ? 'scale-110' : ''}`} />
                 {tab.badge !== undefined && (
-                  <span className={`absolute -top-1 -right-2 min-w-4 h-4 px-1 rounded-full text-[9px] font-black flex items-center justify-center ring-2 ring-white dark:ring-slate-900 ${tab.badgeColor}`}>
+                  <span className={`absolute -top-1.5 -right-2.5 min-w-[18px] h-[18px] px-1 rounded-full text-[9px] font-black flex items-center justify-center ring-2 ring-slate-900 ${tab.badgeColor}`}>
                     {tab.badge}
                   </span>
                 )}
               </div>
+              
               <span className="text-[10px] mt-1 tracking-tight truncate max-w-[64px]">
                 {tab.label}
               </span>
-              {isActive && (
-                <span className={`w-1.5 h-1.5 rounded-full mt-0.5 ${isWarehouseAdmin ? 'bg-brand-600 dark:bg-brand-400' : 'bg-emerald-600 dark:bg-emerald-400'}`} />
-              )}
             </button>
           );
         })}
-      </div>
-    </nav>
+      </nav>
+    </div>
   );
 };

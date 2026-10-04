@@ -4,6 +4,7 @@ import App from './App';
 import { ThemeProvider } from './context/ThemeContext';
 import { AuthProvider } from './context/AuthContext';
 import { InventoryProvider } from './context/InventoryContext';
+import { PWAUpdatePrompt } from './components/PWAUpdatePrompt';
 import './index.css';
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
@@ -12,6 +13,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
       <AuthProvider>
         <InventoryProvider>
           <App />
+          <PWAUpdatePrompt />
         </InventoryProvider>
       </AuthProvider>
     </ThemeProvider>

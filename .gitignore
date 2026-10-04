@@ -56,3 +56,10 @@ test_export_run.xlsx
 supabase/.temp/
 .wrangler/
 .cloudflare/
+
+# Android build outputs
+android/.gradle/
+android/app/build/
+android/.idea/
+android/*.iml
+android/app/*.iml
