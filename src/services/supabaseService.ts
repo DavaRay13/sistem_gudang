@@ -193,6 +193,10 @@ export class SupabaseService {
         return createdItem;
       } catch (err: any) {
         console.warn('Supabase createItem error:', err.message);
+        if (err.message?.includes('Failed to fetch') || err.name === 'TypeError') {
+          console.warn('Supabase network unreachable, falling back to Local Storage');
+          return StorageRepository.saveItem(itemData);
+        }
         throw err;
       }
     }
@@ -240,6 +244,11 @@ export class SupabaseService {
         return;
       } catch (err: any) {
         console.warn('Supabase inboundStock error:', err.message);
+        if (err.message?.includes('Failed to fetch') || err.name === 'TypeError') {
+          console.warn('Supabase network unreachable, falling back to Local Storage');
+          StorageRepository.addStockInbound(itemId, qty, notes, userId, supplierName);
+          return;
+        }
         throw err;
       }
     }
