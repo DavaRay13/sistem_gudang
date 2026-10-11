@@ -59,31 +59,31 @@ export const Sidebar: React.FC<SidebarProps> = ({
     },
     {
       id: 'warehouse_master_items' as NavigationTab,
-      label: 'Daftar Barang & Stok Masuk',
+      label: 'Master Barang & Stok',
       icon: Package,
     },
     {
       id: 'warehouse_approval_queue' as NavigationTab,
-      label: 'Persetujuan Permintaan',
+      label: 'Antrean Otorisasi',
       icon: ClipboardList,
       badge: pendingRequestsCount > 0 ? pendingRequestsCount : undefined,
-      badgeColor: 'bg-amber-500 text-white',
+      badgeColor: 'bg-[#FBF3DB] text-[#956400] dark:bg-[#332A15] dark:text-[#E8CA65] border border-[#F4E3B4] dark:border-[#4D3F1E]',
     },
     {
       id: 'warehouse_dispatch' as NavigationTab,
-      label: 'Kirim Barang & Surat Jalan',
+      label: 'Pengiriman & DO',
       icon: Send,
       badge: approvedForDispatchCount > 0 ? approvedForDispatchCount : undefined,
-      badgeColor: 'bg-indigo-500 text-white',
+      badgeColor: 'bg-[#E1F3FE] text-[#1F6C9F] dark:bg-[#142838] dark:text-[#97D2FB] border border-[#C8E7FD] dark:border-[#1E3B52]',
     },
     {
       id: 'warehouse_mutation_ledger' as NavigationTab,
-      label: 'Riwayat Keluar Masuk',
+      label: 'Ledger Mutasi Stok',
       icon: BookOpen,
     },
     {
       id: 'warehouse_user_management' as NavigationTab,
-      label: 'Kelola Akun Staf',
+      label: 'Kelola Pengguna',
       icon: PlusCircle,
     },
   ];
@@ -94,24 +94,24 @@ export const Sidebar: React.FC<SidebarProps> = ({
       label: 'Dasbor Toko',
       icon: LayoutDashboard,
       badge: lowStockCount > 0 ? lowStockCount : undefined,
-      badgeColor: 'bg-rose-500 text-white',
+      badgeColor: 'bg-[#FDEBEC] text-[#9F2F2D] dark:bg-[#381B1B] dark:text-[#F8A4A4] border border-[#F8D2D4] dark:border-[#522525]',
     },
     {
       id: 'store_create_request' as NavigationTab,
-      label: 'Minta Tambah Stok',
+      label: 'Buat Permintaan Stok',
       icon: PlusCircle,
     },
     {
       id: 'store_request_history' as NavigationTab,
-      label: 'Riwayat Permintaan',
+      label: 'Riwayat Dokumen',
       icon: ClipboardList,
     },
     {
       id: 'store_receiving' as NavigationTab,
-      label: 'Penerimaan Barang',
+      label: 'Konfirmasi Penerimaan',
       icon: CheckSquare,
       badge: inTransitCount > 0 ? inTransitCount : undefined,
-      badgeColor: 'bg-blue-500 text-white animate-pulse',
+      badgeColor: 'bg-[#E1F3FE] text-[#1F6C9F] dark:bg-[#142838] dark:text-[#97D2FB] border border-[#C8E7FD] dark:border-[#1E3B52]',
     },
   ];
 
@@ -122,45 +122,45 @@ export const Sidebar: React.FC<SidebarProps> = ({
       {/* Mobile Backdrop */}
       {mobileOpen && (
         <div
-          className="fixed inset-0 z-30 bg-slate-900/50 backdrop-blur-sm lg:hidden"
+          className="fixed inset-0 z-30 bg-black/30 backdrop-blur-sm lg:hidden"
           onClick={onCloseMobile}
         />
       )}
 
       {/* Sidebar Container */}
       <aside
-        className={`fixed lg:sticky top-0 lg:top-16 z-50 lg:z-30 h-full lg:h-[calc(100vh-4rem)] w-72 lg:w-64 shrink-0 bg-white dark:bg-slate-900 border-r border-slate-200/80 dark:border-slate-800 transition-transform duration-200 ease-in-out ${
-          mobileOpen ? 'translate-x-0 shadow-2xl' : '-translate-x-full lg:translate-x-0'
-        } flex flex-col justify-between p-4 overflow-y-auto`}
+        className={`fixed lg:sticky top-0 lg:top-14 z-50 lg:z-30 h-full lg:h-[calc(100vh-3.5rem)] w-64 shrink-0 bg-[#FFFFFF] dark:bg-[#111215] border-r border-[#EAEAEA] dark:border-[#26282E] transition-transform duration-200 ease-in-out ${
+          mobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
+        } flex flex-col justify-between p-3.5 overflow-y-auto`}
       >
         <div>
-          {/* Mobile Drawer Header (Only visible on mobile when open) */}
-          <div className="lg:hidden flex items-center justify-between pb-3 mb-3 border-b border-slate-100 dark:border-slate-800">
-            <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
-              Navigasi Sistem
+          {/* Mobile Drawer Header */}
+          <div className="lg:hidden flex items-center justify-between pb-3 mb-3 border-b border-[#EAEAEA] dark:border-[#26282E]">
+            <span className="text-[11px] font-mono uppercase tracking-wider text-[#787774] dark:text-[#A1A09E]">
+              Menu Sistem
             </span>
             <button
               onClick={onCloseMobile}
-              className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800"
-              aria-label="Tutup Menu"
+              className="p-1 rounded-md text-[#787774] hover:bg-[#F7F6F3] dark:hover:bg-[#1C1E22]"
+              aria-label="Tutup"
             >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
               </svg>
             </button>
           </div>
 
-          {/* Active Area Banner */}
-          <div className="mb-4 p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80">
+          {/* Active Unit Box */}
+          <div className="mb-3.5 p-2.5 rounded-lg bg-[#F7F6F3] dark:bg-[#18191D] border border-[#EAEAEA] dark:border-[#26282E]">
             <div className="flex items-center gap-2">
-              <div className={`p-2 rounded-lg ${isWarehouseAdmin ? 'bg-brand-100 text-brand-700 dark:bg-brand-950 dark:text-brand-300' : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300'}`}>
-                {isWarehouseAdmin ? <Warehouse className="w-4 h-4" /> : <Store className="w-4 h-4" />}
+              <div className="p-1.5 rounded-md bg-white dark:bg-[#22242A] border border-[#EAEAEA] dark:border-[#2E313A] text-[#111111] dark:text-[#ECECED]">
+                {isWarehouseAdmin ? <Warehouse className="w-3.5 h-3.5" /> : <Store className="w-3.5 h-3.5" />}
               </div>
               <div className="min-w-0 flex-1">
-                <span className="block text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                  {isWarehouseAdmin ? 'Modul Pusat' : 'Modul Cabang'}
+                <span className="block text-[10px] font-mono uppercase tracking-wider text-[#787774] dark:text-[#A1A09E]">
+                  {isWarehouseAdmin ? 'Unit Pusat' : 'Unit Cabang'}
                 </span>
-                <span className="block text-xs font-bold text-slate-900 dark:text-white truncate">
+                <span className="block text-xs font-semibold text-[#111111] dark:text-[#ECECED] truncate">
                   {currentLocation?.name}
                 </span>
               </div>
@@ -168,9 +168,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
           </div>
 
           {/* Navigation Links */}
-          <div className="space-y-1">
-            <div className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-400">
-              Menu Utama
+          <div className="space-y-0.5">
+            <div className="px-2.5 py-1 text-[10px] font-mono uppercase tracking-wider text-[#787774] dark:text-[#A1A09E]">
+              Navigasi
             </div>
             {menuItems.map(item => {
               const Icon = item.icon;
@@ -183,20 +183,18 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     onSelectTab(item.id);
                     onCloseMobile();
                   }}
-                  className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all ${
+                  className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-medium transition-all ${
                     isActive
-                      ? isWarehouseAdmin
-                        ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30'
-                        : 'bg-emerald-600 text-white shadow-md shadow-emerald-600/30'
-                      : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-850 hover:text-slate-900 dark:hover:text-white'
+                      ? 'bg-[#111111] text-white dark:bg-white dark:text-[#111111]'
+                      : 'text-[#787774] dark:text-[#A1A09E] hover:bg-[#F7F6F3] dark:hover:bg-[#18191D] hover:text-[#111111] dark:hover:text-white'
                   }`}
                 >
-                  <div className="flex items-center gap-3">
-                    <Icon className="w-4 h-4" />
+                  <div className="flex items-center gap-2.5">
+                    <Icon className="w-3.5 h-3.5" />
                     <span>{item.label}</span>
                   </div>
                   {item.badge !== undefined && (
-                    <span className={`px-1.5 py-0.5 rounded-md text-[10px] font-bold ${item.badgeColor}`}>
+                    <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-mono font-medium ${item.badgeColor}`}>
                       {item.badge}
                     </span>
                   )}
@@ -206,15 +204,15 @@ export const Sidebar: React.FC<SidebarProps> = ({
           </div>
         </div>
 
-        {/* Bottom Info Card & Quick Logout */}
-        <div className="pt-4 border-t border-slate-100 dark:border-slate-800 space-y-3">
-          <div className="p-3 rounded-xl bg-gradient-to-br from-slate-50 to-indigo-50/30 dark:from-slate-800/40 dark:to-indigo-950/20 border border-slate-200/60 dark:border-slate-800">
-            <div className="flex items-center gap-2 text-xs font-semibold text-slate-700 dark:text-slate-300">
-              <AlertCircle className="w-4 h-4 text-brand-500 shrink-0" />
-              <span>Serah Terima Aman</span>
+        {/* Bottom Utilitarian Notice */}
+        <div className="pt-3 border-t border-[#EAEAEA] dark:border-[#26282E] space-y-2">
+          <div className="p-2.5 rounded-lg bg-[#F7F6F3] dark:bg-[#18191D] border border-[#EAEAEA] dark:border-[#26282E] text-[11px] text-[#787774] dark:text-[#A1A09E]">
+            <div className="flex items-center gap-1.5 font-medium text-[#111111] dark:text-[#ECECED] mb-0.5">
+              <AlertCircle className="w-3.5 h-3.5" />
+              <span>Verifikasi Fisik</span>
             </div>
-            <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 leading-normal">
-              Stok yang dikirim baru akan masuk ke toko setelah pihak toko mengecek dan menekan konfirmasi terima.
+            <p className="leading-relaxed text-[10px]">
+              Setiap pergerakan stok dicatat di ledger terpusat secara permanen.
             </p>
           </div>
 
@@ -225,11 +223,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
               logout();
               window.scrollTo({ top: 0, behavior: 'instant' });
             }}
-            className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-bold text-rose-600 dark:text-rose-400 bg-rose-50/60 dark:bg-rose-950/30 hover:bg-rose-100 dark:hover:bg-rose-900/50 border border-rose-200/60 dark:border-rose-900/50 transition-all active:scale-95"
-            title="Keluar dari Akun Langsung"
+            className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs text-[#9F2F2D] dark:text-[#F8A4A4] hover:bg-[#FDEBEC] dark:hover:bg-[#381B1B] transition-colors"
           >
-            <LogOut className="w-4 h-4 shrink-0" />
-            <span>Keluar dari Akun</span>
+            <LogOut className="w-3.5 h-3.5 shrink-0" />
+            <span>Keluar Akun</span>
           </button>
         </div>
       </aside>

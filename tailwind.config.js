@@ -8,32 +8,60 @@ export default {
   theme: {
     extend: {
       colors: {
-        brand: {
-          50: '#eef2ff',
-          100: '#e0e7ff',
-          200: '#c7d2fe',
-          300: '#a5b4fc',
-          400: '#818cf8',
-          500: '#6366f1',
-          600: '#4f46e5',
-          700: '#4338ca',
-          800: '#3730a3',
-          900: '#312e81',
-          950: '#1e1b4b',
+        canvas: {
+          light: '#FBFBFA',
+          dark: '#0F1012',
         },
-        slate: {
-          850: '#151e2e',
-          925: '#0b1120',
-        }
+        surface: {
+          light: '#FFFFFF',
+          dark: '#16171A',
+          subtle: '#F7F6F3',
+          'subtle-dark': '#1C1E22',
+        },
+        border: {
+          light: '#EAEAEA',
+          dark: '#26282E',
+        },
+        ink: {
+          DEFAULT: '#111111',
+          muted: '#787774',
+          faint: '#A1A09E',
+        },
+        pastel: {
+          red: '#FDEBEC',
+          'red-ink': '#9F2F2D',
+          blue: '#E1F3FE',
+          'blue-ink': '#1F6C9F',
+          green: '#EDF3EC',
+          'green-ink': '#346538',
+          yellow: '#FBF3DB',
+          'yellow-ink': '#956400',
+        },
+        brand: {
+          50: '#F4F4F5',
+          100: '#E4E4E7',
+          200: '#D4D4D8',
+          300: '#A1A1AA',
+          400: '#71717A',
+          500: '#3F3F46',
+          600: '#18181B',
+          700: '#09090B',
+          800: '#09090B',
+          900: '#000000',
+        },
       },
       fontFamily: {
-        sans: ['Outfit', 'sans-serif'],
+        sans: ['Geist', 'Outfit', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
+        mono: ['Geist Mono', 'SF Mono', 'ui-monospace', 'monospace'],
         display: ['Geist', 'Outfit', 'sans-serif'],
       },
       boxShadow: {
-        'glow': '0 0 20px -5px rgba(99, 102, 241, 0.3)',
-        'glow-emerald': '0 0 20px -5px rgba(16, 185, 129, 0.3)',
-        'glow-amber': '0 0 20px -5px rgba(245, 158, 11, 0.3)',
+        'subtle': '0 1px 2px rgba(0, 0, 0, 0.03)',
+        'lift': '0 2px 8px rgba(0, 0, 0, 0.04)',
+      },
+      borderRadius: {
+        'crisp': '8px',
+        'bento': '12px',
       }
     },
   },

@@ -16,6 +16,7 @@ export const MasterItemManagement: React.FC = () => {
 
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('ALL');
+  const [statusFilter, setStatusFilter] = useState<'ALL' | 'EMPTY' | 'LOW' | 'AVAILABLE'>('ALL');
   
   // Modals state
   const [isAddItemOpen, setIsAddItemOpen] = useState(false);
@@ -23,6 +24,21 @@ export const MasterItemManagement: React.FC = () => {
   const [selectedInboundItemId, setSelectedInboundItemId] = useState<number | undefined>(undefined);
   const [itemToDelete, setItemToDelete] = useState<any>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+
+  // Helper to get inventory
+  const getInv = (locationId: number, itemId: number) => {
+    return inventories.find(inv => inv.location_id === locationId && inv.item_id === itemId) || {
+      stock_available: 0,
+      stock_reserved: 0,
+      stock_in_transit: 0,
+    };
+  };
+
+  const emptyStockCount = items.filter(i => getInv(0, i.id).stock_available <= 0).length;
+  const lowStockCount = items.filter(i => {
+    const avail = getInv(0, i.id).stock_available;
+    return avail > 0 && avail <= i.safety_stock;
+  }).length;
 
   const handleDeleteItem = async () => {
     if (!itemToDelete) return;
@@ -64,7 +80,17 @@ export const MasterItemManagement: React.FC = () => {
     const matchSearch = itemName.toLowerCase().includes(searchTerm.toLowerCase()) || 
                         itemSku.toLowerCase().includes(searchTerm.toLowerCase());
     const matchCategory = selectedCategory === 'ALL' || item.category === selectedCategory;
-    return matchSearch && matchCategory;
+    if (!matchSearch || !matchCategory) return false;
+
+    const hubInv = getInv(0, item.id);
+    const isOut = hubInv.stock_available <= 0;
+    const isLow = !isOut && hubInv.stock_available <= item.safety_stock;
+
+    if (statusFilter === 'EMPTY') return isOut;
+    if (statusFilter === 'LOW') return isLow;
+    if (statusFilter === 'AVAILABLE') return !isOut && !isLow;
+
+    return true;
   });
 
   const handleCreateItem = async (e: React.FormEvent) => {
@@ -100,15 +126,6 @@ export const MasterItemManagement: React.FC = () => {
   const openInboundForItem = (itemId: number) => {
     setSelectedInboundItemId(itemId);
     setIsInboundOpen(true);
-  };
-
-  // Helper to get inventory
-  const getInv = (locationId: number, itemId: number) => {
-    return inventories.find(inv => inv.location_id === locationId && inv.item_id === itemId) || {
-      stock_available: 0,
-      stock_reserved: 0,
-      stock_in_transit: 0,
-    };
   };
 
   const handleExportExcel = () => {
@@ -167,8 +184,8 @@ export const MasterItemManagement: React.FC = () => {
         </div>
       </div>
 
-      {/* Search & Category Filter Pills */}
-      <div className="space-y-2">
+      {/* Search, Status & Category Filters */}
+      <div className="space-y-2.5">
         <div className="relative">
           <Search className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
           <input
@@ -180,16 +197,61 @@ export const MasterItemManagement: React.FC = () => {
           />
         </div>
 
+        {/* Status Filter Chips */}
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5 no-scrollbar">
+          <button
+            onClick={() => setStatusFilter('ALL')}
+            className={`px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all active:scale-95 ${
+              statusFilter === 'ALL'
+                ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-sm'
+                : 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-800 hover:bg-slate-50'
+            }`}
+          >
+            Semua ({items.length})
+          </button>
+          <button
+            onClick={() => setStatusFilter('EMPTY')}
+            className={`px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all active:scale-95 flex items-center gap-1.5 ${
+              statusFilter === 'EMPTY'
+                ? 'bg-rose-600 text-white shadow-sm'
+                : 'bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-400 border border-rose-200/80 dark:border-rose-900/50 hover:bg-rose-100/70'
+            }`}
+          >
+            <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse"></span>
+            Stok Kosong ({emptyStockCount})
+          </button>
+          <button
+            onClick={() => setStatusFilter('LOW')}
+            className={`px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all active:scale-95 flex items-center gap-1.5 ${
+              statusFilter === 'LOW'
+                ? 'bg-amber-600 text-white shadow-sm'
+                : 'bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 border border-amber-200/80 dark:border-amber-900/50 hover:bg-amber-100/70'
+            }`}
+          >
+            Menipis ({lowStockCount})
+          </button>
+          <button
+            onClick={() => setStatusFilter('AVAILABLE')}
+            className={`px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all active:scale-95 ${
+              statusFilter === 'AVAILABLE'
+                ? 'bg-emerald-600 text-white shadow-sm'
+                : 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border border-emerald-200/80 dark:border-emerald-900/50 hover:bg-emerald-100/70'
+            }`}
+          >
+            Stok Tersedia
+          </button>
+        </div>
+
         {/* Horizontal Category Scroll for touch */}
-        <div className="flex items-center gap-1.5 overflow-x-auto py-1 no-scrollbar">
+        <div className="flex items-center gap-1.5 overflow-x-auto py-0.5 no-scrollbar">
           {categories.map(cat => (
             <button
               key={cat}
               onClick={() => setSelectedCategory(cat)}
-              className={`px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all active:scale-95 ${
+              className={`px-3 py-1 rounded-lg text-[11px] font-semibold whitespace-nowrap transition-all active:scale-95 ${
                 selectedCategory === cat
                   ? 'bg-brand-600 text-white shadow-sm'
-                  : 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-800'
+                  : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'
               }`}
             >
               {cat}
@@ -203,13 +265,19 @@ export const MasterItemManagement: React.FC = () => {
         <div className="p-8 text-center bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-sm">
           <Boxes className="w-10 h-10 text-slate-300 dark:text-slate-600 mx-auto mb-2" />
           <h3 className="text-sm font-bold text-slate-700 dark:text-slate-300">
-            Belum Ada Master SKU
+            {statusFilter === 'EMPTY' ? 'Tidak Ada Barang dengan Stok Kosong' : 'Belum Ada Master SKU'}
           </h3>
           <p className="text-xs text-slate-400 mt-1 mb-4">
-            Tambahkan SKU baru atau gunakan tombol "Data Demo" di pojok kanan atas.
+            {statusFilter === 'EMPTY'
+              ? 'Seluruh jenis barang memiliki stok di atas 0 unit.'
+              : 'Tambahkan SKU baru atau gunakan tombol "Data Demo" di pojok kanan atas.'}
           </p>
           <button
-            onClick={() => setIsAddItemOpen(true)}
+            onClick={() => {
+              setStatusFilter('ALL');
+              setSelectedCategory('ALL');
+              setIsAddItemOpen(true);
+            }}
             className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold text-white bg-brand-600 shadow-sm"
           >
             <Plus className="w-4 h-4" />
@@ -224,7 +292,8 @@ export const MasterItemManagement: React.FC = () => {
             const store2Inv = getInv(2, item.id);
             const store3Inv = getInv(3, item.id);
 
-            const isLowStockInHub = hubInv.stock_available <= item.safety_stock;
+            const isOutOfStock = hubInv.stock_available <= 0;
+            const isLowStockInHub = !isOutOfStock && hubInv.stock_available <= item.safety_stock;
 
             return (
               <div
@@ -235,13 +304,23 @@ export const MasterItemManagement: React.FC = () => {
                 <div>
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-1.5">
+                      <div className="flex items-center gap-1.5 flex-wrap">
                         <span className="font-extrabold text-sm text-slate-900 dark:text-white leading-tight">
                           {item.name}
                         </span>
-                        {isLowStockInHub && (
-                          <span title="Stok Menipis">
-                            <ShieldAlert className="w-4 h-4 text-amber-500 shrink-0" />
+                        {isOutOfStock ? (
+                          <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-900/60 shadow-sm" title="Stok Gudang Kosong (0 unit)">
+                            <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse"></span>
+                            Stok Kosong
+                          </span>
+                        ) : isLowStockInHub ? (
+                          <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-900/60" title="Stok Menipis">
+                            <ShieldAlert className="w-3 h-3 text-amber-500 shrink-0" />
+                            Menipis
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 border border-emerald-200/60 dark:border-emerald-900/60">
+                            Tersedia
                           </span>
                         )}
                       </div>
@@ -283,9 +362,18 @@ export const MasterItemManagement: React.FC = () => {
                 <div className="grid grid-cols-3 gap-1.5 p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-700/60 text-center">
                   <div>
                     <span className="text-[10px] text-slate-400 uppercase font-semibold block">Tersedia</span>
-                    <span className="text-base font-bold font-mono tabular-nums text-brand-600 dark:text-brand-400">
+                    <span className={`text-base font-bold font-mono tabular-nums ${
+                      isOutOfStock
+                        ? 'text-rose-600 dark:text-rose-400 font-black'
+                        : isLowStockInHub
+                          ? 'text-amber-600 dark:text-amber-400'
+                          : 'text-brand-600 dark:text-brand-400'
+                    }`}>
                       {formatNumber(hubInv.stock_available)}
                     </span>
+                    {isOutOfStock && (
+                      <span className="text-[9px] font-bold text-rose-500 block">Kosong</span>
+                    )}
                   </div>
 
                   <div>

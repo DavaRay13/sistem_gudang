@@ -21,58 +21,60 @@ export const StatCard: React.FC<StatCardProps> = ({
   color = 'indigo',
   trend,
 }) => {
-  const colorStyles = {
+  // Map to minimalist spot pastels
+  const pastelStyles = {
     indigo: {
-      bg: 'bg-indigo-50 dark:bg-indigo-950/50',
-      text: 'text-indigo-600 dark:text-indigo-400',
-      border: 'border-indigo-100 dark:border-indigo-900/60',
+      bg: 'bg-[#F7F6F3] dark:bg-[#1E2025]',
+      text: 'text-[#111111] dark:text-[#ECECED]',
+      border: 'border-[#EAEAEA] dark:border-[#2B2D33]',
     },
     emerald: {
-      bg: 'bg-emerald-50 dark:bg-emerald-950/50',
-      text: 'text-emerald-600 dark:text-emerald-400',
-      border: 'border-emerald-100 dark:border-emerald-900/60',
+      bg: 'bg-[#EDF3EC] dark:bg-[#172B19]',
+      text: 'text-[#346538] dark:text-[#96D99C]',
+      border: 'border-[#D4E5D3] dark:border-[#223F25]',
     },
     amber: {
-      bg: 'bg-amber-50 dark:bg-amber-950/50',
-      text: 'text-amber-600 dark:text-amber-400',
-      border: 'border-amber-100 dark:border-amber-900/60',
+      bg: 'bg-[#FBF3DB] dark:bg-[#332A15]',
+      text: 'text-[#956400] dark:text-[#E8CA65]',
+      border: 'border-[#F4E3B4] dark:border-[#4D3F1E]',
     },
     blue: {
-      bg: 'bg-blue-50 dark:bg-blue-950/50',
-      text: 'text-blue-600 dark:text-blue-400',
-      border: 'border-blue-100 dark:border-blue-900/60',
+      bg: 'bg-[#E1F3FE] dark:bg-[#142838]',
+      text: 'text-[#1F6C9F] dark:text-[#97D2FB]',
+      border: 'border-[#C8E7FD] dark:border-[#1E3B52]',
     },
     rose: {
-      bg: 'bg-rose-50 dark:bg-rose-950/50',
-      text: 'text-rose-600 dark:text-rose-400',
-      border: 'border-rose-100 dark:border-rose-900/60',
+      bg: 'bg-[#FDEBEC] dark:bg-[#381B1B]',
+      text: 'text-[#9F2F2D] dark:text-[#F8A4A4]',
+      border: 'border-[#F8D2D4] dark:border-[#522525]',
     },
     purple: {
-      bg: 'bg-purple-50 dark:bg-purple-950/50',
-      text: 'text-purple-600 dark:text-purple-400',
-      border: 'border-purple-100 dark:border-purple-900/60',
+      bg: 'bg-[#F7F6F3] dark:bg-[#1E2025]',
+      text: 'text-[#111111] dark:text-[#ECECED]',
+      border: 'border-[#EAEAEA] dark:border-[#2B2D33]',
     },
   }[color];
 
   return (
-    <div className="group relative bg-white dark:bg-slate-900 p-4 sm:p-5 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-sm hover:border-slate-300 dark:hover:border-slate-700 hover:shadow-md transition-all duration-200">
+    <div className="bg-white dark:bg-[#16171A] p-4 sm:p-5 rounded-xl border border-[#EAEAEA] dark:border-[#26282E] hover:border-[#D4D4D4] dark:hover:border-[#383A42] transition-colors flex flex-col justify-between">
       <div className="flex items-center justify-between gap-2">
-        <span className="text-[11px] sm:text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 truncate">
+        <span className="text-[11px] font-medium tracking-wide uppercase text-[#787774] dark:text-[#A1A09E] truncate">
           {title}
         </span>
-        <div className={`p-2 sm:p-2.5 rounded-xl border ${colorStyles.bg} ${colorStyles.text} ${colorStyles.border} shrink-0`}>
-          <Icon className="w-4 h-4 sm:w-5 sm:h-5" />
+        <div className={`p-1.5 rounded-lg border ${pastelStyles.bg} ${pastelStyles.text} ${pastelStyles.border} shrink-0`}>
+          <Icon className="w-3.5 h-3.5" />
         </div>
       </div>
-      <div className="mt-2.5 sm:mt-3">
-        <div className="text-xl sm:text-2xl lg:text-3xl font-bold font-mono tabular-nums text-slate-900 dark:text-white tracking-tight">
+
+      <div className="mt-3">
+        <div className="text-2xl sm:text-3xl font-semibold font-mono tabular-nums text-[#111111] dark:text-[#ECECED] tracking-tight">
           {value}
         </div>
         {(subtitle || trend) && (
-          <div className="mt-1 flex items-center justify-between text-[11px] sm:text-xs text-slate-500 dark:text-slate-400">
+          <div className="mt-1 flex items-center justify-between text-[11px] text-[#787774] dark:text-[#A1A09E]">
             {subtitle && <span className="truncate">{subtitle}</span>}
             {trend && (
-              <span className={`font-semibold shrink-0 ${trend.isPositive ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
+              <span className={`font-mono font-medium shrink-0 ${trend.isPositive ? 'text-[#346538] dark:text-[#96D99C]' : 'text-[#9F2F2D] dark:text-[#F8A4A4]'}`}>
                 {trend.value}
               </span>
             )}

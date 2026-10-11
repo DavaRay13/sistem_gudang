@@ -130,14 +130,14 @@ export const StoreRequestList: React.FC<StoreRequestListProps> = ({ initialFilte
                     <span className="font-semibold">{req.items.length} Jenis Barang</span> ({totalRequested} unit diminta)
                   </div>
 
-                  {/* If In-Transit: Prominent Receive Button on Mobile */}
+                  {/* If In-Transit: Prominent Receive Button */}
                   {req.status === 'IN_TRANSIT' && (
                     <button
                       onClick={() => setReceivingRequest(req)}
-                      className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-500 shadow-md active:scale-95 transition-all animate-pulse"
+                      className="w-full flex items-center justify-center gap-2 py-2.5 rounded-lg text-xs font-semibold text-white dark:text-[#111111] bg-[#111111] dark:bg-white hover:opacity-90 active:scale-[0.98] transition-all"
                     >
-                      <CheckSquare className="w-4 h-4" />
-                      <span>Konfirmasi Terima Barang Sekarang</span>
+                      <CheckSquare className="w-3.5 h-3.5" />
+                      <span>Konfirmasi Terima Barang</span>
                     </button>
                   )}
                 </div>

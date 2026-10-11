@@ -53,66 +53,66 @@ export function getStatusBadgeConfig(status: TransferRequestStatus): {
     case 'PENDING':
       return {
         label: 'Menunggu Persetujuan',
-        bgClass: 'bg-amber-50 dark:bg-amber-950/40',
-        textClass: 'text-amber-700 dark:text-amber-300',
-        borderClass: 'border-amber-200 dark:border-amber-800',
-        dotClass: 'bg-amber-500',
+        bgClass: 'bg-[#FBF3DB] dark:bg-[#332A15]',
+        textClass: 'text-[#956400] dark:text-[#E8CA65]',
+        borderClass: 'border-[#F4E3B4] dark:border-[#4D3F1E]',
+        dotClass: 'bg-[#956400]',
       };
     case 'APPROVED':
       return {
         label: 'Disetujui Penuh',
-        bgClass: 'bg-indigo-50 dark:bg-indigo-950/40',
-        textClass: 'text-indigo-700 dark:text-indigo-300',
-        borderClass: 'border-indigo-200 dark:border-indigo-800',
-        dotClass: 'bg-indigo-500',
+        bgClass: 'bg-[#EDF3EC] dark:bg-[#172B19]',
+        textClass: 'text-[#346538] dark:text-[#96D99C]',
+        borderClass: 'border-[#D4E5D3] dark:border-[#223F25]',
+        dotClass: 'bg-[#346538]',
       };
     case 'PARTIAL':
       return {
         label: 'Disetujui Sebagian',
-        bgClass: 'bg-purple-50 dark:bg-purple-950/40',
-        textClass: 'text-purple-700 dark:text-purple-300',
-        borderClass: 'border-purple-200 dark:border-purple-800',
-        dotClass: 'bg-purple-500',
+        bgClass: 'bg-[#FBF3DB] dark:bg-[#332A15]',
+        textClass: 'text-[#956400] dark:text-[#E8CA65]',
+        borderClass: 'border-[#F4E3B4] dark:border-[#4D3F1E]',
+        dotClass: 'bg-[#956400]',
       };
     case 'IN_TRANSIT':
       return {
         label: 'Dalam Pengiriman',
-        bgClass: 'bg-blue-50 dark:bg-blue-950/40',
-        textClass: 'text-blue-700 dark:text-blue-300',
-        borderClass: 'border-blue-200 dark:border-blue-800',
-        dotClass: 'bg-blue-500 animate-pulse',
+        bgClass: 'bg-[#E1F3FE] dark:bg-[#142838]',
+        textClass: 'text-[#1F6C9F] dark:text-[#97D2FB]',
+        borderClass: 'border-[#C8E7FD] dark:border-[#1E3B52]',
+        dotClass: 'bg-[#1F6C9F]',
       };
     case 'COMPLETED':
       return {
-        label: 'Selesai (100% Sesuai)',
-        bgClass: 'bg-emerald-50 dark:bg-emerald-950/40',
-        textClass: 'text-emerald-700 dark:text-emerald-300',
-        borderClass: 'border-emerald-200 dark:border-emerald-800',
-        dotClass: 'bg-emerald-500',
+        label: 'Selesai (Sesuai)',
+        bgClass: 'bg-[#EDF3EC] dark:bg-[#172B19]',
+        textClass: 'text-[#346538] dark:text-[#96D99C]',
+        borderClass: 'border-[#D4E5D3] dark:border-[#223F25]',
+        dotClass: 'bg-[#346538]',
       };
     case 'DISCREPANCY':
       return {
         label: 'Ada Selisih / Kerusakan',
-        bgClass: 'bg-rose-50 dark:bg-rose-950/40',
-        textClass: 'text-rose-700 dark:text-rose-300',
-        borderClass: 'border-rose-200 dark:border-rose-800',
-        dotClass: 'bg-rose-500',
+        bgClass: 'bg-[#FDEBEC] dark:bg-[#381B1B]',
+        textClass: 'text-[#9F2F2D] dark:text-[#F8A4A4]',
+        borderClass: 'border-[#F8D2D4] dark:border-[#522525]',
+        dotClass: 'bg-[#9F2F2D]',
       };
     case 'REJECTED':
       return {
         label: 'Ditolak',
-        bgClass: 'bg-slate-100 dark:bg-slate-800',
-        textClass: 'text-slate-700 dark:text-slate-300',
-        borderClass: 'border-slate-300 dark:border-slate-700',
-        dotClass: 'bg-slate-400',
+        bgClass: 'bg-[#FDEBEC] dark:bg-[#381B1B]',
+        textClass: 'text-[#9F2F2D] dark:text-[#F8A4A4]',
+        borderClass: 'border-[#F8D2D4] dark:border-[#522525]',
+        dotClass: 'bg-[#9F2F2D]',
       };
     default:
       return {
         label: status,
-        bgClass: 'bg-slate-100 dark:bg-slate-800',
-        textClass: 'text-slate-700 dark:text-slate-300',
-        borderClass: 'border-slate-200 dark:border-slate-700',
-        dotClass: 'bg-slate-400',
+        bgClass: 'bg-[#F7F6F3] dark:bg-[#1C1E22]',
+        textClass: 'text-[#787774] dark:text-[#A1A09E]',
+        borderClass: 'border-[#EAEAEA] dark:border-[#26282E]',
+        dotClass: 'bg-[#787774]',
       };
   }
 }
@@ -124,16 +124,16 @@ export function getTransactionTypeBadge(type: TransactionType): {
 } {
   switch (type) {
     case 'PURCHASE_INBOUND':
-      return { label: 'Barang Masuk (Pemasok)', bgClass: 'bg-emerald-100 dark:bg-emerald-900/40', textClass: 'text-emerald-800 dark:text-emerald-300' };
+      return { label: 'Barang Masuk', bgClass: 'bg-[#EDF3EC] dark:bg-[#172B19]', textClass: 'text-[#346538] dark:text-[#96D99C]' };
     case 'TRANSFER_DISPATCH':
-      return { label: 'Barang Keluar (Dikirim)', bgClass: 'bg-blue-100 dark:bg-blue-900/40', textClass: 'text-blue-800 dark:text-blue-300' };
+      return { label: 'Dikirim ke Toko', bgClass: 'bg-[#E1F3FE] dark:bg-[#142838]', textClass: 'text-[#1F6C9F] dark:text-[#97D2FB]' };
     case 'TRANSFER_RECEIVE':
-      return { label: 'Barang Masuk (Diterima Toko)', bgClass: 'bg-indigo-100 dark:bg-indigo-900/40', textClass: 'text-indigo-800 dark:text-indigo-300' };
+      return { label: 'Diterima Toko', bgClass: 'bg-[#EDF3EC] dark:bg-[#172B19]', textClass: 'text-[#346538] dark:text-[#96D99C]' };
     case 'DAMAGE_LOSS':
-      return { label: 'Barang Rusak / Hilang', bgClass: 'bg-rose-100 dark:bg-rose-900/40', textClass: 'text-rose-800 dark:text-rose-300' };
+      return { label: 'Rusak / Hilang', bgClass: 'bg-[#FDEBEC] dark:bg-[#381B1B]', textClass: 'text-[#9F2F2D] dark:text-[#F8A4A4]' };
     case 'MANUAL_ADJUSTMENT':
-      return { label: 'Koreksi Stok Manual', bgClass: 'bg-amber-100 dark:bg-amber-900/40', textClass: 'text-amber-800 dark:text-amber-300' };
+      return { label: 'Penyesuaian', bgClass: 'bg-[#FBF3DB] dark:bg-[#332A15]', textClass: 'text-[#956400] dark:text-[#E8CA65]' };
     default:
-      return { label: type, bgClass: 'bg-slate-100 dark:bg-slate-800', textClass: 'text-slate-800 dark:text-slate-200' };
+      return { label: type, bgClass: 'bg-[#F7F6F3] dark:bg-[#1C1E22]', textClass: 'text-[#787774] dark:text-[#A1A09E]' };
   }
 }

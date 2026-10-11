@@ -82,12 +82,24 @@ export const RequestApprovalQueue: React.FC = () => {
       if (modalType === 'PARTIAL') {
         const approvedItems = activeRequest.items.map(item => {
           const raw = partialQtys[item.item_id];
-          const qtyApproved = raw === '' || raw === undefined ? item.qty_requested : Number(raw);
+          const available = getWarehouseStock(item.item_id);
+          const defaultVal = Math.min(item.qty_requested, Math.max(0, available));
+          const qtyApproved = raw === '' || raw === undefined ? defaultVal : Math.max(0, Number(raw) || 0);
           return {
             itemId: item.item_id,
             qtyApproved,
           };
         });
+
+        // Validasi ketersediaan stok fisik gudang
+        for (const ai of approvedItems) {
+          const stock = getWarehouseStock(ai.itemId);
+          const master = itemMap.get(ai.itemId);
+          if (ai.qtyApproved > stock) {
+            alert(`Kuantiti disetujui untuk "${master?.name || 'Barang'}" (${ai.qtyApproved} unit) melebihi stok fisik di Gudang Pusat (${stock} unit).\n\nSilakan sesuaikan jumlah atau lakukan Tambah Stok (Inbound) terlebih dahulu.`);
+            return;
+          }
+        }
 
         await authorizeRequest(activeRequest.id, currentUser.id, 'APPROVE_PARTIAL', {
           approvedItems,
@@ -261,11 +273,11 @@ export const RequestApprovalQueue: React.FC = () => {
                   )}
                 </div>
 
-                {/* Mobile Full-width Action Buttons */}
-                <div className="p-3 bg-slate-50/50 dark:bg-slate-800/20 border-t border-slate-100 dark:border-slate-800 grid grid-cols-3 gap-2">
+                {/* Minimalist Action Buttons */}
+                <div className="p-3 bg-[#FBFBFA] dark:bg-[#191A1E] border-t border-[#EAEAEA] dark:border-[#26282E] grid grid-cols-3 gap-2">
                   <button
                     onClick={() => openRejectModal(req)}
-                    className="flex items-center justify-center gap-1 py-2.5 rounded-xl text-xs font-bold text-rose-700 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/40 hover:bg-rose-100 border border-rose-200 dark:border-rose-900 active:scale-95 transition-transform"
+                    className="flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-medium text-[#9F2F2D] dark:text-[#F8A4A4] bg-[#FDEBEC] dark:bg-[#381B1B] hover:opacity-90 border border-[#F8D2D4] dark:border-[#522525] active:scale-[0.98] transition-all"
                   >
                     <XCircle className="w-3.5 h-3.5" />
                     <span>Tolak</span>
@@ -273,7 +285,7 @@ export const RequestApprovalQueue: React.FC = () => {
 
                   <button
                     onClick={() => openPartialModal(req)}
-                    className="flex items-center justify-center gap-1 py-2.5 rounded-xl text-xs font-bold text-purple-700 dark:text-purple-400 bg-purple-50 dark:bg-purple-950/40 hover:bg-purple-100 border border-purple-200 dark:border-purple-900 active:scale-95 transition-transform"
+                    className="flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-medium text-[#956400] dark:text-[#E8CA65] bg-[#FBF3DB] dark:bg-[#332A15] hover:opacity-90 border border-[#F4E3B4] dark:border-[#4D3F1E] active:scale-[0.98] transition-all"
                   >
                     <AlertTriangle className="w-3.5 h-3.5" />
                     <span>Sebagian</span>
@@ -281,7 +293,7 @@ export const RequestApprovalQueue: React.FC = () => {
 
                   <button
                     onClick={() => handleApproveFull(req)}
-                    className="flex items-center justify-center gap-1 py-2.5 rounded-xl text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-500 shadow-sm active:scale-95 transition-transform"
+                    className="flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-semibold text-white dark:text-[#111111] bg-[#111111] dark:bg-white hover:opacity-90 active:scale-[0.98] transition-all"
                   >
                     <CheckCircle2 className="w-3.5 h-3.5" />
                     <span>Setujui</span>
@@ -315,30 +327,45 @@ export const RequestApprovalQueue: React.FC = () => {
                 {activeRequest.items.map(item => {
                   const masterItem = itemMap.get(item.item_id);
                   const available = getWarehouseStock(item.item_id);
-                  const currentApproved = partialQtys[item.item_id] ?? Math.min(item.qty_requested, available);
+                  const currentApproved = partialQtys[item.item_id] !== undefined
+                    ? partialQtys[item.item_id]
+                    : Math.min(item.qty_requested, Math.max(0, available));
+                  const numApproved = Number(currentApproved) || 0;
+                  const isZeroStock = available <= 0;
+                  const isOverStock = numApproved > available;
 
                   return (
-                    <div key={item.id} className="p-3 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 space-y-2">
-                      <div className="flex justify-between items-start">
-                        <span className="font-bold text-xs text-slate-900 dark:text-white">
-                          {masterItem?.name}
-                        </span>
-                        <span className="text-[10px] text-slate-400">
-                          Minta: {item.qty_requested} | Gudang: {available}
-                        </span>
+                    <div key={item.id} className="p-3.5 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 space-y-2.5">
+                      <div className="flex justify-between items-start gap-2">
+                        <div>
+                          <span className="font-bold text-xs text-slate-900 dark:text-white block">
+                            {masterItem?.name}
+                          </span>
+                          <span className="text-[10px] font-mono font-semibold text-slate-500 dark:text-slate-400">
+                            SKU: {masterItem?.sku || '-'}
+                          </span>
+                        </div>
+                        <div className="text-right shrink-0">
+                          <span className="text-[11px] font-medium text-slate-500 block">
+                            Diminta Toko: <strong className="font-bold text-slate-800 dark:text-slate-200">{item.qty_requested}</strong>
+                          </span>
+                          <span className={`text-[11px] font-bold ${isZeroStock ? 'text-rose-600 dark:text-rose-400' : 'text-emerald-600 dark:text-emerald-400'}`}>
+                            Stok Gudang: {available} unit
+                          </span>
+                        </div>
                       </div>
 
                       {/* Touch Stepper [-] [qty] [+] */}
                       <div className="flex items-center justify-between pt-1">
-                        <span className="text-xs font-semibold text-slate-500">Kuantiti Disetujui:</span>
+                        <span className="text-xs font-semibold text-slate-600 dark:text-slate-300">Kuantiti Disetujui:</span>
                         <div className="flex items-center gap-2">
                           <button
                             type="button"
                             onClick={() => setPartialQtys({
                               ...partialQtys,
-                              [item.item_id]: Math.max(0, (Number(currentApproved) || 0) - 1),
+                              [item.item_id]: Math.max(0, numApproved - 1),
                             })}
-                            className="p-1.5 rounded-lg bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 active:scale-90"
+                            className="p-1.5 rounded-lg bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-300 dark:hover:bg-slate-600 active:scale-90 transition-all"
                           >
                             <Minus className="w-4 h-4" />
                           </button>
@@ -346,7 +373,7 @@ export const RequestApprovalQueue: React.FC = () => {
                           <input
                             type="number"
                             min="0"
-                            max={available}
+                            max={item.qty_requested}
                             value={currentApproved}
                             onChange={e => {
                               const raw = e.target.value;
@@ -357,10 +384,12 @@ export const RequestApprovalQueue: React.FC = () => {
                                 });
                                 return;
                               }
-                              const val = parseInt(raw) || 0;
+                              const val = parseInt(raw);
+                              if (isNaN(val)) return;
+                              // Izinkan user mengetik angka sampai batas permintaan toko
                               setPartialQtys({
                                 ...partialQtys,
-                                [item.item_id]: Math.min(Math.max(0, val), available),
+                                [item.item_id]: Math.min(Math.max(0, val), item.qty_requested),
                               });
                             }}
                             onBlur={() => {
@@ -371,21 +400,46 @@ export const RequestApprovalQueue: React.FC = () => {
                                 });
                               }
                             }}
-                            className="w-16 py-1 text-center font-black text-sm rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-white"
+                            className={`w-20 py-1.5 text-center font-black text-sm rounded-lg border ${
+                              isOverStock 
+                                ? 'border-rose-400 dark:border-rose-600 bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300' 
+                                : 'border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-white'
+                            } focus:ring-2 focus:ring-brand-500 focus:outline-none`}
                           />
 
                           <button
                             type="button"
-                            onClick={() => setPartialQtys({
-                              ...partialQtys,
-                              [item.item_id]: Math.min(available, (Number(currentApproved) || 0) + 1),
-                            })}
-                            className="p-1.5 rounded-lg bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 active:scale-90"
+                            onClick={() => {
+                              const nextVal = numApproved + 1;
+                              if (nextVal <= item.qty_requested) {
+                                setPartialQtys({
+                                  ...partialQtys,
+                                  [item.item_id]: nextVal,
+                                });
+                              }
+                            }}
+                            className="p-1.5 rounded-lg bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-300 dark:hover:bg-slate-600 active:scale-90 transition-all"
                           >
                             <Plus className="w-4 h-4" />
                           </button>
                         </div>
                       </div>
+
+                      {/* Notifikasi Ketersediaan Stok */}
+                      {isZeroStock && (
+                        <div className="flex items-start gap-1.5 p-2.5 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 text-[11px] text-rose-700 dark:text-rose-300">
+                          <AlertTriangle className="w-3.5 h-3.5 shrink-0 mt-0.5 text-rose-600 dark:text-rose-400" />
+                          <span>
+                            Stok Gudang Pusat masih <strong>0 (Kosong)</strong>. Harap lakukan <strong>Stok Masuk (Inbound)</strong> terlebih dahulu di menu <em>Daftar Barang</em> sebelum menyetujui pengiriman.
+                          </span>
+                        </div>
+                      )}
+                      {!isZeroStock && isOverStock && (
+                        <div className="flex items-center gap-1.5 text-[11px] text-amber-600 dark:text-amber-400 font-medium">
+                          <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                          <span>Melebihi stok gudang (Tersedia: {available} unit). Maksimal disetujui {available}.</span>
+                        </div>
+                      )}
                     </div>
                   );
                 })}

@@ -138,10 +138,10 @@ export const DispatchManagement: React.FC = () => {
                   {/* Dispatch Action */}
                   <button
                     onClick={() => handleDispatch(req)}
-                    className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-xs font-bold text-white bg-brand-600 hover:bg-brand-500 shadow-md active:scale-95 transition-all"
+                    className="w-full flex items-center justify-center gap-2 py-2.5 rounded-lg text-xs font-semibold text-white dark:text-[#111111] bg-[#111111] dark:bg-white hover:opacity-90 active:scale-[0.98] transition-all"
                   >
-                    <Send className="w-4 h-4" />
-                    <span>Kirim Barang & Buat Surat Jalan</span>
+                    <Send className="w-3.5 h-3.5" />
+                    <span>Kirim Barang & Terbitkan DO</span>
                   </button>
                 </div>
               );

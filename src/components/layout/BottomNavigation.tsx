@@ -40,26 +40,26 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({
     },
     {
       id: 'warehouse_master_items' as NavigationTab,
-      label: 'Stok',
+      label: 'Barang',
       icon: Package,
     },
     {
       id: 'warehouse_approval_queue' as NavigationTab,
-      label: 'Persetujuan',
+      label: 'Otorisasi',
       icon: ClipboardList,
       badge: pendingRequestsCount > 0 ? pendingRequestsCount : undefined,
-      badgeColor: 'bg-amber-500 text-white',
+      badgeColor: 'bg-[#FBF3DB] text-[#956400] dark:bg-[#332A15] dark:text-[#E8CA65]',
     },
     {
       id: 'warehouse_dispatch' as NavigationTab,
       label: 'Kirim',
       icon: Send,
       badge: approvedForDispatchCount > 0 ? approvedForDispatchCount : undefined,
-      badgeColor: 'bg-indigo-500 text-white',
+      badgeColor: 'bg-[#E1F3FE] text-[#1F6C9F] dark:bg-[#142838] dark:text-[#97D2FB]',
     },
     {
       id: 'warehouse_mutation_ledger' as NavigationTab,
-      label: 'Riwayat',
+      label: 'Ledger',
       icon: BookOpen,
     },
   ];
@@ -70,7 +70,7 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({
       label: 'Beranda',
       icon: LayoutDashboard,
       badge: lowStockCount > 0 ? lowStockCount : undefined,
-      badgeColor: 'bg-rose-500 text-white',
+      badgeColor: 'bg-[#FDEBEC] text-[#9F2F2D] dark:bg-[#381B1B] dark:text-[#F8A4A4]',
     },
     {
       id: 'store_create_request' as NavigationTab,
@@ -87,7 +87,7 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({
       label: 'Terima',
       icon: CheckSquare,
       badge: inTransitCount > 0 ? inTransitCount : undefined,
-      badgeColor: 'bg-emerald-500 text-white animate-pulse',
+      badgeColor: 'bg-[#E1F3FE] text-[#1F6C9F] dark:bg-[#142838] dark:text-[#97D2FB]',
     },
   ];
 
@@ -95,7 +95,7 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({
 
   return (
     <div className="lg:hidden fixed bottom-3 left-3 right-3 z-40 max-w-md mx-auto pointer-events-none">
-      <nav className="pointer-events-auto bg-slate-900/90 dark:bg-[#0c1220]/95 backdrop-blur-2xl border border-slate-700/60 dark:border-slate-800 rounded-3xl px-3 py-2 shadow-2xl shadow-black/60 flex items-center justify-around transition-all">
+      <nav className="pointer-events-auto bg-white/95 dark:bg-[#16171A]/95 backdrop-blur-md border border-[#EAEAEA] dark:border-[#26282E] rounded-2xl px-2 py-1.5 shadow-sm flex items-center justify-around transition-all">
         {tabs.map(tab => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.id;
@@ -104,31 +104,22 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({
             <button
               key={tab.id}
               onClick={() => onSelectTab(tab.id)}
-              className={`relative flex flex-col items-center justify-center py-1.5 px-3 rounded-2xl transition-all duration-200 active:scale-90 ${
+              className={`relative flex flex-col items-center justify-center py-1 px-2.5 rounded-xl transition-colors active:scale-95 ${
                 isActive
-                  ? isWarehouseAdmin
-                    ? 'text-indigo-400 font-bold'
-                    : 'text-emerald-400 font-bold'
-                  : 'text-slate-400 hover:text-slate-200 font-medium'
+                  ? 'text-[#111111] dark:text-white font-semibold'
+                  : 'text-[#787774] dark:text-[#A1A09E] hover:text-[#111111]'
               }`}
             >
-              {/* Active Glow Pill on Top */}
-              {isActive && (
-                <span className={`absolute -top-1.5 w-6 h-1 rounded-full ${
-                  isWarehouseAdmin ? 'bg-indigo-400 shadow-[0_0_8px_#818cf8]' : 'bg-emerald-400 shadow-[0_0_8px_#34d399]'
-                }`} />
-              )}
-
-              <div className="relative mt-0.5">
-                <Icon className={`w-5 h-5 transition-transform duration-200 ${isActive ? 'scale-110' : ''}`} />
+              <div className="relative">
+                <Icon className="w-4 h-4" />
                 {tab.badge !== undefined && (
-                  <span className={`absolute -top-1.5 -right-2.5 min-w-[18px] h-[18px] px-1 rounded-full text-[9px] font-black flex items-center justify-center ring-2 ring-slate-900 ${tab.badgeColor}`}>
+                  <span className={`absolute -top-1.5 -right-2 px-1 rounded-full text-[9px] font-mono font-medium border border-white dark:border-[#16171A] ${tab.badgeColor}`}>
                     {tab.badge}
                   </span>
                 )}
               </div>
               
-              <span className="text-[10px] mt-1 tracking-tight truncate max-w-[64px]">
+              <span className="text-[10px] mt-0.5 tracking-tight truncate max-w-[60px]">
                 {tab.label}
               </span>
             </button>

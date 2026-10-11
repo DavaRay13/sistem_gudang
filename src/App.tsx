@@ -58,7 +58,7 @@ export const App: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col font-sans transition-colors duration-200">
+    <div className="min-h-screen bg-[#FBFBFA] dark:bg-[#0F1012] text-[#111111] dark:text-[#ECECED] flex flex-col font-sans transition-colors duration-200">
       {/* Top App Bar */}
       <Navbar onToggleMobileMenu={() => setMobileSidebarOpen(prev => !prev)} />
 
