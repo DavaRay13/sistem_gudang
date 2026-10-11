@@ -143,6 +143,37 @@ export class StorageRepository {
     return newItem;
   }
 
+  static updateItem(itemId: number, itemData: Partial<Omit<Item, 'id' | 'created_at'>>): Item {
+    const items = this.getItems();
+    const idx = items.findIndex(i => i.id === itemId);
+    if (idx === -1) {
+      throw new Error('Barang tidak ditemukan!');
+    }
+
+    if (itemData.sku) {
+      const incomingSku = itemData.sku.trim().toLowerCase();
+      const duplicate = items.find(i => i.id !== itemId && (i.sku || '').trim().toLowerCase() === incomingSku);
+      if (duplicate) {
+        throw new Error(`SKU "${itemData.sku}" sudah terdaftar untuk barang lain!`);
+      }
+    }
+
+    const updatedItem: Item = {
+      ...items[idx],
+      ...itemData,
+      sku: itemData.sku !== undefined ? itemData.sku.trim().toUpperCase() : items[idx].sku,
+      name: itemData.name !== undefined ? itemData.name.trim() : items[idx].name,
+      category: itemData.category !== undefined ? itemData.category.trim() : items[idx].category,
+      unit: itemData.unit !== undefined ? itemData.unit.trim().toUpperCase() : items[idx].unit,
+      price: itemData.price !== undefined ? Math.max(0, Number(itemData.price) || 0) : items[idx].price,
+      safety_stock: itemData.safety_stock !== undefined ? Math.max(0, Math.floor(Number(itemData.safety_stock) || 0)) : items[idx].safety_stock,
+    };
+
+    items[idx] = updatedItem;
+    setStorage(STORAGE_KEYS.ITEMS, items);
+    return updatedItem;
+  }
+
   static deleteItem(itemId: number): void {
     const items = this.getItems().filter(i => i.id !== itemId);
     setStorage(STORAGE_KEYS.ITEMS, items);

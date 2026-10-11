@@ -203,6 +203,56 @@ export class SupabaseService {
     return StorageRepository.saveItem(itemData);
   }
 
+  static async updateItem(itemId: number, itemData: Partial<Omit<Item, 'id' | 'created_at'>>): Promise<Item> {
+    if (isSupabaseConfigured && supabase) {
+      try {
+        const updatePayload: Record<string, any> = {};
+        if (itemData.sku !== undefined) updatePayload.sku = itemData.sku.trim().toUpperCase();
+        if (itemData.name !== undefined) updatePayload.name = itemData.name.trim();
+        if (itemData.category !== undefined) updatePayload.category = itemData.category.trim();
+        if (itemData.unit !== undefined) updatePayload.unit = itemData.unit.trim().toUpperCase();
+        if (itemData.price !== undefined) {
+          const p = Number(itemData.price);
+          updatePayload.price = Number.isFinite(p) ? Math.max(0, p) : 0;
+        }
+        if (itemData.safety_stock !== undefined) {
+          const s = Number(itemData.safety_stock);
+          updatePayload.safety_stock = Number.isFinite(s) ? Math.max(0, Math.floor(s)) : 0;
+        }
+
+        const { data, error } = await supabase
+          .from('items')
+          .update(updatePayload)
+          .eq('id', itemId)
+          .select()
+          .single();
+
+        if (error) {
+          if (error.code === '23505') {
+            throw new Error(`SKU "${itemData.sku}" sudah terdaftar untuk barang lain! Gunakan SKU yang berbeda.`);
+          }
+          throw error;
+        }
+
+        const updatedItem = data as Item;
+        try {
+          StorageRepository.updateItem(itemId, itemData);
+        } catch {
+          // ignore
+        }
+        return updatedItem;
+      } catch (err: any) {
+        console.warn('Supabase updateItem error:', err.message);
+        if (err.message?.includes('Failed to fetch') || err.name === 'TypeError') {
+          console.warn('Supabase network unreachable, falling back to Local Storage');
+          return StorageRepository.updateItem(itemId, itemData);
+        }
+        throw err;
+      }
+    }
+    return StorageRepository.updateItem(itemId, itemData);
+  }
+
   static async deleteItem(itemId: number): Promise<void> {
     if (isSupabaseConfigured && supabase) {
       try {

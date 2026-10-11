@@ -5,13 +5,14 @@ import { Modal } from '../common/Modal';
 import { InboundStockModal } from './InboundStockModal';
 import { 
   Package, Plus, ArrowDownRight, Search, 
-  ShieldAlert, Boxes, Download, Trash2
+  ShieldAlert, Boxes, Download, Trash2, Pencil
 } from 'lucide-react';
+import { Item } from '../../types';
 import { formatNumber, formatRupiah } from '../../utils/formatters';
 import { exportMasterItemsToExcel } from '../../utils/exportHelpers';
 
 export const MasterItemManagement: React.FC = () => {
-  const { items, inventories, addNewItem, deleteItem } = useInventory();
+  const { items, inventories, addNewItem, updateItem, deleteItem } = useInventory();
   const { locations, currentUser } = useAuth();
 
   const [searchTerm, setSearchTerm] = useState('');
@@ -24,6 +25,59 @@ export const MasterItemManagement: React.FC = () => {
   const [selectedInboundItemId, setSelectedInboundItemId] = useState<number | undefined>(undefined);
   const [itemToDelete, setItemToDelete] = useState<any>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+
+  // Edit item state
+  const [itemToEdit, setItemToEdit] = useState<Item | null>(null);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editFormData, setEditFormData] = useState<{
+    sku: string;
+    name: string;
+    category: string;
+    unit: string;
+    price: number | string;
+    safety_stock: number | string;
+  }>({
+    sku: '',
+    name: '',
+    category: 'Elektronik',
+    unit: 'PCS',
+    price: 50000,
+    safety_stock: 10,
+  });
+
+  const openEditModal = (item: Item) => {
+    setItemToEdit(item);
+    setEditFormData({
+      sku: item.sku,
+      name: item.name,
+      category: item.category,
+      unit: item.unit,
+      price: item.price,
+      safety_stock: item.safety_stock,
+    });
+  };
+
+  const handleUpdateItem = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!itemToEdit || !editFormData.sku || !editFormData.name || isEditing) return;
+
+    setIsEditing(true);
+    try {
+      await updateItem(itemToEdit.id, {
+        sku: editFormData.sku.trim().toUpperCase(),
+        name: editFormData.name.trim(),
+        category: editFormData.category.trim(),
+        unit: editFormData.unit.trim().toUpperCase(),
+        price: Number(editFormData.price) || 0,
+        safety_stock: Number(editFormData.safety_stock) || 0,
+      });
+      setItemToEdit(null);
+    } catch {
+      // Handled by toast
+    } finally {
+      setIsEditing(false);
+    }
+  };
 
   // Helper to get inventory
   const getInv = (locationId: number, itemId: number) => {
@@ -348,6 +402,14 @@ export const MasterItemManagement: React.FC = () => {
                       </button>
 
                       <button
+                        onClick={() => openEditModal(item)}
+                        className="p-1.5 rounded-xl text-xs font-medium text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-200 dark:hover:bg-slate-700 active:scale-95 transition-all"
+                        title="Edit Data Barang"
+                      >
+                        <Pencil className="w-3.5 h-3.5" />
+                      </button>
+
+                      <button
                         onClick={() => setItemToDelete(item)}
                         className="p-1.5 rounded-xl text-xs font-medium text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-900/60 hover:bg-rose-100 dark:hover:bg-rose-900/60 active:scale-95 transition-all"
                         title="Hapus Barang / SKU"
@@ -542,6 +604,141 @@ export const MasterItemManagement: React.FC = () => {
               className="w-full sm:w-auto px-5 py-3 rounded-xl text-xs font-bold text-white bg-brand-600 hover:bg-brand-500 shadow-md active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
             >
               {isSubmitting ? 'Menyimpan...' : 'Simpan Data Barang'}
+            </button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* Modal Edit Item */}
+      <Modal
+        isOpen={Boolean(itemToEdit)}
+        onClose={() => setItemToEdit(null)}
+        title="Edit Data Barang"
+        subtitle={`Perbarui informasi data barang: ${itemToEdit?.name || ''}`}
+        maxWidth="md"
+      >
+        <form onSubmit={handleUpdateItem} className="space-y-4">
+          <div>
+            <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">
+              Kode Barang / Barcode
+            </label>
+            <input
+              type="text"
+              required
+              placeholder="Contoh: BRG-ELK-001"
+              value={editFormData.sku}
+              onChange={e => setEditFormData({ ...editFormData, sku: e.target.value })}
+              className="w-full px-3.5 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs font-mono font-bold uppercase focus:ring-2 focus:ring-brand-500 focus:outline-none"
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">
+              Nama Barang / Produk
+            </label>
+            <input
+              type="text"
+              required
+              placeholder="Contoh: Wireless Barcode Scanner 2D"
+              value={editFormData.name}
+              onChange={e => setEditFormData({ ...editFormData, name: e.target.value })}
+              className="w-full px-3.5 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs font-medium focus:ring-2 focus:ring-brand-500 focus:outline-none"
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">
+                Kategori
+              </label>
+              <input
+                type="text"
+                required
+                placeholder="Elektronik"
+                value={editFormData.category}
+                onChange={e => setEditFormData({ ...editFormData, category: e.target.value })}
+                className="w-full px-3.5 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs font-medium focus:ring-2 focus:ring-brand-500 focus:outline-none"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">
+                Satuan (Contoh: PCS, BOX)
+              </label>
+              <input
+                type="text"
+                required
+                placeholder="PCS / BOX"
+                value={editFormData.unit}
+                onChange={e => setEditFormData({ ...editFormData, unit: e.target.value })}
+                className="w-full px-3.5 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs font-bold uppercase focus:ring-2 focus:ring-brand-500 focus:outline-none"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">
+                Harga Satuan (Rp)
+              </label>
+              <input
+                type="number"
+                min="0"
+                step="500"
+                required
+                placeholder="50000"
+                value={editFormData.price}
+                onChange={e => {
+                  const val = e.target.value;
+                  setEditFormData({ ...editFormData, price: val === '' ? '' : Math.max(0, parseInt(val) || 0) });
+                }}
+                onBlur={() => {
+                  if (editFormData.price === '') {
+                    setEditFormData(prev => ({ ...prev, price: 0 }));
+                  }
+                }}
+                className="w-full px-3.5 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs font-bold focus:ring-2 focus:ring-brand-500 focus:outline-none"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">
+                Batas Minimum Stok Aman
+              </label>
+              <input
+                type="number"
+                min="0"
+                required
+                placeholder="10"
+                value={editFormData.safety_stock}
+                onChange={e => {
+                  const val = e.target.value;
+                  setEditFormData({ ...editFormData, safety_stock: val === '' ? '' : Math.max(0, parseInt(val) || 0) });
+                }}
+                onBlur={() => {
+                  if (editFormData.safety_stock === '') {
+                    setEditFormData(prev => ({ ...prev, safety_stock: 0 }));
+                  }
+                }}
+                className="w-full px-3.5 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs font-bold focus:ring-2 focus:ring-brand-500 focus:outline-none"
+              />
+            </div>
+          </div>
+
+          <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
+            <button
+              type="button"
+              onClick={() => setItemToEdit(null)}
+              className="px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all"
+            >
+              Batal
+            </button>
+            <button
+              type="submit"
+              disabled={isEditing}
+              className="w-full sm:w-auto px-5 py-3 rounded-xl text-xs font-bold text-white bg-brand-600 hover:bg-brand-500 shadow-md active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+            >
+              {isEditing ? 'Menyimpan...' : 'Simpan Perubahan'}
             </button>
           </div>
         </form>

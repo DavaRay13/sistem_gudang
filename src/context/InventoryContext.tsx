@@ -25,6 +25,7 @@ interface InventoryContextType {
   
   // Actions
   addNewItem: (data: Omit<Item, 'id' | 'created_at'>) => Promise<Item>;
+  updateItem: (itemId: number, data: Partial<Omit<Item, 'id' | 'created_at'>>) => Promise<Item>;
   deleteItem: (itemId: number) => Promise<void>;
   inboundStock: (itemId: number, qty: number, notes: string, userId: string, supplierName?: string) => Promise<void>;
   createRequest: (toLocationId: number, requestedByUserId: string, itemsData: Array<{ itemId: number; qtyRequested: number }>, notes?: string) => Promise<TransferRequest>;
@@ -149,6 +150,18 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     }
   };
 
+  const updateItem = async (itemId: number, data: Partial<Omit<Item, 'id' | 'created_at'>>): Promise<Item> => {
+    try {
+      const updated = await SupabaseService.updateItem(itemId, data);
+      await refreshData();
+      showToast('success', 'Data Barang Diperbarui', `[${updated.sku}] ${updated.name} berhasil disimpan.`);
+      return updated;
+    } catch (err: any) {
+      showToast('error', 'Gagal Memperbarui Barang', err.message);
+      throw err;
+    }
+  };
+
   const deleteItem = async (itemId: number): Promise<void> => {
     try {
       await SupabaseService.deleteItem(itemId);
@@ -269,6 +282,7 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         showToast,
         removeToast,
         addNewItem,
+        updateItem,
         deleteItem,
         inboundStock,
         createRequest,
