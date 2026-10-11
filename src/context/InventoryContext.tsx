@@ -19,6 +19,7 @@ interface InventoryContextType {
   notifications: Notification[];
   toasts: ToastMessage[];
   isLoading: boolean;
+  isOfflineMode: boolean;
   refreshData: () => Promise<void>;
   showToast: (type: ToastMessage['type'], title: string, message?: string) => void;
   removeToast: (id: string) => void;
@@ -47,6 +48,7 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isOfflineMode, setIsOfflineMode] = useState<boolean>(!isSupabaseConfigured);
 
   const refreshData = useCallback(async () => {
     try {
@@ -62,8 +64,10 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       setRequests(reqs);
       setMutations(muts);
       setNotifications(StorageRepository.getNotifications());
+      setIsOfflineMode(!isSupabaseConfigured);
     } catch (err) {
       console.warn('Fallback to local storage data:', err);
+      setIsOfflineMode(true);
       setItems(StorageRepository.getItems());
       setInventories(StorageRepository.getInventories());
       setRequests(StorageRepository.getRequests());
@@ -176,6 +180,13 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const inboundStock = async (itemId: number, qty: number, notes: string, userId: string, supplierName?: string): Promise<void> => {
     try {
       await SupabaseService.inboundStock(itemId, qty, notes, userId, supplierName);
+      const targetItem = items.find(i => i.id === itemId);
+      StorageRepository.addNotification({
+        title: 'Inbound Stok Berhasil',
+        message: `Stok masuk sebanyak ${qty} ${targetItem?.unit || 'unit'} untuk SKU ${targetItem?.sku || itemId}.`,
+        type: 'info',
+        targetRole: 'ADMIN_GUDANG',
+      });
       await refreshData();
       showToast('success', 'Stock Inbound Berhasil', `Berhasil menambah ${qty} unit ke Gudang Pusat.`);
     } catch (err: any) {
@@ -192,6 +203,12 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   ): Promise<TransferRequest> => {
     try {
       const newReq = await SupabaseService.createTransferRequest(toLocationId, requestedByUserId, itemsData, notes);
+      StorageRepository.addNotification({
+        title: 'Permintaan Transfer Baru',
+        message: `Dokumen ${newReq.request_number} dibuat (${itemsData.length} jenis barang). Menunggu persetujuan admin.`,
+        type: 'info',
+        targetRole: 'ADMIN_GUDANG',
+      });
       await refreshData();
       showToast('success', 'Transfer Request Terkirim', `Dokumen ${newReq.request_number} berhasil diajukan.`);
       return newReq;
@@ -209,6 +226,14 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   ): Promise<void> => {
     try {
       await SupabaseService.authorizeTransferRequest(requestId, adminUserId, decision, options);
+      const req = requests.find(r => r.id === requestId);
+      StorageRepository.addNotification({
+        title: decision === 'REJECT' ? 'Permintaan Ditolak' : 'Permintaan Disetujui',
+        message: `Dokumen ${req?.request_number || '#' + requestId} telah ${decision === 'REJECT' ? 'ditolak' : 'disetujui'} oleh Admin Gudang.`,
+        type: decision === 'REJECT' ? 'warning' : 'success',
+        targetRole: 'ORANG_TOKO',
+        targetLocationId: req?.to_location_id,
+      });
       await refreshData();
       if (decision === 'REJECT') {
         showToast('warning', 'Request Ditolak', `Permintaan #${requestId} telah ditolak.`);
@@ -224,6 +249,14 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const dispatchRequest = async (requestId: number, adminUserId: string): Promise<void> => {
     try {
       await SupabaseService.dispatchTransferRequest(requestId, adminUserId);
+      const req = requests.find(r => r.id === requestId);
+      StorageRepository.addNotification({
+        title: 'Pesanan Telah Dikirim (Dispatch)',
+        message: `Surat Jalan ${req?.request_number || '#' + requestId} dalam perjalanan menuju toko.`,
+        type: 'info',
+        targetRole: 'ORANG_TOKO',
+        targetLocationId: req?.to_location_id,
+      });
       await refreshData();
       showToast('success', 'Barang Telah Di-Dispatch', `Surat Jalan (DO) diterbitkan.`);
     } catch (err: any) {
@@ -239,6 +272,13 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   ): Promise<void> => {
     try {
       await SupabaseService.receiveTransferRequest(requestId, storeUserId, receivedItems);
+      const req = requests.find(r => r.id === requestId);
+      StorageRepository.addNotification({
+        title: 'Penerimaan Selesai',
+        message: `Toko telah mengonfirmasi penerimaan barang untuk ${req?.request_number || '#' + requestId}.`,
+        type: 'success',
+        targetRole: 'ADMIN_GUDANG',
+      });
       await refreshData();
       showToast('success', 'Serah Terima Selesai', `Stok toko berhasil diperbarui.`);
     } catch (err: any) {
@@ -278,6 +318,7 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         notifications,
         toasts,
         isLoading,
+        isOfflineMode,
         refreshData,
         showToast,
         removeToast,

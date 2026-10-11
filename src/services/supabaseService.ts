@@ -12,6 +12,19 @@ function resolveUuid(userId?: string, fallback = DEFAULT_ADMIN_UUID): string {
   return fallback;
 }
 
+function isNetworkOrConnectionError(err: any): boolean {
+  if (!err) return false;
+  const msg = (err.message || '').toLowerCase();
+  const name = err.name || '';
+  return (
+    name === 'TypeError' ||
+    msg.includes('failed to fetch') ||
+    msg.includes('networkerror') ||
+    msg.includes('connection refused') ||
+    msg.includes('timeout')
+  );
+}
+
 export class SupabaseService {
   // --- AUTHENTICATION ---
   static async authenticateUser(username: string, password?: string): Promise<{ success: boolean; user?: User; location?: Location; message?: string }> {
@@ -86,9 +99,14 @@ export class SupabaseService {
         });
 
         if (error) throw error;
-        if (data && !data.success) throw new Error(data.message);
+        if (data && !data.success) throw new Error(data.message || 'Gagal membuat user');
       } catch (err: any) {
-        console.warn('Supabase createUser fallback to local:', err.message);
+        console.warn('Supabase createUser error:', err.message);
+        if (isNetworkOrConnectionError(err)) {
+          console.warn('Network unreachable, falling back to local user store');
+          return StorageRepository.saveUser(userData);
+        }
+        throw err;
       }
     }
 
@@ -113,9 +131,14 @@ export class SupabaseService {
         });
 
         if (error) throw error;
-        if (data && !data.success) throw new Error(data.message);
+        if (data && !data.success) throw new Error(data.message || 'Gagal memperbarui user');
       } catch (err: any) {
-        console.warn('Supabase manageUser fallback to local:', err.message);
+        console.warn('Supabase manageUser error:', err.message);
+        if (isNetworkOrConnectionError(err)) {
+          console.warn('Network unreachable, falling back to local user store');
+          return StorageRepository.updateUser(targetUserId, updateData);
+        }
+        throw err;
       }
     }
 
@@ -193,7 +216,7 @@ export class SupabaseService {
         return createdItem;
       } catch (err: any) {
         console.warn('Supabase createItem error:', err.message);
-        if (err.message?.includes('Failed to fetch') || err.name === 'TypeError') {
+        if (isNetworkOrConnectionError(err)) {
           console.warn('Supabase network unreachable, falling back to Local Storage');
           return StorageRepository.saveItem(itemData);
         }
@@ -243,7 +266,7 @@ export class SupabaseService {
         return updatedItem;
       } catch (err: any) {
         console.warn('Supabase updateItem error:', err.message);
-        if (err.message?.includes('Failed to fetch') || err.name === 'TypeError') {
+        if (isNetworkOrConnectionError(err)) {
           console.warn('Supabase network unreachable, falling back to Local Storage');
           return StorageRepository.updateItem(itemId, itemData);
         }
@@ -277,7 +300,7 @@ export class SupabaseService {
         return;
       } catch (err: any) {
         console.warn('Supabase deleteItem error:', err.message);
-        if (err.message?.includes('Failed to fetch') || err.name === 'TypeError') {
+        if (isNetworkOrConnectionError(err)) {
           console.warn('Supabase network unreachable, falling back to Local Storage');
           StorageRepository.deleteItem(itemId);
           return;
@@ -329,7 +352,7 @@ export class SupabaseService {
         return;
       } catch (err: any) {
         console.warn('Supabase inboundStock error:', err.message);
-        if (err.message?.includes('Failed to fetch') || err.name === 'TypeError') {
+        if (isNetworkOrConnectionError(err)) {
           console.warn('Supabase network unreachable, falling back to Local Storage');
           StorageRepository.addStockInbound(itemId, qty, notes, userId, supplierName);
           return;
@@ -391,7 +414,12 @@ export class SupabaseService {
         const created = reqList.find(r => r.id === data.request_id);
         if (created) return created;
       } catch (err: any) {
-        console.warn('Supabase createTransferRequest error, falling back:', err.message);
+        console.warn('Supabase createTransferRequest error:', err.message);
+        if (isNetworkOrConnectionError(err)) {
+          console.warn('Network unreachable, falling back to local transfer request store');
+          return StorageRepository.createTransferRequest(toLocationId, requestedByUserId, itemsData, notes);
+        }
+        throw err;
       }
     }
     return StorageRepository.createTransferRequest(toLocationId, requestedByUserId, itemsData, notes);
@@ -423,7 +451,13 @@ export class SupabaseService {
         if (data && !data.success) throw new Error(data.message || 'Gagal otorisasi transfer');
         return;
       } catch (err: any) {
-        console.warn('Supabase authorizeTransferRequest error, falling back:', err.message);
+        console.warn('Supabase authorizeTransferRequest error:', err.message);
+        if (isNetworkOrConnectionError(err)) {
+          console.warn('Network unreachable, falling back to local authorization');
+          StorageRepository.authorizeRequest(requestId, adminUserId, decision, options);
+          return;
+        }
+        throw err;
       }
     }
     StorageRepository.authorizeRequest(requestId, adminUserId, decision, options);
@@ -442,7 +476,13 @@ export class SupabaseService {
         if (data && !data.success) throw new Error(data.message || 'Gagal dispatch pengiriman');
         return;
       } catch (err: any) {
-        console.warn('Supabase dispatchTransferRequest error, falling back:', err.message);
+        console.warn('Supabase dispatchTransferRequest error:', err.message);
+        if (isNetworkOrConnectionError(err)) {
+          console.warn('Network unreachable, falling back to local dispatch');
+          StorageRepository.dispatchRequest(requestId, adminUserId);
+          return;
+        }
+        throw err;
       }
     }
     StorageRepository.dispatchRequest(requestId, adminUserId);
@@ -472,7 +512,13 @@ export class SupabaseService {
         if (data && !data.success) throw new Error(data.message || 'Gagal konfirmasi serah terima');
         return;
       } catch (err: any) {
-        console.warn('Supabase receiveTransferRequest error, falling back:', err.message);
+        console.warn('Supabase receiveTransferRequest error:', err.message);
+        if (isNetworkOrConnectionError(err)) {
+          console.warn('Network unreachable, falling back to local receiving confirmation');
+          StorageRepository.receiveTransfer(requestId, storeUserId, receivedItems);
+          return;
+        }
+        throw err;
       }
     }
     StorageRepository.receiveTransfer(requestId, storeUserId, receivedItems);

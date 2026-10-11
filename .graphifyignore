@@ -1,0 +1,12 @@
+# Agent tooling / vendored skills — not project content
+.agents/
+.opencode/
+.claude/
+
+# Scratch space
+scratch/
+
+# Graphify's own scaffolding
+graphify-out/
+AGENTS.md
+CLAUDE.md

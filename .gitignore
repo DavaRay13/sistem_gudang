@@ -63,3 +63,6 @@ android/app/build/
 android/.idea/
 android/*.iml
 android/app/*.iml
+
+# Graphify knowledge graph (regenerate with: graphify update .)
+/graphify-out/

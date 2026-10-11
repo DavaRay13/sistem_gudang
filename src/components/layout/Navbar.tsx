@@ -1,9 +1,10 @@
 import React from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
+import { useInventory } from '../../context/InventoryContext';
 import { 
   Sun, Moon, LogOut, Package2, 
-  Warehouse, Store
+  Warehouse, Store, WifiOff
 } from 'lucide-react';
 
 interface NavbarProps {
@@ -13,6 +14,7 @@ interface NavbarProps {
 export const Navbar: React.FC<NavbarProps> = ({ onToggleMobileMenu }) => {
   const { currentUser, currentLocation, isWarehouseAdmin, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
+  const { isOfflineMode } = useInventory();
 
   return (
     <header className="sticky top-0 z-40 bg-white/90 dark:bg-[#0F1012]/90 backdrop-blur-md border-b border-[#EAEAEA] dark:border-[#26282E] transition-colors">
@@ -56,6 +58,17 @@ export const Navbar: React.FC<NavbarProps> = ({ onToggleMobileMenu }) => {
                 ? 'Gudang Pusat' 
                 : currentLocation?.name.replace(' (Cabang Barat)', '').replace(' (Cabang Selatan)', '').replace(' (Cabang Timur)', '')}
             </span>
+
+            {/* Offline / Local Storage Fallback Badge */}
+            {isOfflineMode && (
+              <span 
+                className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-mono font-medium tracking-tight bg-[#FFF7D6] text-[#8F6B00] border border-[#FFE885] dark:bg-[#332B00] dark:text-[#FFDF6D] dark:border-[#5C4F00] shrink-0 animate-pulse"
+                title="Aplikasi berjalan dalam mode offline / penyimpanan lokal (LocalStorage)"
+              >
+                <WifiOff className="w-2.5 h-2.5" />
+                <span>Mode Offline</span>
+              </span>
+            )}
           </div>
         </div>
 
