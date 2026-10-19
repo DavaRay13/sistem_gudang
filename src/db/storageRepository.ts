@@ -652,11 +652,11 @@ export class StorageRepository {
 
   // --- RESET & SAMPLE DATA PRESET ---
   static resetToInitial(): void {
-    localStorage.removeItem(STORAGE_KEYS.ITEMS);
-    localStorage.removeItem(STORAGE_KEYS.INVENTORIES);
-    localStorage.removeItem(STORAGE_KEYS.REQUESTS);
-    localStorage.removeItem(STORAGE_KEYS.MUTATIONS);
-    localStorage.removeItem(STORAGE_KEYS.NOTIFICATIONS);
+    setStorage(STORAGE_KEYS.ITEMS, []);
+    setStorage(STORAGE_KEYS.INVENTORIES, []);
+    setStorage(STORAGE_KEYS.REQUESTS, []);
+    setStorage(STORAGE_KEYS.MUTATIONS, []);
+    setStorage(STORAGE_KEYS.NOTIFICATIONS, []);
   }
 
   static loadSampleData(): void {

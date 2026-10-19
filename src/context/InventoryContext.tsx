@@ -302,10 +302,15 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     }
   };
 
-  const resetToClean = () => {
-    StorageRepository.resetToInitial();
-    refreshData();
-    showToast('info', 'Data Direset', 'Semua data lokal telah direset ke kondisi awal.');
+  const resetToClean = async () => {
+    setIsLoading(true);
+    try {
+      await SupabaseService.cleanAllDataForDemo();
+      await refreshData();
+      showToast('info', 'Database Direset', 'Semua data barang, stok, dan transaksi telah dibersihkan untuk demo.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (

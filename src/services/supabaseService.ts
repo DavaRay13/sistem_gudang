@@ -159,49 +159,7 @@ export class SupabaseService {
           .order('created_at', { ascending: true });
 
         if (!error && data) {
-          const remoteItems = [...(data as Item[])];
-
-          // Auto-sync: jika ada item yang dibuat saat offline di local storage, upload ke Supabase
-          const localItems = StorageRepository.getItems();
-          const remoteSkus = new Set(remoteItems.map(i => (i.sku || '').toUpperCase()));
-          const pendingSync = localItems.filter(local => local.sku && !remoteSkus.has(local.sku.toUpperCase()));
-
-          if (pendingSync.length > 0) {
-            for (const pending of pendingSync) {
-              try {
-                const { data: inserted } = await supabase
-                  .from('items')
-                  .insert({
-                    sku: (pending.sku || '').trim().toUpperCase(),
-                    name: (pending.name || '').trim(),
-                    category: pending.category || 'Umum',
-                    unit: (pending.unit || 'PCS').trim().toUpperCase(),
-                    price: Number(pending.price) || 0,
-                    safety_stock: Number(pending.safety_stock) || 0,
-                  })
-                  .select()
-                  .single();
-
-                if (inserted?.id) {
-                  remoteItems.push(inserted as Item);
-                  const { data: locations } = await supabase.from('locations').select('id');
-                  if (locations && locations.length > 0) {
-                    const invRows = locations.map(loc => ({
-                      location_id: loc.id,
-                      item_id: inserted.id,
-                      stock_available: 0,
-                      stock_reserved: 0,
-                      stock_in_transit: 0,
-                    }));
-                    await supabase.from('inventories').upsert(invRows, { onConflict: 'location_id,item_id' });
-                  }
-                }
-              } catch (syncErr) {
-                console.warn('Auto-sync local item to Supabase failed:', syncErr);
-              }
-            }
-          }
-
+          const remoteItems = data as Item[];
           StorageRepository.setItems(remoteItems);
           return remoteItems;
         }
@@ -662,5 +620,22 @@ export class SupabaseService {
       StorageRepository.loadSampleData();
       return { success: false, message: 'Gagal seed ke Supabase: ' + err.message };
     }
+  }
+
+  // --- BERSIHKAN SEMUA DATA UNTUK DEMO ---
+  static async cleanAllDataForDemo(): Promise<{ success: boolean; message: string }> {
+    if (isSupabaseConfigured && supabase) {
+      try {
+        await supabase.from('inventory_mutations').delete().neq('id', 0);
+        await supabase.from('transfer_request_items').delete().neq('id', 0);
+        await supabase.from('transfer_requests').delete().neq('id', 0);
+        await supabase.from('inventories').delete().neq('id', 0);
+        await supabase.from('items').delete().neq('id', 0);
+      } catch (err: any) {
+        console.warn('Error cleaning Supabase data:', err.message);
+      }
+    }
+    StorageRepository.resetToInitial();
+    return { success: true, message: 'Seluruh data transaksi dan stok berhasil dibersihkan.' };
   }
 }
