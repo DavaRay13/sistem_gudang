@@ -1,12 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useInventory } from '../../context/InventoryContext';
 import { useAuth } from '../../context/AuthContext';
 import { Modal } from '../common/Modal';
 import { 
   Plus, Trash2, Send, AlertTriangle, 
-  FileText, Minus
+  FileText, Minus, Search, ChevronDown, Check, X
 } from 'lucide-react';
-import { formatRupiah } from '../../utils/formatters';
+import { formatNumber, formatRupiah } from '../../utils/formatters';
+import { Item, Inventory } from '../../types';
 
 interface CreateRequestModalProps {
   isOpen: boolean;
@@ -18,11 +19,201 @@ interface ItemRow {
   qtyRequested: number | string;
 }
 
+interface SearchableItemPickerProps {
+  selectedItemId: number;
+  items: Item[];
+  inventories: Inventory[];
+  onSelect: (itemId: number) => void;
+  disabledItemIds?: Set<number>;
+}
+
+const SearchableItemPicker: React.FC<SearchableItemPickerProps> = ({
+  selectedItemId,
+  items,
+  inventories,
+  onSelect,
+  disabledItemIds = new Set(),
+}) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const containerRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const selectedItem = items.find(i => i.id === selectedItemId);
+
+  // Close when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+    if (isOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+      setTimeout(() => inputRef.current?.focus(), 50);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isOpen]);
+
+  const getHubStock = (itemId: number) => {
+    return inventories.find(inv => inv.location_id === 0 && inv.item_id === itemId)?.stock_available || 0;
+  };
+
+  const filteredItems = items.filter(item => {
+    if (!searchQuery.trim()) return true;
+    const q = searchQuery.toLowerCase();
+    const nameMatch = (item.name || '').toLowerCase().includes(q);
+    const skuMatch = (item.sku || '').toLowerCase().includes(q);
+    const catMatch = (item.category || '').toLowerCase().includes(q);
+    return nameMatch || skuMatch || catMatch;
+  });
+
+  const hubStock = selectedItem ? getHubStock(selectedItem.id) : 0;
+
+  return (
+    <div ref={containerRef} className="relative flex-1 min-w-0">
+      {/* Trigger Button */}
+      <button
+        type="button"
+        onClick={() => setIsOpen(prev => !prev)}
+        className="w-full text-left px-3 py-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 hover:border-brand-500 dark:hover:border-brand-500 flex items-center justify-between gap-2 text-xs transition-colors shadow-sm"
+      >
+        <div className="min-w-0 flex-1">
+          {selectedItem ? (
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <span className="font-mono font-bold text-[10px] px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200">
+                {selectedItem.sku}
+              </span>
+              <span className="font-semibold text-slate-900 dark:text-white truncate">
+                {selectedItem.name}
+              </span>
+              <span className="text-[10px] text-slate-400 font-mono">
+                • {formatRupiah(selectedItem.price || 0)} / {selectedItem.unit}
+              </span>
+            </div>
+          ) : (
+            <span className="text-slate-400">Pilih Barang...</span>
+          )}
+        </div>
+
+        <div className="flex items-center gap-2 shrink-0">
+          {selectedItem && (
+            <span className={`text-[10px] font-mono px-1.5 py-0.5 rounded ${
+              hubStock > 0 
+                ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-400' 
+                : 'bg-rose-50 text-rose-700 dark:bg-rose-950/50 dark:text-rose-400'
+            }`}>
+              Stok Gudang: {formatNumber(hubStock)}
+            </span>
+          )}
+          <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+        </div>
+      </button>
+
+      {/* Searchable Dropdown Popover */}
+      {isOpen && (
+        <div className="absolute left-0 right-0 top-full mt-1.5 z-50 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-100">
+          {/* Search Input Bar */}
+          <div className="p-2.5 border-b border-slate-100 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-800/80">
+            <div className="relative">
+              <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-2.5" />
+              <input
+                ref={inputRef}
+                type="text"
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+                placeholder="Cari kode SKU, nama barang, kategori..."
+                className="w-full pl-8 pr-7 py-1.5 text-xs rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500"
+              />
+              {searchQuery && (
+                <button
+                  type="button"
+                  onClick={() => setSearchQuery('')}
+                  className="p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 absolute right-1.5 top-1.5"
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Results List */}
+          <div className="max-h-56 overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800/60 p-1">
+            {filteredItems.length === 0 ? (
+              <div className="p-4 text-center text-xs text-slate-400">
+                Tidak ada barang yang cocok dengan kata kunci "{searchQuery}"
+              </div>
+            ) : (
+              filteredItems.map(item => {
+                const isSelected = item.id === selectedItemId;
+                const isAlreadyUsed = !isSelected && disabledItemIds.has(item.id);
+                const stock = getHubStock(item.id);
+
+                return (
+                  <button
+                    key={item.id}
+                    type="button"
+                    onClick={() => {
+                      onSelect(item.id);
+                      setIsOpen(false);
+                      setSearchQuery('');
+                    }}
+                    className={`w-full p-2.5 rounded-xl text-left flex items-center justify-between gap-2.5 text-xs transition-colors ${
+                      isSelected 
+                        ? 'bg-brand-50 dark:bg-brand-950/40 text-brand-700 dark:text-brand-300' 
+                        : 'hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-900 dark:text-slate-200'
+                    }`}
+                  >
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-1.5">
+                        <span className="font-mono font-bold text-[10px] px-1.5 py-0.2 rounded bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
+                          {item.sku}
+                        </span>
+                        <span className="font-semibold truncate">{item.name}</span>
+                      </div>
+                      <div className="flex items-center gap-1.5 mt-0.5 text-[10px] text-slate-400 font-mono">
+                        <span>{item.category}</span>
+                        <span>•</span>
+                        <span className="text-slate-600 dark:text-slate-300 font-semibold">{formatRupiah(item.price || 0)}</span>
+                        <span>/ {item.unit}</span>
+                        {isAlreadyUsed && (
+                          <span className="text-amber-600 dark:text-amber-400 font-sans italic ml-1">
+                            (Sudah ada di daftar)
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2 shrink-0">
+                      <span className={`text-[10px] font-mono px-2 py-0.5 rounded-full ${
+                        stock > 0 
+                          ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-400 font-medium' 
+                          : 'bg-rose-50 text-rose-700 dark:bg-rose-950/50 dark:text-rose-400'
+                      }`}>
+                        Gudang: {formatNumber(stock)} {item.unit}
+                      </span>
+                      {isSelected && (
+                        <Check className="w-3.5 h-3.5 text-brand-600 dark:text-brand-400" />
+                      )}
+                    </div>
+                  </button>
+                );
+              })
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
 export const CreateRequestModal: React.FC<CreateRequestModalProps> = ({
   isOpen,
   onClose,
 }) => {
-  const { items, requests, createRequest } = useInventory();
+  const { items, inventories, requests, createRequest } = useInventory();
   const { currentUser, currentLocation } = useAuth();
 
   const [rows, setRows] = useState<ItemRow[]>([{ itemId: items[0]?.id || 1, qtyRequested: 10 }]);
@@ -103,6 +294,8 @@ export const CreateRequestModal: React.FC<CreateRequestModalProps> = ({
     }
   };
 
+  const usedItemIds = new Set(rows.map(r => r.itemId));
+
   return (
     <Modal
       isOpen={isOpen}
@@ -143,27 +336,24 @@ export const CreateRequestModal: React.FC<CreateRequestModalProps> = ({
                 return (
                   <div
                     key={idx}
-                    className="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-2xl border border-slate-200/80 dark:border-slate-700/80 space-y-2"
+                    className="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-2xl border border-slate-200/80 dark:border-slate-700/80 space-y-2 relative"
                   >
-                    {/* Select Item */}
+                    {/* Searchable Item Selector */}
                     <div className="flex items-center justify-between gap-2">
-                      <select
-                        value={row.itemId}
-                        onChange={e => handleRowChange(idx, 'itemId', Number(e.target.value))}
-                        className="w-full px-3 py-2 text-xs font-semibold rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-none"
-                      >
-                        {items.map(i => (
-                          <option key={i.id} value={i.id}>
-                            [{i.sku}] {i.name} • {formatRupiah(i.price || 0)} / {i.unit}
-                          </option>
-                        ))}
-                      </select>
+                      <SearchableItemPicker
+                        selectedItemId={row.itemId}
+                        items={items}
+                        inventories={inventories}
+                        onSelect={newItemId => handleRowChange(idx, 'itemId', newItemId)}
+                        disabledItemIds={usedItemIds}
+                      />
 
                       <button
                         type="button"
                         onClick={() => handleRemoveRow(idx)}
                         disabled={rows.length === 1}
-                        className="p-2 text-slate-400 hover:text-rose-500 disabled:opacity-20 active:scale-90"
+                        className="p-2 text-slate-400 hover:text-rose-500 disabled:opacity-20 active:scale-90 shrink-0"
+                        title="Hapus baris"
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
