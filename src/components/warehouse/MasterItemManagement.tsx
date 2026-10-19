@@ -12,7 +12,7 @@ import { formatNumber, formatRupiah } from '../../utils/formatters';
 import { exportMasterItemsToExcel } from '../../utils/exportHelpers';
 
 export const MasterItemManagement: React.FC = () => {
-  const { items, inventories, addNewItem, updateItem, deleteItem } = useInventory();
+  const { items, inventories, addNewItem, updateItem, deleteItem, inboundStock } = useInventory();
   const { locations, currentUser } = useAuth();
 
   const [searchTerm, setSearchTerm] = useState('');
@@ -115,6 +115,8 @@ export const MasterItemManagement: React.FC = () => {
     unit: string;
     price: number | string;
     safety_stock: number | string;
+    initial_stock: number | string;
+    supplier_name: string;
   }>({
     sku: '',
     name: '',
@@ -122,6 +124,8 @@ export const MasterItemManagement: React.FC = () => {
     unit: 'PCS',
     price: 50000,
     safety_stock: 10,
+    initial_stock: '',
+    supplier_name: '',
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -153,7 +157,7 @@ export const MasterItemManagement: React.FC = () => {
 
     setIsSubmitting(true);
     try {
-      await addNewItem({
+      const created = await addNewItem({
         sku: formData.sku.trim().toUpperCase(),
         name: formData.name.trim(),
         category: formData.category.trim(),
@@ -161,6 +165,19 @@ export const MasterItemManagement: React.FC = () => {
         price: Number(formData.price) || 0,
         safety_stock: Number(formData.safety_stock) || 0,
       });
+
+      // Otomatis catat saldo stok awal ke database jika kuantiti diisi
+      const initStock = Number(formData.initial_stock) || 0;
+      if (initStock > 0 && currentUser) {
+        await inboundStock(
+          created.id,
+          initStock,
+          'Saldo stok awal saat pendaftaran barang baru',
+          currentUser.id,
+          formData.supplier_name.trim() || 'Pemasok / Saldo Awal'
+        );
+      }
+
       setIsAddItemOpen(false);
       setFormData({
         sku: '',
@@ -169,6 +186,8 @@ export const MasterItemManagement: React.FC = () => {
         unit: 'PCS',
         price: 50000,
         safety_stock: 10,
+        initial_stock: '',
+        supplier_name: '',
       });
     } catch {
       // Handled by toast
@@ -587,6 +606,51 @@ export const MasterItemManagement: React.FC = () => {
                 }}
                 className="w-full px-3.5 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs font-bold focus:ring-2 focus:ring-brand-500 focus:outline-none"
               />
+            </div>
+          </div>
+
+          {/* Opsi Stok Awal Gudang Pusat */}
+          <div className="p-3.5 rounded-2xl bg-emerald-50/70 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-800/60 space-y-3">
+            <div className="flex items-center gap-2">
+              <Boxes className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+              <span className="text-xs font-bold text-emerald-900 dark:text-emerald-200">
+                Stok Awal di Gudang Pusat (Opsional)
+              </span>
+            </div>
+            <p className="text-[11px] text-slate-600 dark:text-slate-400">
+              Jika diisi, saldo stok barang akan langsung tercatat dan masuk ke database Gudang Pusat.
+            </p>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-1">
+                  Jumlah Stok Masuk ({formData.unit || 'Unit'})
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  placeholder="Contoh: 100 (opsional)"
+                  value={formData.initial_stock}
+                  onChange={e => {
+                    const val = e.target.value;
+                    setFormData({ ...formData, initial_stock: val === '' ? '' : Math.max(0, parseInt(val) || 0) });
+                  }}
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-emerald-300 dark:border-emerald-800 bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-xs font-bold focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-1">
+                  Pemasok / Supplier
+                </label>
+                <input
+                  type="text"
+                  placeholder="Contoh: PT. Sumber Makmur"
+                  value={formData.supplier_name}
+                  onChange={e => setFormData({ ...formData, supplier_name: e.target.value })}
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-xs font-medium focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+                />
+              </div>
             </div>
           </div>
 

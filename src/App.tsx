@@ -58,12 +58,12 @@ export const App: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-[#FBFBFA] dark:bg-[#0F1012] text-[#111111] dark:text-[#ECECED] flex flex-col font-sans transition-colors duration-200">
+    <div className="min-h-screen bg-[#FBFBFA] dark:bg-[#0F1012] text-[#111111] dark:text-[#ECECED] flex flex-col font-sans transition-colors duration-200 overflow-x-hidden w-full max-w-full">
       {/* Top App Bar */}
       <Navbar onToggleMobileMenu={() => setMobileSidebarOpen(prev => !prev)} />
 
       {/* Main Responsive Layout Container */}
-      <div className="flex-1 flex max-w-7xl w-full mx-auto px-0 sm:px-4 lg:px-6">
+      <div className="flex-1 flex max-w-7xl w-full mx-auto px-0 sm:px-4 lg:px-6 min-w-0 overflow-x-hidden">
         {/* Desktop Sidebar & Mobile Drawer */}
         <Sidebar
           activeTab={activeTab}
@@ -73,7 +73,7 @@ export const App: React.FC = () => {
         />
 
         {/* Dynamic Content Viewport */}
-        <main className="flex-1 p-3.5 sm:p-6 pb-28 lg:pb-8 min-w-0">
+        <main className="flex-1 p-3.5 sm:p-6 pb-28 lg:pb-8 min-w-0 overflow-x-hidden">
           {/* Warehouse Admin Views */}
           {isWarehouseAdmin && (
             <>

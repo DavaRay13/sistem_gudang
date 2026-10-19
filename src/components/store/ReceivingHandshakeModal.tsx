@@ -37,6 +37,18 @@ export const ReceivingHandshakeModal: React.FC<ReceivingHandshakeModalProps> = (
   const [discrepancyReasons, setDiscrepancyReasons] = useState<{ [itemId: number]: string }>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Sync state when request changes or modal opens
+  React.useEffect(() => {
+    if (request && request.items) {
+      const initial: { [itemId: number]: number | string } = {};
+      request.items.forEach(item => {
+        initial[item.item_id] = item.qty_dispatched;
+      });
+      setReceivedQtys(initial);
+      setDiscrepancyReasons({});
+    }
+  }, [request, isOpen]);
+
   const hasDiscrepancy = request.items.some(item => {
     const raw = receivedQtys[item.item_id];
     const actual = raw === '' || raw === undefined ? item.qty_dispatched : Number(raw);

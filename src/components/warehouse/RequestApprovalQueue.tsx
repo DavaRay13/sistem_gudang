@@ -39,7 +39,7 @@ export const RequestApprovalQueue: React.FC = () => {
     return true;
   });
 
-  const handleApproveFull = (req: TransferRequest) => {
+  const handleApproveFull = async (req: TransferRequest) => {
     if (!currentUser) return;
     
     // Validate if warehouse has enough stock
@@ -52,7 +52,11 @@ export const RequestApprovalQueue: React.FC = () => {
     }
 
     if (confirm(`Setujui seluruh permintaan barang ${req.request_number}? Stok gudang akan disiapkan untuk dikirim.`)) {
-      authorizeRequest(req.id, currentUser.id, 'APPROVE_FULL');
+      try {
+        await authorizeRequest(req.id, currentUser.id, 'APPROVE_FULL');
+      } catch {
+        // Handled by toast
+      }
     }
   };
 

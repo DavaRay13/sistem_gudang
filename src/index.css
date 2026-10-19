@@ -3,6 +3,14 @@
 @tailwind utilities;
 
 @layer base {
+  html {
+    overflow-x: hidden;
+    max-width: 100vw;
+    width: 100%;
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
+
   body {
     font-family: 'Geist', 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     background-color: #FBFBFA;
@@ -11,11 +19,36 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     letter-spacing: -0.01em;
+    overflow-x: hidden;
+    max-width: 100vw;
+    width: 100%;
+    position: relative;
+    touch-action: manipulation;
+  }
+
+  #root {
+    overflow-x: hidden;
+    max-width: 100vw;
+    width: 100%;
   }
   
   .dark body {
     background-color: #0F1012;
     color: #ECECED;
+  }
+}
+
+/* Prevent auto-zoom on mobile inputs in Safari and Chrome */
+@media screen and (max-width: 768px) {
+  input, 
+  select, 
+  textarea,
+  input[type="text"],
+  input[type="number"],
+  input[type="search"],
+  input[type="password"],
+  input[type="email"] {
+    font-size: 16px !important;
   }
 }
 

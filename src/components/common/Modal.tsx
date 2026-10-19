@@ -44,7 +44,7 @@ export const Modal: React.FC<ModalProps> = ({
   }[maxWidth];
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 overflow-y-auto">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 overflow-y-auto overflow-x-hidden">
       {/* Backdrop */}
       <div 
         className="fixed inset-0 bg-black/40 backdrop-blur-sm transition-opacity"
@@ -52,7 +52,7 @@ export const Modal: React.FC<ModalProps> = ({
       />
 
       {/* Modal Dialog / Bottom Sheet on Mobile */}
-      <div className={`relative w-full ${maxWidthClasses} bg-white dark:bg-[#16171A] rounded-t-2xl sm:rounded-xl border-t sm:border border-[#EAEAEA] dark:border-[#26282E] overflow-hidden transform transition-all max-h-[92vh] sm:max-h-[85vh] flex flex-col`}>
+      <div className={`relative w-full max-w-full ${maxWidthClasses} bg-white dark:bg-[#16171A] rounded-t-2xl sm:rounded-xl border-t sm:border border-[#EAEAEA] dark:border-[#26282E] overflow-hidden transform transition-all max-h-[92vh] sm:max-h-[85vh] flex flex-col`}>
         
         {/* Mobile Swipe / Drag Indicator */}
         <div className="sm:hidden w-full flex items-center justify-center pt-2.5 pb-1 bg-[#FBFBFA] dark:bg-[#191A1E]">

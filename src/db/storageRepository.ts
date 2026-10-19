@@ -95,9 +95,49 @@ export class StorageRepository {
     return users[idx];
   }
 
+  static setUsers(users: User[]): void {
+    setStorage(STORAGE_KEYS.USERS, users);
+  }
+
   // --- ITEMS ---
   static getItems(): Item[] {
     return getStorage<Item[]>(STORAGE_KEYS.ITEMS, INITIAL_ITEMS);
+  }
+
+  static setItems(items: Item[]): void {
+    setStorage(STORAGE_KEYS.ITEMS, items);
+  }
+
+  static upsertItem(item: Item): Item {
+    const items = this.getItems();
+    const idx = items.findIndex(i => i.id === item.id || (i.sku || '').trim().toLowerCase() === (item.sku || '').trim().toLowerCase());
+    if (idx >= 0) {
+      items[idx] = { ...items[idx], ...item };
+    } else {
+      items.push(item);
+    }
+    setStorage(STORAGE_KEYS.ITEMS, items);
+
+    // Inisialisasi saldo inventori di semua lokasi jika belum ada
+    const locations = this.getLocations();
+    const inventories = this.getInventories();
+    locations.forEach(loc => {
+      const exists = inventories.some(inv => inv.location_id === loc.id && inv.item_id === item.id);
+      if (!exists) {
+        const nextInvId = inventories.length > 0 ? Math.max(...inventories.map(inv => inv.id)) + 1 : 1;
+        inventories.push({
+          id: nextInvId,
+          location_id: loc.id,
+          item_id: item.id,
+          stock_available: 0,
+          stock_reserved: 0,
+          stock_in_transit: 0,
+          updated_at: new Date().toISOString(),
+        });
+      }
+    });
+    setStorage(STORAGE_KEYS.INVENTORIES, inventories);
+    return item;
   }
 
   static saveItem(itemData: Omit<Item, 'id' | 'created_at'>): Item {
@@ -187,6 +227,10 @@ export class StorageRepository {
     return getStorage<Inventory[]>(STORAGE_KEYS.INVENTORIES, INITIAL_INVENTORIES);
   }
 
+  static setInventories(inventories: Inventory[]): void {
+    setStorage(STORAGE_KEYS.INVENTORIES, inventories);
+  }
+
   static getInventory(locationId: number, itemId: number): Inventory | undefined {
     const inventories = this.getInventories();
     return inventories.find(inv => inv.location_id === locationId && inv.item_id === itemId);
@@ -248,6 +292,10 @@ export class StorageRepository {
   // --- TRANSFER REQUESTS (LIFECYCLE) ---
   static getRequests(): TransferRequest[] {
     return getStorage<TransferRequest[]>(STORAGE_KEYS.REQUESTS, INITIAL_REQUESTS);
+  }
+
+  static setRequests(requests: TransferRequest[]): void {
+    setStorage(STORAGE_KEYS.REQUESTS, requests);
   }
 
   static createTransferRequest(
@@ -569,6 +617,10 @@ export class StorageRepository {
   // --- MUTATIONS LEDGER ---
   static getMutations(): InventoryMutation[] {
     return getStorage<InventoryMutation[]>(STORAGE_KEYS.MUTATIONS, INITIAL_MUTATIONS);
+  }
+
+  static setMutations(mutations: InventoryMutation[]): void {
+    setStorage(STORAGE_KEYS.MUTATIONS, mutations);
   }
 
   // --- NOTIFICATIONS ---

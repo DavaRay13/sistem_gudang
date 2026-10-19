@@ -75,7 +75,11 @@ export class SupabaseService {
           .select('*')
           .order('created_at', { ascending: true });
 
-        if (!error && data) return data as User[];
+        if (!error && data) {
+          const userList = data as User[];
+          StorageRepository.setUsers(userList);
+          return userList;
+        }
       } catch (err) {
         console.warn('Supabase getUsers fallback to local:', err);
       }
@@ -155,8 +159,51 @@ export class SupabaseService {
           .order('created_at', { ascending: true });
 
         if (!error && data) {
-          // Sync local storage as cache/fallback
-          return data as Item[];
+          const remoteItems = [...(data as Item[])];
+
+          // Auto-sync: jika ada item yang dibuat saat offline di local storage, upload ke Supabase
+          const localItems = StorageRepository.getItems();
+          const remoteSkus = new Set(remoteItems.map(i => (i.sku || '').toUpperCase()));
+          const pendingSync = localItems.filter(local => local.sku && !remoteSkus.has(local.sku.toUpperCase()));
+
+          if (pendingSync.length > 0) {
+            for (const pending of pendingSync) {
+              try {
+                const { data: inserted } = await supabase
+                  .from('items')
+                  .insert({
+                    sku: (pending.sku || '').trim().toUpperCase(),
+                    name: (pending.name || '').trim(),
+                    category: pending.category || 'Umum',
+                    unit: (pending.unit || 'PCS').trim().toUpperCase(),
+                    price: Number(pending.price) || 0,
+                    safety_stock: Number(pending.safety_stock) || 0,
+                  })
+                  .select()
+                  .single();
+
+                if (inserted?.id) {
+                  remoteItems.push(inserted as Item);
+                  const { data: locations } = await supabase.from('locations').select('id');
+                  if (locations && locations.length > 0) {
+                    const invRows = locations.map(loc => ({
+                      location_id: loc.id,
+                      item_id: inserted.id,
+                      stock_available: 0,
+                      stock_reserved: 0,
+                      stock_in_transit: 0,
+                    }));
+                    await supabase.from('inventories').upsert(invRows, { onConflict: 'location_id,item_id' });
+                  }
+                }
+              } catch (syncErr) {
+                console.warn('Auto-sync local item to Supabase failed:', syncErr);
+              }
+            }
+          }
+
+          StorageRepository.setItems(remoteItems);
+          return remoteItems;
         }
       } catch (err) {
         console.warn('Supabase getItems fallback to local:', err);
@@ -207,12 +254,12 @@ export class SupabaseService {
         }
 
         const createdItem = data as Item;
-    try {
-      // Keep local storage synchronized
-      StorageRepository.saveItem(itemData);
-    } catch {
-      // SKU may already be in local storage or ID conflict, safe to ignore
-    }
+        try {
+          // Keep local storage synchronized with real Supabase id
+          StorageRepository.upsertItem(createdItem);
+        } catch {
+          // safe to ignore
+        }
         return createdItem;
       } catch (err: any) {
         console.warn('Supabase createItem error:', err.message);
@@ -259,7 +306,7 @@ export class SupabaseService {
 
         const updatedItem = data as Item;
         try {
-          StorageRepository.updateItem(itemId, itemData);
+          StorageRepository.upsertItem(updatedItem);
         } catch {
           // ignore
         }
@@ -319,7 +366,11 @@ export class SupabaseService {
           .from('inventories')
           .select('*');
 
-        if (!error && data) return data as Inventory[];
+        if (!error && data) {
+          const invList = data as Inventory[];
+          StorageRepository.setInventories(invList);
+          return invList;
+        }
       } catch (err) {
         console.warn('Supabase getInventories fallback to local:', err);
       }
@@ -373,10 +424,12 @@ export class SupabaseService {
           .order('created_at', { ascending: false });
 
         if (!error && data) {
-          return data.map((r: any) => ({
+          const reqList = data.map((r: any) => ({
             ...r,
             items: r.items || [],
           })) as TransferRequest[];
+          StorageRepository.setRequests(reqList);
+          return reqList;
         }
       } catch (err) {
         console.warn('Supabase getRequests fallback to local:', err);
@@ -533,7 +586,11 @@ export class SupabaseService {
           .select('*')
           .order('created_at', { ascending: false });
 
-        if (!error && data) return data as InventoryMutation[];
+        if (!error && data) {
+          const mutList = data as InventoryMutation[];
+          StorageRepository.setMutations(mutList);
+          return mutList;
+        }
       } catch (err) {
         console.warn('Supabase getMutations fallback to local:', err);
       }

@@ -42,16 +42,16 @@ export const SuratJalanModal: React.FC<SuratJalanModalProps> = ({
     >
       <div className="space-y-6 print:space-y-4">
         {/* Printable Area */}
-        <div id="printable-surat-jalan" className="p-6 sm:p-8 bg-white text-slate-900 rounded-xl border border-slate-200 shadow-sm print:border-none print:shadow-none print:p-0">
+        <div id="printable-surat-jalan" className="p-3 sm:p-8 bg-white text-slate-900 rounded-xl border border-slate-200 shadow-sm print:border-none print:shadow-none print:p-0 overflow-hidden">
           
           {/* Header Surat Jalan */}
           <div className="flex flex-col sm:flex-row justify-between items-start pb-6 border-b-2 border-slate-900 gap-4">
             <div>
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-lg bg-slate-900 text-white flex items-center justify-center font-black text-sm">
+                <div className="w-8 h-8 rounded-lg bg-slate-900 text-white flex items-center justify-center font-black text-sm shrink-0">
                   SG
                 </div>
-                <h2 className="text-xl font-black uppercase tracking-wider text-slate-900">
+                <h2 className="text-base sm:text-xl font-black uppercase tracking-wider text-slate-900 break-words">
                   SISTEM GUDANG LOGISTIK & DISTRIBUSI
                 </h2>
               </div>
@@ -80,7 +80,7 @@ export const SuratJalanModal: React.FC<SuratJalanModalProps> = ({
           </div>
 
           {/* Pengirim & Penerima */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 my-6 text-xs">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 my-4 sm:my-6 text-xs">
             <div className="p-3.5 rounded-lg bg-slate-50 border border-slate-200">
               <span className="font-bold text-slate-400 uppercase tracking-wider text-[10px] block mb-1">
                 PENGIRIM (HUB ASAL)
@@ -101,8 +101,8 @@ export const SuratJalanModal: React.FC<SuratJalanModalProps> = ({
           </div>
 
           {/* Tabel Rincian Barang */}
-          <div className="overflow-x-auto my-6">
-            <table className="w-full text-left text-xs border border-slate-300">
+          <div className="overflow-x-auto my-4 sm:my-6 border border-slate-300 rounded-lg">
+            <table className="min-w-[600px] w-full text-left text-xs">
               <thead className="bg-slate-100 text-slate-800 uppercase font-bold text-[11px] border-b border-slate-300">
                 <tr>
                   <th className="px-3 py-2.5 border-r border-slate-300 w-10 text-center">No</th>

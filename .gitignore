@@ -56,6 +56,9 @@ test_export_run.xlsx
 supabase/.temp/
 .wrangler/
 .cloudflare/
+playwright-report/
+test-results/
+playwright-results.json
 
 # Android build outputs
 android/.gradle/
