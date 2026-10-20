@@ -44,8 +44,7 @@ export const StoreDashboard: React.FC<StoreDashboardProps> = ({ onNavigate }) =>
   });
 
   const filteredItems = items.filter(item => {
-    return item.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-           item.sku.toLowerCase().includes(searchTerm.toLowerCase());
+    return item.name.toLowerCase().includes(searchTerm.toLowerCase());
   });
 
   return (
@@ -257,7 +256,7 @@ export const StoreDashboard: React.FC<StoreDashboardProps> = ({ onNavigate }) =>
             <Search className="w-3.5 h-3.5 text-[#787774] absolute left-3 top-2.5" />
             <input
               type="text"
-              placeholder="Cari kode atau nama barang..."
+              placeholder="Cari nama barang..."
               value={searchTerm}
               onChange={e => setSearchTerm(e.target.value)}
               className="w-full pl-8 pr-3 py-1.5 text-xs rounded-lg bg-[#FBFBFA] dark:bg-[#191A1E] border border-[#EAEAEA] dark:border-[#26282E] text-[#111111] dark:text-[#ECECED] placeholder-[#A1A09E] focus:outline-none focus:border-[#111111] dark:focus:border-white transition-colors"
@@ -287,10 +286,6 @@ export const StoreDashboard: React.FC<StoreDashboardProps> = ({ onNavigate }) =>
                       {item.name}
                     </span>
                     <div className="flex items-center gap-1.5 mt-0.5 text-[11px] text-[#787774] dark:text-[#A1A09E] font-mono flex-wrap">
-                      <span className="bg-[#EAEAEA] dark:bg-[#26282E] px-1.5 rounded text-[10px] text-[#111111] dark:text-[#ECECED]">
-                        {item.sku}
-                      </span>
-                      <span>•</span>
                       <span className="tabular-nums">{formatRupiah(item.price || 0)}</span>
                       <span>•</span>
                       <span>Min: {item.safety_stock} {item.unit}</span>

@@ -161,9 +161,6 @@ export const StoreRequestList: React.FC<StoreRequestListProps> = ({ initialFilte
                               <span className="font-bold text-slate-900 dark:text-white block truncate max-w-[170px]">
                                 {master?.name}
                               </span>
-                              <span className="text-[10px] text-slate-400 font-mono">
-                                SKU: {master?.sku}
-                              </span>
                             </div>
 
                             <div className="text-right">

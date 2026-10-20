@@ -53,11 +53,10 @@ export const MutationLedgerReport: React.FC = () => {
     if (searchTerm.trim()) {
       const item = itemMap.get(m.item_id);
       const search = searchTerm.toLowerCase();
-      const matchSku = item?.sku.toLowerCase().includes(search);
       const matchName = item?.name.toLowerCase().includes(search);
       const matchRef = m.reference_code?.toLowerCase().includes(search);
       const matchNotes = m.notes?.toLowerCase().includes(search);
-      if (!matchSku && !matchName && !matchRef && !matchNotes) return false;
+      if (!matchName && !matchRef && !matchNotes) return false;
     }
 
     return true;
@@ -155,7 +154,7 @@ export const MutationLedgerReport: React.FC = () => {
         <StatCard
           title="Barang Masuk"
           value={`${formatNumber(totalInboundQty)}`}
-          subtitle="Dari Pemasok"
+          subtitle="Stok Tambahan Masuk"
           icon={ArrowDownRight}
           color="emerald"
         />
@@ -191,7 +190,7 @@ export const MutationLedgerReport: React.FC = () => {
           <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
           <input
             type="text"
-            placeholder="Cari kode barang, nama, nomor referensi, atau catatan..."
+            placeholder="Cari nama barang, nomor referensi, atau catatan..."
             value={searchTerm}
             onChange={e => setSearchTerm(e.target.value)}
             className="w-full pl-9 pr-3.5 py-2 text-xs rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/80 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500"
@@ -272,9 +271,6 @@ export const MutationLedgerReport: React.FC = () => {
                   <div className="min-w-0 flex-1">
                     <span className="font-bold text-xs text-slate-900 dark:text-white block truncate">
                       {item?.name}
-                    </span>
-                    <span className="font-mono text-[10px] text-slate-400">
-                      {item?.sku}
                     </span>
                   </div>
 

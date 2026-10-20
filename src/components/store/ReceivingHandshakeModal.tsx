@@ -144,7 +144,7 @@ export const ReceivingHandshakeModal: React.FC<ReceivingHandshakeModalProps> = (
                         {masterItem?.name || `Item #${item.item_id}`}
                       </span>
                       <span className="text-[10px] text-slate-500 block">
-                        Kode: {masterItem?.sku || '-'} • Dikirim: <strong className="text-slate-700 dark:text-slate-300">{item.qty_dispatched} {masterItem?.unit}</strong>
+                        Dikirim: <strong className="text-slate-700 dark:text-slate-300">{item.qty_dispatched} {masterItem?.unit}</strong>
                       </span>
                     </div>
 

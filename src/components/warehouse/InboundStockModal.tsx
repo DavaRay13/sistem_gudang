@@ -3,7 +3,7 @@ import { Item } from '../../types';
 import { useInventory } from '../../context/InventoryContext';
 import { useAuth } from '../../context/AuthContext';
 import { Modal } from '../common/Modal';
-import { ArrowDownRight, Building, FileText, CheckCircle2 } from 'lucide-react';
+import { ArrowDownRight, FileText, CheckCircle2 } from 'lucide-react';
 
 interface InboundStockModalProps {
   isOpen: boolean;
@@ -23,8 +23,7 @@ export const InboundStockModal: React.FC<InboundStockModalProps> = ({
 
   const [itemId, setItemId] = useState<number>(preselectedItemId || (items[0]?.id ?? 1));
   const [qty, setQty] = useState<number | string>(100);
-  const [supplierName, setSupplierName] = useState<string>('PT. Distribusi Utama Prima');
-  const [notes, setNotes] = useState<string>('Penerimaan PO Pabrik / Supplier');
+  const [notes, setNotes] = useState<string>('Penerimaan Barang Masuk');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Sync when preselected item changes
@@ -47,11 +46,11 @@ export const InboundStockModal: React.FC<InboundStockModalProps> = ({
 
     setIsSubmitting(true);
     try {
-      await inboundStock(Number(itemId), parsedQty, notes, currentUser.id, supplierName);
+      await inboundStock(Number(itemId), parsedQty, notes, currentUser.id);
       onClose();
       // Reset form defaults
       setQty(100);
-      setNotes('Penerimaan PO Pabrik / Supplier');
+      setNotes('Penerimaan Barang Masuk');
     } catch {
       // Toast handles error
     } finally {
@@ -66,7 +65,7 @@ export const InboundStockModal: React.FC<InboundStockModalProps> = ({
       isOpen={isOpen}
       onClose={onClose}
       title="Penerimaan Barang Masuk (Stok Baru)"
-      subtitle="Tambah stok baru ke Gudang Pusat dari Pemasok / Supplier"
+      subtitle="Tambah stok baru ke Gudang Pusat"
       maxWidth="lg"
     >
       <form onSubmit={handleSubmit} className="space-y-4">
@@ -87,7 +86,7 @@ export const InboundStockModal: React.FC<InboundStockModalProps> = ({
             >
               {items.map(item => (
                 <option key={item.id} value={item.id}>
-                  [{item.sku}] {item.name} ({item.unit})
+                  {item.name} ({item.unit})
                 </option>
               ))}
             </select>
@@ -132,27 +131,10 @@ export const InboundStockModal: React.FC<InboundStockModalProps> = ({
           </div>
         </div>
 
-        {/* Supplier */}
+        {/* Catatan / Nomor Dokumen */}
         <div>
           <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">
-            Nama Pemasok / Pabrik Supplier
-          </label>
-          <div className="relative">
-            <input
-              type="text"
-              value={supplierName}
-              onChange={e => setSupplierName(e.target.value)}
-              placeholder="Contoh: PT. Sumber Makmur Perkasa"
-              className="w-full pl-9 pr-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs font-medium focus:ring-2 focus:ring-brand-500 focus:outline-none"
-            />
-            <Building className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
-          </div>
-        </div>
-
-        {/* Catatan / Nomor PO */}
-        <div>
-          <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">
-            Nomor Surat / Catatan Penerimaan
+            Nomor Dokumen / Catatan Penerimaan
           </label>
           <div className="relative">
             <textarea

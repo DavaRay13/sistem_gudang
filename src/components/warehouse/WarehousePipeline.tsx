@@ -232,7 +232,6 @@ export const WarehousePipeline: React.FC<WarehousePipelineProps> = ({ onNavigate
                         <div key={item.id} className="flex items-center justify-between gap-2 py-2 border-b border-[#F7F6F3] dark:border-[#1C1E22] last:border-0">
                           <div className="min-w-0 flex-1">
                             <span className="text-xs font-semibold text-[#111111] dark:text-[#ECECED] block truncate">{master?.name}</span>
-                            <span className="text-[10px] font-mono text-[#A1A09E]">{master?.sku}</span>
                           </div>
                           <div className="text-right shrink-0 text-xs">
                             <span className="font-bold text-[#111111] dark:text-[#ECECED]">{item.qty_requested} {master?.unit}</span>

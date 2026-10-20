@@ -286,7 +286,7 @@ export const WarehouseDashboard: React.FC<WarehouseDashboardProps> = ({ onNaviga
                           )}
                         </div>
                         <span className="text-[11px] font-mono text-[#787774] dark:text-[#A1A09E] block mt-0.5">
-                          {item.sku} • Batas Aman: {item.safety_stock} {item.unit}
+                          Batas Aman: {item.safety_stock} {item.unit}
                         </span>
                       </div>
 

@@ -30,14 +30,12 @@ export const MasterItemManagement: React.FC = () => {
   const [itemToEdit, setItemToEdit] = useState<Item | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [editFormData, setEditFormData] = useState<{
-    sku: string;
     name: string;
     category: string;
     unit: string;
     price: number | string;
     safety_stock: number | string;
   }>({
-    sku: '',
     name: '',
     category: 'Elektronik',
     unit: 'PCS',
@@ -48,7 +46,6 @@ export const MasterItemManagement: React.FC = () => {
   const openEditModal = (item: Item) => {
     setItemToEdit(item);
     setEditFormData({
-      sku: item.sku,
       name: item.name,
       category: item.category,
       unit: item.unit,
@@ -59,12 +56,12 @@ export const MasterItemManagement: React.FC = () => {
 
   const handleUpdateItem = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!itemToEdit || !editFormData.sku || !editFormData.name || isEditing) return;
+    if (!itemToEdit || !editFormData.name || isEditing) return;
 
     setIsEditing(true);
     try {
       await updateItem(itemToEdit.id, {
-        sku: editFormData.sku.trim().toUpperCase(),
+        sku: itemToEdit.sku,
         name: editFormData.name.trim(),
         category: editFormData.category.trim(),
         unit: editFormData.unit.trim().toUpperCase(),
@@ -109,23 +106,19 @@ export const MasterItemManagement: React.FC = () => {
 
   // Form State New Item
   const [formData, setFormData] = useState<{
-    sku: string;
     name: string;
     category: string;
     unit: string;
     price: number | string;
     safety_stock: number | string;
     initial_stock: number | string;
-    supplier_name: string;
   }>({
-    sku: '',
     name: '',
     category: 'Elektronik',
     unit: 'PCS',
     price: 50000,
     safety_stock: 10,
     initial_stock: '',
-    supplier_name: '',
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -134,9 +127,7 @@ export const MasterItemManagement: React.FC = () => {
 
   const filteredItems = items.filter(item => {
     const itemName = item?.name || '';
-    const itemSku = item?.sku || '';
-    const matchSearch = itemName.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                        itemSku.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchSearch = itemName.toLowerCase().includes(searchTerm.toLowerCase());
     const matchCategory = selectedCategory === 'ALL' || item.category === selectedCategory;
     if (!matchSearch || !matchCategory) return false;
 
@@ -153,12 +144,14 @@ export const MasterItemManagement: React.FC = () => {
 
   const handleCreateItem = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.sku || !formData.name || isSubmitting) return;
+    if (!formData.name || isSubmitting) return;
 
     setIsSubmitting(true);
     try {
+      // Auto-generate internal unique SKU
+      const autoSku = 'BRG-' + Date.now().toString(36).toUpperCase() + '-' + Math.floor(Math.random() * 1000);
       const created = await addNewItem({
-        sku: formData.sku.trim().toUpperCase(),
+        sku: autoSku,
         name: formData.name.trim(),
         category: formData.category.trim(),
         unit: formData.unit.trim().toUpperCase(),
@@ -173,21 +166,18 @@ export const MasterItemManagement: React.FC = () => {
           created.id,
           initStock,
           'Saldo stok awal saat pendaftaran barang baru',
-          currentUser.id,
-          formData.supplier_name.trim() || 'Pemasok / Saldo Awal'
+          currentUser.id
         );
       }
 
       setIsAddItemOpen(false);
       setFormData({
-        sku: '',
         name: '',
         category: 'Elektronik',
         unit: 'PCS',
         price: 50000,
         safety_stock: 10,
         initial_stock: '',
-        supplier_name: '',
       });
     } catch {
       // Handled by toast
@@ -263,7 +253,7 @@ export const MasterItemManagement: React.FC = () => {
           <Search className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
           <input
             type="text"
-            placeholder="Cari kode atau nama barang..."
+            placeholder="Cari nama barang..."
             value={searchTerm}
             onChange={e => setSearchTerm(e.target.value)}
             className="w-full pl-9 pr-3.5 py-2.5 text-xs rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500 shadow-sm"
@@ -398,9 +388,6 @@ export const MasterItemManagement: React.FC = () => {
                         )}
                       </div>
                       <div className="flex items-center gap-2 mt-1.5 flex-wrap">
-                        <span className="font-mono tabular-nums text-[11px] font-bold text-brand-600 dark:text-brand-400 bg-brand-50 dark:bg-brand-950/60 px-2 py-0.5 rounded-lg border border-brand-200/60 dark:border-brand-900/60">
-                          {item.sku}
-                        </span>
                         <span className="text-[11px] font-bold font-mono tabular-nums text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 rounded-lg border border-emerald-200/60 dark:border-emerald-900/60">
                           {formatRupiah(item.price || 0)}
                         </span>
@@ -502,20 +489,6 @@ export const MasterItemManagement: React.FC = () => {
         maxWidth="md"
       >
         <form onSubmit={handleCreateItem} className="space-y-4">
-          <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">
-              Kode Barang / Barcode
-            </label>
-            <input
-              type="text"
-              required
-              placeholder="Contoh: BRG-ELK-001"
-              value={formData.sku}
-              onChange={e => setFormData({ ...formData, sku: e.target.value })}
-              className="w-full px-3.5 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs font-mono font-bold uppercase focus:ring-2 focus:ring-brand-500 focus:outline-none"
-            />
-          </div>
-
           <div>
             <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">
               Nama Barang / Produk
@@ -621,36 +594,21 @@ export const MasterItemManagement: React.FC = () => {
               Jika diisi, saldo stok barang akan langsung tercatat dan masuk ke database Gudang Pusat.
             </p>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div>
-                <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-1">
-                  Jumlah Stok Masuk ({formData.unit || 'Unit'})
-                </label>
-                <input
-                  type="number"
-                  min="0"
-                  placeholder="Contoh: 100 (opsional)"
-                  value={formData.initial_stock}
-                  onChange={e => {
-                    const val = e.target.value;
-                    setFormData({ ...formData, initial_stock: val === '' ? '' : Math.max(0, parseInt(val) || 0) });
-                  }}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-emerald-300 dark:border-emerald-800 bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-xs font-bold focus:ring-2 focus:ring-emerald-500 focus:outline-none"
-                />
-              </div>
-
-              <div>
-                <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-1">
-                  Pemasok / Supplier
-                </label>
-                <input
-                  type="text"
-                  placeholder="Contoh: PT. Sumber Makmur"
-                  value={formData.supplier_name}
-                  onChange={e => setFormData({ ...formData, supplier_name: e.target.value })}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-xs font-medium focus:ring-2 focus:ring-emerald-500 focus:outline-none"
-                />
-              </div>
+            <div>
+              <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-1">
+                Jumlah Stok Masuk Awal ({formData.unit || 'Unit'})
+              </label>
+              <input
+                type="number"
+                min="0"
+                placeholder="Contoh: 100 (opsional)"
+                value={formData.initial_stock}
+                onChange={e => {
+                  const val = e.target.value;
+                  setFormData({ ...formData, initial_stock: val === '' ? '' : Math.max(0, parseInt(val) || 0) });
+                }}
+                className="w-full px-3.5 py-2.5 rounded-xl border border-emerald-300 dark:border-emerald-800 bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-xs font-bold focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+              />
             </div>
           </div>
 
@@ -682,20 +640,6 @@ export const MasterItemManagement: React.FC = () => {
         maxWidth="md"
       >
         <form onSubmit={handleUpdateItem} className="space-y-4">
-          <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">
-              Kode Barang / Barcode
-            </label>
-            <input
-              type="text"
-              required
-              placeholder="Contoh: BRG-ELK-001"
-              value={editFormData.sku}
-              onChange={e => setEditFormData({ ...editFormData, sku: e.target.value })}
-              className="w-full px-3.5 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs font-mono font-bold uppercase focus:ring-2 focus:ring-brand-500 focus:outline-none"
-            />
-          </div>
-
           <div>
             <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">
               Nama Barang / Produk
@@ -820,7 +764,7 @@ export const MasterItemManagement: React.FC = () => {
           <div className="p-4 rounded-2xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 text-xs text-rose-800 dark:text-rose-200 space-y-2">
             <p className="font-bold text-sm text-rose-700 dark:text-rose-300">Peringatan Penghapusan!</p>
             <p>
-              Apakah Anda yakin ingin menghapus barang <strong className="font-mono font-bold text-slate-900 dark:text-white">[{itemToDelete?.sku}] {itemToDelete?.name}</strong>?
+              Apakah Anda yakin ingin menghapus barang <strong className="font-bold text-slate-900 dark:text-white">"{itemToDelete?.name}"</strong>?
             </p>
             <p className="text-slate-600 dark:text-slate-400 text-[11px] leading-relaxed">
               Tindakan ini akan menghapus data barang beserta seluruh catatan saldo stok barang ini di Gudang Pusat dan seluruh Toko Cabang.

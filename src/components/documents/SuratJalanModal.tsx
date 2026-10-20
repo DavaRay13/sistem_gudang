@@ -179,7 +179,6 @@ export const SuratJalanModal: React.FC<SuratJalanModalProps> = ({
               <thead className="bg-slate-100 text-slate-800 uppercase font-bold text-[11px] border-b border-slate-300">
                 <tr>
                   <th className="px-3 py-2.5 border-r border-slate-300 w-10 text-center">No</th>
-                  <th className="px-3 py-2.5 border-r border-slate-300">SKU</th>
                   <th className="px-3 py-2.5 border-r border-slate-300">Nama Barang / Deskripsi</th>
                   <th className="px-3 py-2.5 border-r border-slate-300 text-center">Satuan</th>
                   <th className="px-3 py-2.5 border-r border-slate-300 text-right">Harga Satuan</th>
@@ -197,7 +196,6 @@ export const SuratJalanModal: React.FC<SuratJalanModalProps> = ({
                   return (
                     <tr key={item.id} className="hover:bg-slate-50">
                       <td className="px-3 py-2 border-r border-slate-300 text-center font-medium">{idx + 1}</td>
-                      <td className="px-3 py-2 border-r border-slate-300 font-mono font-semibold">{masterItem?.sku || '-'}</td>
                       <td className="px-3 py-2 border-r border-slate-300 font-medium">
                         {masterItem?.name || `Item ID #${item.item_id}`}
                         <span className="block text-[10px] text-slate-500">{masterItem?.category}</span>

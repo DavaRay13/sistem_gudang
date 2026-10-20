@@ -244,9 +244,6 @@ export const RequestApprovalQueue: React.FC = () => {
                             <span className="font-bold text-slate-900 dark:text-white block truncate">
                               {masterItem?.name}
                             </span>
-                            <span className="font-mono text-[10px] text-slate-400">
-                              SKU: {masterItem?.sku}
-                            </span>
                           </div>
 
                           <div className="text-right shrink-0">
@@ -344,9 +341,6 @@ export const RequestApprovalQueue: React.FC = () => {
                         <div>
                           <span className="font-bold text-xs text-slate-900 dark:text-white block">
                             {masterItem?.name}
-                          </span>
-                          <span className="text-[10px] font-mono font-semibold text-slate-500 dark:text-slate-400">
-                            SKU: {masterItem?.sku || '-'}
                           </span>
                         </div>
                         <div className="text-right shrink-0">

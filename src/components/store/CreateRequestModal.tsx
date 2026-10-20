@@ -65,9 +65,8 @@ const SearchableItemPicker: React.FC<SearchableItemPickerProps> = ({
     if (!searchQuery.trim()) return true;
     const q = searchQuery.toLowerCase();
     const nameMatch = (item.name || '').toLowerCase().includes(q);
-    const skuMatch = (item.sku || '').toLowerCase().includes(q);
     const catMatch = (item.category || '').toLowerCase().includes(q);
-    return nameMatch || skuMatch || catMatch;
+    return nameMatch || catMatch;
   });
 
   const hubStock = selectedItem ? getHubStock(selectedItem.id) : 0;
@@ -83,9 +82,6 @@ const SearchableItemPicker: React.FC<SearchableItemPickerProps> = ({
         <div className="min-w-0 flex-1">
           {selectedItem ? (
             <div className="flex items-center gap-1.5 flex-wrap">
-              <span className="font-mono font-bold text-[10px] px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200">
-                {selectedItem.sku}
-              </span>
               <span className="font-semibold text-slate-900 dark:text-white truncate">
                 {selectedItem.name}
               </span>
@@ -124,7 +120,7 @@ const SearchableItemPicker: React.FC<SearchableItemPickerProps> = ({
                 type="text"
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
-                placeholder="Cari kode SKU, nama barang, kategori..."
+                placeholder="Cari nama barang atau kategori..."
                 className="w-full pl-8 pr-7 py-1.5 text-xs rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500"
               />
               {searchQuery && (
@@ -168,9 +164,6 @@ const SearchableItemPicker: React.FC<SearchableItemPickerProps> = ({
                   >
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-1.5">
-                        <span className="font-mono font-bold text-[10px] px-1.5 py-0.2 rounded bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
-                          {item.sku}
-                        </span>
                         <span className="font-semibold truncate">{item.name}</span>
                       </div>
                       <div className="flex items-center gap-1.5 mt-0.5 text-[10px] text-slate-400 font-mono">
