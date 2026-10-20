@@ -2,9 +2,10 @@ import React from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useInventory } from '../../context/InventoryContext';
 import { 
-  LayoutDashboard, Package, ClipboardList, Send, 
+  LayoutDashboard, Package, ClipboardList, 
   BookOpen, PlusCircle, CheckSquare, 
-  Warehouse, Store, AlertCircle, LogOut
+  Warehouse, Store, AlertCircle, LogOut,
+  Layers, Users
 } from 'lucide-react';
 
 export type NavigationTab = 
@@ -19,7 +20,9 @@ export type NavigationTab =
   | 'store_dashboard'
   | 'store_create_request'
   | 'store_request_history'
-  | 'store_receiving';
+  | 'store_receiving'
+  // Warehouse Pipeline (combined view)
+  | 'warehouse_pipeline';
 
 interface SidebarProps {
   activeTab: NavigationTab;
@@ -54,64 +57,66 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const warehouseMenuItems = [
     {
       id: 'warehouse_dashboard' as NavigationTab,
-      label: 'Dasbor Gudang',
+      label: 'Beranda Gudang',
       icon: LayoutDashboard,
+      hint: 'Ringkasan stok & aktivitas',
+    },
+    {
+      id: 'warehouse_pipeline' as NavigationTab,
+      label: 'Proses Permintaan',
+      icon: Layers,
+      badge: (pendingRequestsCount + approvedForDispatchCount) > 0 ? (pendingRequestsCount + approvedForDispatchCount) : undefined,
+      badgeColor: 'bg-[#FBF3DB] text-[#956400] dark:bg-[#332A15] dark:text-[#E8CA65] border border-[#F4E3B4] dark:border-[#4D3F1E]',
+      hint: 'Setujui & kirim barang ke toko',
     },
     {
       id: 'warehouse_master_items' as NavigationTab,
-      label: 'Master Barang & Stok',
+      label: 'Kelola Barang & Stok',
       icon: Package,
-    },
-    {
-      id: 'warehouse_approval_queue' as NavigationTab,
-      label: 'Antrean Otorisasi',
-      icon: ClipboardList,
-      badge: pendingRequestsCount > 0 ? pendingRequestsCount : undefined,
-      badgeColor: 'bg-[#FBF3DB] text-[#956400] dark:bg-[#332A15] dark:text-[#E8CA65] border border-[#F4E3B4] dark:border-[#4D3F1E]',
-    },
-    {
-      id: 'warehouse_dispatch' as NavigationTab,
-      label: 'Pengiriman & DO',
-      icon: Send,
-      badge: approvedForDispatchCount > 0 ? approvedForDispatchCount : undefined,
-      badgeColor: 'bg-[#E1F3FE] text-[#1F6C9F] dark:bg-[#142838] dark:text-[#97D2FB] border border-[#C8E7FD] dark:border-[#1E3B52]',
+      hint: 'Master barang & stok masuk',
     },
     {
       id: 'warehouse_mutation_ledger' as NavigationTab,
-      label: 'Ledger Mutasi Stok',
+      label: 'Riwayat Keluar Masuk',
       icon: BookOpen,
+      hint: 'Catatan semua pergerakan stok',
     },
     {
       id: 'warehouse_user_management' as NavigationTab,
       label: 'Kelola Pengguna',
-      icon: PlusCircle,
+      icon: Users,
+      hint: 'Akun staf toko & gudang',
     },
   ];
 
   const storeMenuItems = [
     {
       id: 'store_dashboard' as NavigationTab,
-      label: 'Dasbor Toko',
+      label: 'Beranda Toko',
       icon: LayoutDashboard,
       badge: lowStockCount > 0 ? lowStockCount : undefined,
       badgeColor: 'bg-[#FDEBEC] text-[#9F2F2D] dark:bg-[#381B1B] dark:text-[#F8A4A4] border border-[#F8D2D4] dark:border-[#522525]',
+      hint: 'Stok toko & daftar barang',
     },
     {
       id: 'store_create_request' as NavigationTab,
-      label: 'Buat Permintaan Stok',
+      label: 'Minta Tambah Stok',
       icon: PlusCircle,
-    },
-    {
-      id: 'store_request_history' as NavigationTab,
-      label: 'Riwayat Dokumen',
-      icon: ClipboardList,
+      hint: 'Ajukan barang ke gudang pusat',
     },
     {
       id: 'store_receiving' as NavigationTab,
-      label: 'Konfirmasi Penerimaan',
+      label: 'Terima Barang Datang',
       icon: CheckSquare,
       badge: inTransitCount > 0 ? inTransitCount : undefined,
       badgeColor: 'bg-[#E1F3FE] text-[#1F6C9F] dark:bg-[#142838] dark:text-[#97D2FB] border border-[#C8E7FD] dark:border-[#1E3B52]',
+      hint: 'Hitung & konfirmasi kiriman tiba',
+    },
+    {
+      id: 'store_request_history' as NavigationTab,
+      label: 'Riwayat Permintaan',
+      icon: ClipboardList,
+      hint: 'Semua permintaan yang pernah dibuat',
     },
   ];
 
@@ -183,18 +188,23 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     onSelectTab(item.id);
                     onCloseMobile();
                   }}
-                  className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-medium transition-all ${
+                  className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-xs font-medium transition-all ${
                     isActive
                       ? 'bg-[#111111] text-white dark:bg-white dark:text-[#111111]'
                       : 'text-[#787774] dark:text-[#A1A09E] hover:bg-[#F7F6F3] dark:hover:bg-[#18191D] hover:text-[#111111] dark:hover:text-white'
                   }`}
                 >
-                  <div className="flex items-center gap-2.5">
-                    <Icon className="w-3.5 h-3.5" />
-                    <span>{item.label}</span>
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <Icon className="w-3.5 h-3.5 shrink-0" />
+                    <div className="text-left min-w-0">
+                      <div className="font-medium">{item.label}</div>
+                      {item.hint && !isActive && (
+                        <div className="text-[10px] opacity-60 truncate">{item.hint}</div>
+                      )}
+                    </div>
                   </div>
                   {item.badge !== undefined && (
-                    <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-mono font-medium ${item.badgeColor}`}>
+                    <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-mono font-medium shrink-0 ${item.badgeColor}`}>
                       {item.badge}
                     </span>
                   )}

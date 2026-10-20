@@ -1,8 +1,10 @@
-import React from 'react';
+import React, { useRef, useState } from 'react';
 import { TransferRequest, Location, Item, User } from '../../types';
 import { Modal } from '../common/Modal';
-import { Printer, PackageCheck, ShieldCheck } from 'lucide-react';
+import { PackageCheck, ShieldCheck, Share2, Loader2, Download } from 'lucide-react';
 import { formatDate, formatRupiah } from '../../utils/formatters';
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
 
 interface SuratJalanModalProps {
   isOpen: boolean;
@@ -27,9 +29,80 @@ export const SuratJalanModal: React.FC<SuratJalanModalProps> = ({
   const approver = users.find(u => u.id === request.approved_by);
 
   const itemMap = new Map(items.map(i => [i.id, i]));
+  const printRef = useRef<HTMLDivElement>(null);
+  const [loadingPdf, setLoadingPdf] = useState(false);
 
-  const handlePrint = () => {
-    window.print();
+  const generatePdfBlob = async (): Promise<Blob> => {
+    const el = printRef.current;
+    if (!el) throw new Error('Element tidak ditemukan');
+
+    const canvas = await html2canvas(el, {
+      scale: 2,
+      useCORS: true,
+      backgroundColor: '#ffffff',
+    });
+
+    const imgData = canvas.toDataURL('image/png');
+    const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+    const pageWidth = pdf.internal.pageSize.getWidth();
+    const pageHeight = pdf.internal.pageSize.getHeight();
+    const imgWidth = pageWidth;
+    const imgHeight = (canvas.height * pageWidth) / canvas.width;
+
+    let y = 0;
+    while (y < imgHeight) {
+      if (y > 0) pdf.addPage();
+      pdf.addImage(imgData, 'PNG', 0, -y, imgWidth, imgHeight);
+      y += pageHeight;
+    }
+
+    return pdf.output('blob');
+  };
+
+  const handleDownloadPdf = async () => {
+    setLoadingPdf(true);
+    try {
+      const blob = await generatePdfBlob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${request.do_number || request.request_number}.pdf`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } finally {
+      setLoadingPdf(false);
+    }
+  };
+
+  const handleShareWA = async () => {
+    setLoadingPdf(true);
+    try {
+      const blob = await generatePdfBlob();
+      const filename = `${request.do_number || request.request_number}.pdf`;
+      const file = new File([blob], filename, { type: 'application/pdf' });
+
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        // Share API — Android Chrome & iOS Safari 15+
+        await navigator.share({
+          title: `Surat Jalan ${request.do_number || request.request_number}`,
+          text: `Surat Jalan untuk ${toLoc?.name || 'Toko'}`,
+          files: [file],
+        });
+      } else {
+        // Fallback: download PDF dulu, lalu buka WA
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        a.click();
+        URL.revokeObjectURL(url);
+        // Buka WA web setelah download
+        const waMsg = encodeURIComponent(`Surat Jalan ${request.do_number || request.request_number} untuk ${toLoc?.name || 'Toko'} sudah diunduh, silakan lampirkan file PDF.`);
+        setTimeout(() => window.open(`https://wa.me/?text=${waMsg}`, '_blank'), 800);
+      }
+    } finally {
+      setLoadingPdf(false);
+    }
   };
 
   return (
@@ -42,7 +115,7 @@ export const SuratJalanModal: React.FC<SuratJalanModalProps> = ({
     >
       <div className="space-y-6 print:space-y-4">
         {/* Printable Area */}
-        <div id="printable-surat-jalan" className="p-3 sm:p-8 bg-white text-slate-900 rounded-xl border border-slate-200 shadow-sm print:border-none print:shadow-none print:p-0 overflow-hidden">
+        <div ref={printRef} id="printable-surat-jalan" className="p-3 sm:p-8 bg-white text-slate-900 rounded-xl border border-slate-200 shadow-sm print:border-none print:shadow-none print:p-0 overflow-hidden">
           
           {/* Header Surat Jalan */}
           <div className="flex flex-col sm:flex-row justify-between items-start pb-6 border-b-2 border-slate-900 gap-4">
@@ -192,19 +265,34 @@ export const SuratJalanModal: React.FC<SuratJalanModalProps> = ({
         </div>
 
         {/* Action Buttons */}
-        <div className="flex items-center justify-end gap-3 print:hidden">
+        <div className="flex flex-col sm:flex-row items-center justify-end gap-2 print:hidden">
           <button
             onClick={onClose}
-            className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+            className="w-full sm:w-auto px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
           >
             Tutup
           </button>
+
           <button
-            onClick={handlePrint}
-            className="flex items-center gap-2 px-5 py-2 rounded-xl text-xs font-bold text-white bg-slate-900 hover:bg-slate-800 dark:bg-brand-600 dark:hover:bg-brand-500 shadow-md transition-all"
+            onClick={handleDownloadPdf}
+            disabled={loadingPdf}
+            className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-50 transition-all"
           >
-            <Printer className="w-4 h-4" />
-            <span>Cetak Surat Jalan (Print)</span>
+            {loadingPdf ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+            <span>Unduh PDF</span>
+          </button>
+
+          <button
+            onClick={handleShareWA}
+            disabled={loadingPdf}
+            className="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-2 rounded-xl text-xs font-bold text-white bg-[#25D366] hover:bg-[#1ebe5d] disabled:opacity-50 shadow-md transition-all active:scale-[0.98]"
+          >
+            {loadingPdf ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <Share2 className="w-4 h-4" />
+            )}
+            <span>Kirim ke WhatsApp</span>
           </button>
         </div>
       </div>

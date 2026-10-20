@@ -13,6 +13,7 @@ import { RequestApprovalQueue } from './components/warehouse/RequestApprovalQueu
 import { DispatchManagement } from './components/warehouse/DispatchManagement';
 import { MutationLedgerReport } from './components/warehouse/MutationLedgerReport';
 import { UserManagement } from './components/warehouse/UserManagement';
+import { WarehousePipeline } from './components/warehouse/WarehousePipeline';
 
 // Store Views
 import { StoreDashboard } from './components/store/StoreDashboard';
@@ -79,6 +80,9 @@ export const App: React.FC = () => {
             <>
               {activeTab === 'warehouse_dashboard' && (
                 <WarehouseDashboard onNavigate={handleSelectTab} />
+              )}
+              {activeTab === 'warehouse_pipeline' && (
+                <WarehousePipeline onNavigate={handleSelectTab} />
               )}
               {activeTab === 'warehouse_master_items' && (
                 <MasterItemManagement />

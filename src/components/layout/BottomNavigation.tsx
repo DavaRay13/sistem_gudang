@@ -3,8 +3,8 @@ import { useAuth } from '../../context/AuthContext';
 import { useInventory } from '../../context/InventoryContext';
 import { NavigationTab } from './Sidebar';
 import { 
-  LayoutDashboard, Package, ClipboardList, Send, 
-  BookOpen, CheckSquare, PlusCircle
+  LayoutDashboard, Package, Layers, 
+  BookOpen, CheckSquare, PlusCircle, ClipboardList
 } from 'lucide-react';
 
 interface BottomNavigationProps {
@@ -39,27 +39,20 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({
       icon: LayoutDashboard,
     },
     {
+      id: 'warehouse_pipeline' as NavigationTab,
+      label: 'Proses',
+      icon: Layers,
+      badge: (pendingRequestsCount + approvedForDispatchCount) > 0 ? (pendingRequestsCount + approvedForDispatchCount) : undefined,
+      badgeColor: 'bg-[#FBF3DB] text-[#956400] dark:bg-[#332A15] dark:text-[#E8CA65]',
+    },
+    {
       id: 'warehouse_master_items' as NavigationTab,
       label: 'Barang',
       icon: Package,
     },
     {
-      id: 'warehouse_approval_queue' as NavigationTab,
-      label: 'Otorisasi',
-      icon: ClipboardList,
-      badge: pendingRequestsCount > 0 ? pendingRequestsCount : undefined,
-      badgeColor: 'bg-[#FBF3DB] text-[#956400] dark:bg-[#332A15] dark:text-[#E8CA65]',
-    },
-    {
-      id: 'warehouse_dispatch' as NavigationTab,
-      label: 'Kirim',
-      icon: Send,
-      badge: approvedForDispatchCount > 0 ? approvedForDispatchCount : undefined,
-      badgeColor: 'bg-[#E1F3FE] text-[#1F6C9F] dark:bg-[#142838] dark:text-[#97D2FB]',
-    },
-    {
       id: 'warehouse_mutation_ledger' as NavigationTab,
-      label: 'Ledger',
+      label: 'Riwayat',
       icon: BookOpen,
     },
   ];
@@ -78,16 +71,16 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({
       icon: PlusCircle,
     },
     {
-      id: 'store_request_history' as NavigationTab,
-      label: 'Riwayat',
-      icon: ClipboardList,
-    },
-    {
       id: 'store_receiving' as NavigationTab,
       label: 'Terima',
       icon: CheckSquare,
       badge: inTransitCount > 0 ? inTransitCount : undefined,
       badgeColor: 'bg-[#E1F3FE] text-[#1F6C9F] dark:bg-[#142838] dark:text-[#97D2FB]',
+    },
+    {
+      id: 'store_request_history' as NavigationTab,
+      label: 'Riwayat',
+      icon: ClipboardList,
     },
   ];
 
