@@ -67,12 +67,12 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({
     },
     {
       id: 'store_create_request' as NavigationTab,
-      label: 'Minta Stok',
+      label: 'Minta Barang',
       icon: PlusCircle,
     },
     {
       id: 'store_receiving' as NavigationTab,
-      label: 'Terima',
+      label: 'Barang Masuk',
       icon: CheckSquare,
       badge: inTransitCount > 0 ? inTransitCount : undefined,
       badgeColor: 'bg-[#E1F3FE] text-[#1F6C9F] dark:bg-[#142838] dark:text-[#97D2FB]',

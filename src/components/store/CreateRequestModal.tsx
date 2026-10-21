@@ -12,6 +12,7 @@ import { Item, Inventory } from '../../types';
 interface CreateRequestModalProps {
   isOpen: boolean;
   onClose: () => void;
+  initialItemId?: number;
 }
 
 interface ItemRow {
@@ -205,19 +206,22 @@ const SearchableItemPicker: React.FC<SearchableItemPickerProps> = ({
 export const CreateRequestModal: React.FC<CreateRequestModalProps> = ({
   isOpen,
   onClose,
+  initialItemId,
 }) => {
   const { items, inventories, requests, createRequest } = useInventory();
   const { currentUser, currentLocation } = useAuth();
 
-  const [rows, setRows] = useState<ItemRow[]>([{ itemId: items[0]?.id || 1, qtyRequested: 10 }]);
+  const [rows, setRows] = useState<ItemRow[]>([{ itemId: initialItemId || items[0]?.id || 1, qtyRequested: 10 }]);
   const [notes, setNotes] = useState<string>('Pengisian stok toko harian');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   React.useEffect(() => {
-    if (items.length > 0 && (!rows[0] || !items.some(i => i.id === rows[0].itemId))) {
+    if (initialItemId && items.some(i => i.id === initialItemId)) {
+      setRows([{ itemId: initialItemId, qtyRequested: 10 }]);
+    } else if (items.length > 0 && (!rows[0] || !items.some(i => i.id === rows[0].itemId))) {
       setRows([{ itemId: items[0].id, qtyRequested: 10 }]);
     }
-  }, [items]);
+  }, [items, initialItemId, isOpen]);
 
   const itemMap = new Map(items.map(i => [i.id, i]));
 
@@ -353,46 +357,64 @@ export const CreateRequestModal: React.FC<CreateRequestModalProps> = ({
                     </div>
 
                     {/* Quantity Stepper & Subtotal on Mobile */}
-                    <div className="flex items-center justify-between pt-1 border-t border-slate-200/60 dark:border-slate-700/60">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-1.5 border-t border-slate-200/60 dark:border-slate-700/60">
                       <div>
                         <span className="text-[10px] text-slate-400 block font-semibold">
                           Subtotal: <strong className="text-emerald-600 dark:text-emerald-400">{formatRupiah(subtotal)}</strong>
                         </span>
                       </div>
 
-                      <div className="flex items-center gap-2">
-                        <button
-                          type="button"
-                          onClick={() => handleRowChange(idx, 'qtyRequested', Math.max(1, (Number(row.qtyRequested) || 0) - 5))}
-                          className="p-1.5 rounded-lg bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 active:scale-90"
-                        >
-                          <Minus className="w-4 h-4" />
-                        </button>
+                      <div className="flex items-center justify-between sm:justify-end gap-2">
+                        {/* Preset quick buttons */}
+                        <div className="flex items-center gap-1">
+                          {[5, 10, 25].map(preset => (
+                            <button
+                              key={preset}
+                              type="button"
+                              onClick={() => handleRowChange(idx, 'qtyRequested', (Number(row.qtyRequested) || 0) + preset)}
+                              className="px-2 py-1 rounded-md text-[10px] font-semibold bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-600 active:scale-95"
+                            >
+                              +{preset}
+                            </button>
+                          ))}
+                        </div>
 
-                        <input
-                          type="number"
-                          min="1"
-                          required
-                          value={row.qtyRequested}
-                          onChange={e => {
-                            const val = e.target.value;
-                            handleRowChange(idx, 'qtyRequested', val === '' ? '' : Math.max(0, parseInt(val) || 0));
-                          }}
-                          onBlur={() => {
-                            if (!row.qtyRequested || Number(row.qtyRequested) < 1) {
-                              handleRowChange(idx, 'qtyRequested', 1);
-                            }
-                          }}
-                          className="w-16 py-1 text-center font-black text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white"
-                        />
+                        <div className="flex items-center gap-1.5">
+                          <button
+                            type="button"
+                            onClick={() => handleRowChange(idx, 'qtyRequested', Math.max(1, (Number(row.qtyRequested) || 0) - 1))}
+                            className="w-8 h-8 rounded-lg bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 flex items-center justify-center active:scale-90 font-bold"
+                            title="Kurang 1"
+                          >
+                            <Minus className="w-3.5 h-3.5" />
+                          </button>
 
-                        <button
-                          type="button"
-                          onClick={() => handleRowChange(idx, 'qtyRequested', (Number(row.qtyRequested) || 0) + 5)}
-                          className="p-1.5 rounded-lg bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 active:scale-90"
-                        >
-                          <Plus className="w-4 h-4" />
-                        </button>
+                          <input
+                            type="number"
+                            min="1"
+                            required
+                            value={row.qtyRequested}
+                            onChange={e => {
+                              const val = e.target.value;
+                              handleRowChange(idx, 'qtyRequested', val === '' ? '' : Math.max(0, parseInt(val) || 0));
+                            }}
+                            onBlur={() => {
+                              if (!row.qtyRequested || Number(row.qtyRequested) < 1) {
+                                handleRowChange(idx, 'qtyRequested', 1);
+                              }
+                            }}
+                            className="w-14 py-1 text-center font-black text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white"
+                          />
+
+                          <button
+                            type="button"
+                            onClick={() => handleRowChange(idx, 'qtyRequested', (Number(row.qtyRequested) || 0) + 1)}
+                            className="w-8 h-8 rounded-lg bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 flex items-center justify-center active:scale-90 font-bold"
+                            title="Tambah 1"
+                          >
+                            <Plus className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
                       </div>
                     </div>
                   </div>

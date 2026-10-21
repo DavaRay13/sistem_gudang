@@ -106,14 +106,31 @@ export const ReceivingHandshakeModal: React.FC<ReceivingHandshakeModalProps> = (
       <form onSubmit={handleSubmit} className="space-y-4">
         
         {/* Verification Info Box */}
-        <div className="p-3.5 rounded-2xl bg-blue-50/70 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-900/40 text-xs text-blue-900 dark:text-blue-200 flex items-start gap-2.5">
-          <ShieldCheck className="w-5 h-5 text-blue-600 shrink-0 mt-0.5" />
-          <div className="space-y-0.5 leading-relaxed">
-            <span className="font-bold block">Pemeriksaan Barang:</span>
-            <p className="text-slate-600 dark:text-slate-300">
-              Hitung barang fisik yang Anda terima. Stok toko akan bertambah sesuai <strong>Jumlah Diterima</strong>. Jika ada yang kurang atau rusak, selisihnya akan otomatis dicatat.
-            </p>
+        <div className="p-3.5 rounded-2xl bg-blue-50/70 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-900/40 text-xs text-blue-900 dark:text-blue-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="flex items-start gap-2.5">
+            <ShieldCheck className="w-5 h-5 text-blue-600 shrink-0 mt-0.5" />
+            <div className="space-y-0.5 leading-relaxed">
+              <span className="font-bold block">Pemeriksaan Barang Masuk:</span>
+              <p className="text-slate-600 dark:text-slate-300 text-[11px]">
+                Pastikan barang fisik yang tiba sesuai. Jika semua aman, klik tombol di sebelah kanan.
+              </p>
+            </div>
           </div>
+
+          <button
+            type="button"
+            onClick={() => {
+              const full: { [itemId: number]: number } = {};
+              request.items.forEach(i => {
+                full[i.item_id] = i.qty_dispatched;
+              });
+              setReceivedQtys(full);
+              setDiscrepancyReasons({});
+            }}
+            className="px-3 py-1.5 rounded-xl bg-white dark:bg-slate-800 border border-blue-300 dark:border-blue-700 text-blue-700 dark:text-blue-300 font-semibold text-xs hover:bg-blue-50 dark:hover:bg-slate-700 active:scale-95 shrink-0 shadow-sm"
+          >
+            ✓ Semua Sesuai & Lengkap
+          </button>
         </div>
 
         {/* Item Rows Verification */}
@@ -223,20 +240,44 @@ export const ReceivingHandshakeModal: React.FC<ReceivingHandshakeModalProps> = (
 
                   {/* Discrepancy Reason */}
                   {isShort && (
-                    <div className="pt-2 border-t border-rose-200 dark:border-rose-900/40 space-y-1">
-                      <span className="text-[10px] font-bold text-rose-600 block">
-                        Kurang {item.qty_dispatched - numReceived} {masterItem?.unit}. Wajib isi alasan:
-                      </span>
+                    <div className="pt-2 border-t border-rose-200 dark:border-rose-900/40 space-y-1.5">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] font-bold text-rose-600 block">
+                          Kurang {item.qty_dispatched - numReceived} {masterItem?.unit}. Pilih / ketik alasan:
+                        </span>
+                      </div>
+
+                      {/* Quick Reason Chips */}
+                      <div className="flex flex-wrap gap-1">
+                        {['Pecah / Rusak', 'Kurang Kirim', 'Salah Barang', 'Cacat Kemasan'].map(reason => (
+                          <button
+                            key={reason}
+                            type="button"
+                            onClick={() => setDiscrepancyReasons({
+                              ...discrepancyReasons,
+                              [item.item_id]: reason,
+                            })}
+                            className={`px-2 py-0.5 rounded-md text-[10px] font-medium border transition-colors ${
+                              discrepancyReasons[item.item_id] === reason
+                                ? 'bg-rose-600 text-white border-rose-600'
+                                : 'bg-white dark:bg-slate-900 border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-300'
+                            }`}
+                          >
+                            {reason}
+                          </button>
+                        ))}
+                      </div>
+
                       <input
                         type="text"
                         required
-                        placeholder="Contoh: 2 botol pecah di jalan..."
+                        placeholder="Atau tulis alasan lainnya di sini..."
                         value={discrepancyReasons[item.item_id] || ''}
                         onChange={e => setDiscrepancyReasons({
                           ...discrepancyReasons,
                           [item.item_id]: e.target.value,
                         })}
-                        className="w-full px-3 py-2 text-xs rounded-xl border border-rose-300 dark:border-rose-800 bg-white dark:bg-slate-900 text-slate-900 dark:text-white placeholder-rose-300"
+                        className="w-full px-3 py-1.5 text-xs rounded-xl border border-rose-300 dark:border-rose-800 bg-white dark:bg-slate-900 text-slate-900 dark:text-white placeholder-rose-300"
                       />
                     </div>
                   )}
