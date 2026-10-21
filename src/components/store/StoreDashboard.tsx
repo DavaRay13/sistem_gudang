@@ -96,88 +96,96 @@ export const StoreDashboard: React.FC<StoreDashboardProps> = ({ onNavigate }) =>
           </div>
         </div>
 
-        {/* 3 Tombol Aksi Cepat Ramah Sentuhan (Mobile-First) */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        {/* Quick Actions (Mobile: 1 Hero Full-width + 2-Col Status Grid; Desktop: 3-Col Bento) */}
+        <div className="space-y-2 sm:space-y-0 sm:grid sm:grid-cols-3 sm:gap-3">
           {/* Tombol 1: Minta Barang */}
           <button
             onClick={() => handleOpenRequestForItem()}
-            className="p-3.5 rounded-2xl bg-[#111111] dark:bg-white text-white dark:text-[#111111] flex items-center justify-between shadow-sm active:scale-[0.98] transition-all text-left group"
+            className="w-full p-3 sm:p-3.5 rounded-xl sm:rounded-2xl bg-[#111111] dark:bg-white text-white dark:text-[#111111] flex items-center justify-between shadow-sm active:scale-[0.98] transition-all text-left group"
           >
-            <div className="space-y-0.5">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-300 dark:text-slate-600 block">
-                Permintaan Baru
-              </span>
-              <span className="text-sm font-bold block">
-                + Minta Barang
-              </span>
-              <span className="text-[11px] text-slate-300 dark:text-slate-500 block">
-                Pilih barang dari gudang pusat
-              </span>
+            <div className="flex items-center gap-2.5 sm:block sm:space-y-0.5">
+              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-white/10 dark:bg-black/10 flex items-center justify-center shrink-0 sm:hidden">
+                <PlusCircle className="w-4 h-4" />
+              </div>
+              <div>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-300 dark:text-slate-600 hidden sm:block">
+                  Permintaan Baru
+                </span>
+                <span className="text-xs sm:text-sm font-bold block leading-tight">
+                  + Minta Pasokan Barang
+                </span>
+                <span className="text-[10px] sm:text-[11px] text-slate-300 dark:text-slate-500 block">
+                  Pilih barang dari gudang pusat
+                </span>
+              </div>
             </div>
-            <div className="w-10 h-10 rounded-xl bg-white/10 dark:bg-black/5 flex items-center justify-center shrink-0">
+            <div className="w-10 h-10 rounded-xl bg-white/10 dark:bg-black/5 items-center justify-center shrink-0 hidden sm:flex">
               <PlusCircle className="w-5 h-5" />
             </div>
           </button>
 
-          {/* Tombol 2: Kiriman Masuk */}
-          <button
-            onClick={() => {
-              if (inTransitRequests.length > 0) {
-                setActiveReceivingReq(inTransitRequests[0]);
-              } else {
-                onNavigate('store_receiving');
-              }
-            }}
-            className={`p-3.5 rounded-2xl border text-left flex items-center justify-between active:scale-[0.98] transition-all ${
-              inTransitRequests.length > 0
-                ? 'bg-[#E1F3FE] dark:bg-[#142838] border-[#C8E7FD] dark:border-[#1E3B52] text-[#1F6C9F] dark:text-[#97D2FB]'
-                : 'bg-white dark:bg-[#16171A] border-[#EAEAEA] dark:border-[#26282E] text-[#787774] dark:text-[#A1A09E]'
-            }`}
-          >
-            <div className="space-y-0.5">
-              <span className="text-[10px] font-bold uppercase tracking-wider opacity-80 block">
-                Kiriman Kurir
-              </span>
-              <span className="text-sm font-bold block">
-                {inTransitRequests.length > 0 ? `${inTransitRequests.length} Kiriman Di Jalan` : 'Tidak Ada Kiriman'}
-              </span>
-              <span className="text-[11px] opacity-80 block">
-                {inTransitRequests.length > 0 ? 'Klik untuk terima saat tiba' : 'Semua kiriman sudah sampai'}
-              </span>
-            </div>
-            <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
-              inTransitRequests.length > 0 ? 'bg-[#1F6C9F] text-white' : 'bg-slate-100 dark:bg-slate-800'
-            }`}>
-              <Truck className="w-5 h-5" />
-            </div>
-          </button>
+          {/* Grid 2-Kolom untuk 2 Status Action di Mobile */}
+          <div className="grid grid-cols-2 gap-2 sm:contents">
+            {/* Tombol 2: Kiriman Masuk */}
+            <button
+              onClick={() => {
+                if (inTransitRequests.length > 0) {
+                  setActiveReceivingReq(inTransitRequests[0]);
+                } else {
+                  onNavigate('store_receiving');
+                }
+              }}
+              className={`p-2.5 sm:p-3.5 rounded-xl sm:rounded-2xl border text-left flex items-center justify-between active:scale-[0.98] transition-all ${
+                inTransitRequests.length > 0
+                  ? 'bg-[#E1F3FE] dark:bg-[#142838] border-[#C8E7FD] dark:border-[#1E3B52] text-[#1F6C9F] dark:text-[#97D2FB]'
+                  : 'bg-white dark:bg-[#16171A] border-[#EAEAEA] dark:border-[#26282E] text-[#787774] dark:text-[#A1A09E]'
+              }`}
+            >
+              <div className="space-y-0.5 min-w-0">
+                <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider opacity-80 block truncate">
+                  Kiriman Kurir
+                </span>
+                <span className="text-xs sm:text-sm font-bold block truncate leading-tight">
+                  {inTransitRequests.length > 0 ? `${inTransitRequests.length} Di Jalan` : 'Nihil'}
+                </span>
+                <span className="text-[10px] opacity-75 hidden sm:block">
+                  {inTransitRequests.length > 0 ? 'Klik untuk terima' : 'Semua sampai'}
+                </span>
+              </div>
+              <div className={`w-7 h-7 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl flex items-center justify-center shrink-0 ${
+                inTransitRequests.length > 0 ? 'bg-[#1F6C9F] text-white' : 'bg-slate-100 dark:bg-slate-800'
+              }`}>
+                <Truck className="w-3.5 h-3.5 sm:w-5 sm:h-5" />
+              </div>
+            </button>
 
-          {/* Tombol 3: Stok Perlu Tambah */}
-          <button
-            onClick={() => setStockFilter(stockFilter === 'LOW' ? 'ALL' : 'LOW')}
-            className={`p-3.5 rounded-2xl border text-left flex items-center justify-between active:scale-[0.98] transition-all ${
-              lowStockItems.length + outOfStockItems.length > 0
-                ? 'bg-[#FBF3DB] dark:bg-[#332A15] border-[#F4E3B4] dark:border-[#4D3F1E] text-[#956400] dark:text-[#E8CA65]'
-                : 'bg-white dark:bg-[#16171A] border-[#EAEAEA] dark:border-[#26282E] text-[#787774] dark:text-[#A1A09E]'
-            }`}
-          >
-            <div className="space-y-0.5">
-              <span className="text-[10px] font-bold uppercase tracking-wider opacity-80 block">
-                Peringatan Stok
-              </span>
-              <span className="text-sm font-bold block">
-                {lowStockItems.length + outOfStockItems.length} Barang Perlu Tambah
-              </span>
-              <span className="text-[11px] opacity-80 block">
-                {stockFilter === 'LOW' ? 'Menampilkan filter krisis' : 'Klik untuk lihat daftar'}
-              </span>
-            </div>
-            <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
-              lowStockItems.length + outOfStockItems.length > 0 ? 'bg-[#956400] text-white dark:bg-[#E8CA65] dark:text-black' : 'bg-slate-100 dark:bg-slate-800'
-            }`}>
-              <AlertCircle className="w-5 h-5" />
-            </div>
-          </button>
+            {/* Tombol 3: Stok Perlu Tambah */}
+            <button
+              onClick={() => setStockFilter(stockFilter === 'LOW' ? 'ALL' : 'LOW')}
+              className={`p-2.5 sm:p-3.5 rounded-xl sm:rounded-2xl border text-left flex items-center justify-between active:scale-[0.98] transition-all ${
+                lowStockItems.length + outOfStockItems.length > 0
+                  ? 'bg-[#FBF3DB] dark:bg-[#332A15] border-[#F4E3B4] dark:border-[#4D3F1E] text-[#956400] dark:text-[#E8CA65]'
+                  : 'bg-white dark:bg-[#16171A] border-[#EAEAEA] dark:border-[#26282E] text-[#787774] dark:text-[#A1A09E]'
+              }`}
+            >
+              <div className="space-y-0.5 min-w-0">
+                <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider opacity-80 block truncate">
+                  Peringatan Stok
+                </span>
+                <span className="text-xs sm:text-sm font-bold block truncate leading-tight">
+                  {lowStockItems.length + outOfStockItems.length} Perlu Tambah
+                </span>
+                <span className="text-[10px] opacity-75 hidden sm:block">
+                  {stockFilter === 'LOW' ? 'Filter krisis' : 'Lihat daftar'}
+                </span>
+              </div>
+              <div className={`w-7 h-7 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl flex items-center justify-center shrink-0 ${
+                lowStockItems.length + outOfStockItems.length > 0 ? 'bg-[#956400] text-white dark:bg-[#E8CA65] dark:text-black' : 'bg-slate-100 dark:bg-slate-800'
+              }`}>
+                <AlertCircle className="w-3.5 h-3.5 sm:w-5 sm:h-5" />
+              </div>
+            </button>
+          </div>
         </div>
       </div>
 
@@ -208,36 +216,44 @@ export const StoreDashboard: React.FC<StoreDashboardProps> = ({ onNavigate }) =>
         </div>
       )}
 
-      {/* 3. KPI ringkasan */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-        <StatCard
-          title="Stok di Toko"
-          value={formatNumber(totalLocalStock)}
-          subtitle={`${myInventories.length} jenis barang`}
-          icon={Package}
-          color="emerald"
-        />
-        <StatCard
-          title="Stok Hampir Habis"
-          value={lowStockItems.length}
-          subtitle="Perlu segera diminta"
-          icon={ShieldAlert}
-          color="amber"
-        />
-        <StatCard
-          title="Sedang Dikirim"
-          value={inTransitRequests.length}
-          subtitle="Truk dalam perjalanan"
-          icon={Truck}
-          color="blue"
-        />
-        <StatCard
-          title="Menunggu Gudang"
-          value={pendingRequests.length}
-          subtitle="Diproses admin gudang"
-          icon={Clock}
-          color="purple"
-        />
+      {/* 3. KPI ringkasan: Carousel geser di mobile, Grid di desktop */}
+      <div className="flex lg:grid lg:grid-cols-4 gap-2 sm:gap-4 overflow-x-auto no-scrollbar pb-1 -mx-1 px-1 snap-x snap-mandatory">
+        <div className="min-w-[135px] sm:min-w-0 snap-start flex-1">
+          <StatCard
+            title="Stok di Toko"
+            value={formatNumber(totalLocalStock)}
+            subtitle={`${myInventories.length} jenis`}
+            icon={Package}
+            color="emerald"
+          />
+        </div>
+        <div className="min-w-[135px] sm:min-w-0 snap-start flex-1">
+          <StatCard
+            title="Hampir Habis"
+            value={lowStockItems.length}
+            subtitle="Perlu diminta"
+            icon={ShieldAlert}
+            color="amber"
+          />
+        </div>
+        <div className="min-w-[135px] sm:min-w-0 snap-start flex-1">
+          <StatCard
+            title="Sedang Dikirim"
+            value={inTransitRequests.length}
+            subtitle="Truk jalan"
+            icon={Truck}
+            color="blue"
+          />
+        </div>
+        <div className="min-w-[135px] sm:min-w-0 snap-start flex-1">
+          <StatCard
+            title="Menunggu"
+            value={pendingRequests.length}
+            subtitle="Diproses"
+            icon={Clock}
+            color="purple"
+          />
+        </div>
       </div>
 
       {/* 4. Tracker status permintaan terkini */}
@@ -406,7 +422,7 @@ export const StoreDashboard: React.FC<StoreDashboardProps> = ({ onNavigate }) =>
             </p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-3">
             {filteredItems.map(item => {
               const inv = myInventories.find(i => i.item_id === item.id);
               const available = inv ? inv.stock_available : 0;
@@ -416,27 +432,36 @@ export const StoreDashboard: React.FC<StoreDashboardProps> = ({ onNavigate }) =>
               return (
                 <div
                   key={item.id}
-                  className="p-3.5 rounded-2xl bg-[#FBFBFA] dark:bg-[#191A1E] border border-[#EAEAEA] dark:border-[#26282E] hover:border-[#D4D4D4] dark:hover:border-[#383A42] flex items-center justify-between gap-3 text-xs transition-colors shadow-sm"
+                  className="p-2.5 sm:p-3.5 rounded-xl sm:rounded-2xl bg-[#FBFBFA] dark:bg-[#191A1E] border border-[#EAEAEA] dark:border-[#26282E] hover:border-[#D4D4D4] dark:hover:border-[#383A42] flex items-center justify-between gap-2.5 text-xs transition-colors shadow-sm"
                 >
-                  <div className="min-w-0 flex-1">
-                    <span className="font-bold text-sm text-[#111111] dark:text-[#ECECED] block truncate">
-                      {item.name}
-                    </span>
-                    <div className="flex items-center gap-1.5 mt-1 text-[11px] text-[#787774] dark:text-[#A1A09E] flex-wrap">
-                      <span className="px-1.5 py-0.5 rounded bg-slate-200/60 dark:bg-slate-800 text-[10px] font-medium">
-                        {item.category || 'Barang'}
+                  <div className="min-w-0 flex-1 flex items-start gap-2">
+                    <span className={`w-2 h-2 rounded-full mt-1 shrink-0 ${
+                      isOutOfStock
+                        ? 'bg-rose-500 animate-pulse'
+                        : isLow
+                          ? 'bg-amber-500'
+                          : 'bg-emerald-500'
+                    }`} />
+                    <div className="min-w-0">
+                      <span className="font-bold text-xs sm:text-sm text-[#111111] dark:text-[#ECECED] block truncate">
+                        {item.name}
                       </span>
-                      <span>•</span>
-                      <span className="font-semibold text-emerald-700 dark:text-emerald-400">
-                        {formatRupiah(item.price || 0)}
-                      </span>
-                      <span>/ {item.unit}</span>
+                      <div className="flex items-center gap-1.5 mt-0.5 text-[10px] text-[#787774] dark:text-[#A1A09E] font-mono flex-wrap">
+                        <span className="font-semibold text-slate-600 dark:text-slate-300">
+                          {item.category || 'Barang'}
+                        </span>
+                        <span>•</span>
+                        <span className="font-bold text-emerald-600 dark:text-emerald-400">
+                          {formatRupiah(item.price || 0)}
+                        </span>
+                        <span>/{item.unit}</span>
+                      </div>
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-2.5 shrink-0">
+                  <div className="flex items-center gap-2 shrink-0">
                     <div className="text-right">
-                      <span className={`font-mono tabular-nums text-sm font-bold block ${
+                      <span className={`font-mono tabular-nums text-xs sm:text-sm font-bold block ${
                         isOutOfStock 
                           ? 'text-[#9F2F2D] dark:text-[#F8A4A4]' 
                           : 'text-[#111111] dark:text-[#ECECED]'
@@ -445,27 +470,27 @@ export const StoreDashboard: React.FC<StoreDashboardProps> = ({ onNavigate }) =>
                       </span>
 
                       {isOutOfStock ? (
-                        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-bold bg-[#FDEBEC] text-[#9F2F2D] dark:bg-[#381B1B] dark:text-[#F8A4A4] border border-[#F8D2D4] dark:border-[#522525]">
+                        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-bold bg-[#FDEBEC] text-[#9F2F2D] dark:bg-[#381B1B] dark:text-[#F8A4A4]">
                           Habis
                         </span>
                       ) : isLow ? (
-                        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-bold bg-[#FBF3DB] text-[#956400] dark:bg-[#332A15] dark:text-[#E8CA65] border border-[#F4E3B4] dark:border-[#4D3F1E]">
-                          Sisa Sedikit
+                        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-bold bg-[#FBF3DB] text-[#956400] dark:bg-[#332A15] dark:text-[#E8CA65]">
+                          Menipis
                         </span>
                       ) : (
-                        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-bold bg-[#EDF3EC] text-[#346538] dark:bg-[#172B19] dark:text-[#96D99C] border border-[#D4E5D3] dark:border-[#223F25]">
-                          Stok Aman
+                        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-semibold bg-[#EDF3EC] text-[#346538] dark:bg-[#172B19] dark:text-[#96D99C]">
+                          Aman
                         </span>
                       )}
                     </div>
 
                     <button
                       onClick={() => handleOpenRequestForItem(item.id)}
-                      className="px-2.5 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#16171A] text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 active:scale-95 font-semibold text-[11px] flex items-center gap-1 shadow-sm transition-all"
+                      className="px-2.5 py-1.5 rounded-lg sm:rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#16171A] text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 active:scale-90 font-bold text-[11px] flex items-center gap-1 shadow-sm transition-all"
                       title="Minta pasokan barang ini"
                     >
                       <PlusCircle className="w-3.5 h-3.5" />
-                      <span className="hidden sm:inline">Minta</span>
+                      <span>Minta</span>
                     </button>
                   </div>
                 </div>

@@ -305,15 +305,15 @@ export const MasterItemManagement: React.FC = () => {
           </p>
         </div>
 
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar shrink-0 w-full sm:w-auto">
           <button
             onClick={handleExportExcel}
             disabled={activeItems.length === 0}
-            className="flex items-center gap-1 px-3 py-2 rounded-xl text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-500 shadow-sm active:scale-95 disabled:opacity-50 transition-all"
+            className="flex items-center justify-center gap-1 p-2 sm:px-3 sm:py-2 rounded-xl text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-500 shadow-sm active:scale-95 disabled:opacity-50 transition-all"
             title="Download Data Barang & Stok ke Excel"
           >
-            <Download className="w-4 h-4" />
-            <span>Excel</span>
+            <Download className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">Excel</span>
           </button>
 
           <button
@@ -322,10 +322,10 @@ export const MasterItemManagement: React.FC = () => {
               setIsInboundOpen(true);
             }}
             disabled={activeItems.length === 0}
-            className="flex items-center gap-1 px-3 py-2 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/80 shadow-sm active:scale-95 disabled:opacity-50 transition-all"
+            className="flex-1 sm:flex-initial flex items-center justify-center gap-1 px-2.5 py-2 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 shadow-sm active:scale-95 disabled:opacity-50 transition-all whitespace-nowrap"
           >
-            <ArrowDownRight className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-            <span>Stok Masuk</span>
+            <ArrowDownRight className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+            <span>+ Masuk</span>
           </button>
 
           <button
@@ -334,19 +334,19 @@ export const MasterItemManagement: React.FC = () => {
               setIsOutboundOpen(true);
             }}
             disabled={activeItems.length === 0}
-            className="flex items-center gap-1 px-3 py-2 rounded-xl text-xs font-bold text-rose-700 dark:text-rose-300 bg-rose-50/80 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-900/40 hover:bg-rose-100 dark:hover:bg-rose-900/50 shadow-sm active:scale-95 disabled:opacity-50 transition-all"
+            className="flex-1 sm:flex-initial flex items-center justify-center gap-1 px-2.5 py-2 rounded-xl text-xs font-bold text-rose-700 dark:text-rose-300 bg-rose-50/80 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-900/40 hover:bg-rose-100 shadow-sm active:scale-95 disabled:opacity-50 transition-all whitespace-nowrap"
             title="Keluarkan stok (rusak, retur vendor, selisih)"
           >
-            <ArrowUpRight className="w-4 h-4 text-rose-600 dark:text-rose-400" />
-            <span>Keluarkan Stok</span>
+            <ArrowUpRight className="w-3.5 h-3.5 text-rose-600 dark:text-rose-400" />
+            <span>- Keluar</span>
           </button>
 
           <button
             onClick={() => setIsAddItemOpen(true)}
-            className="flex items-center gap-1 px-3 py-2 rounded-xl text-xs font-bold text-white bg-brand-600 hover:bg-brand-500 shadow-sm active:scale-95 transition-all"
+            className="flex-1 sm:flex-initial flex items-center justify-center gap-1 px-3 py-2 rounded-xl text-xs font-bold text-white bg-brand-600 hover:bg-brand-500 shadow-sm active:scale-95 transition-all whitespace-nowrap"
           >
-            <Plus className="w-4 h-4" />
-            <span>+ Barang Baru</span>
+            <Plus className="w-3.5 h-3.5" />
+            <span>+ SKU Baru</span>
           </button>
         </div>
       </div>

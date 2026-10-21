@@ -80,39 +80,47 @@ export const WarehouseDashboard: React.FC<WarehouseDashboardProps> = ({ onNaviga
         </div>
       </div>
 
-      {/* 2. Bento Grid KPI Metrics */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-        <StatCard
-          title="Stok Tersedia"
-          value={formatNumber(totalAvailableStock)}
-          subtitle={`${items.length} master SKU`}
-          icon={Package}
-          color="emerald"
-        />
+      {/* 2. Bento Grid KPI Metrics: Horizontal swipe on mobile, 4-col on desktop */}
+      <div className="flex lg:grid lg:grid-cols-4 gap-2 sm:gap-4 overflow-x-auto no-scrollbar pb-1 -mx-1 px-1 snap-x snap-mandatory">
+        <div className="min-w-[135px] sm:min-w-0 snap-start flex-1">
+          <StatCard
+            title="Stok Tersedia"
+            value={formatNumber(totalAvailableStock)}
+            subtitle={`${items.length} SKU`}
+            icon={Package}
+            color="emerald"
+          />
+        </div>
 
-        <StatCard
-          title="Disiapkan Kirim"
-          value={formatNumber(totalReservedStock)}
-          subtitle="Teralokasi surat jalan"
-          icon={Boxes}
-          color="indigo"
-        />
+        <div className="min-w-[135px] sm:min-w-0 snap-start flex-1">
+          <StatCard
+            title="Disiapkan"
+            value={formatNumber(totalReservedStock)}
+            subtitle="Alokasi DO"
+            icon={Boxes}
+            color="indigo"
+          />
+        </div>
 
-        <StatCard
-          title="Dalam Pengiriman"
-          value={formatNumber(totalInTransitStock)}
-          subtitle={`${inTransitShipments.length} DO aktif`}
-          icon={Truck}
-          color="blue"
-        />
+        <div className="min-w-[135px] sm:min-w-0 snap-start flex-1">
+          <StatCard
+            title="Di Jalan"
+            value={formatNumber(totalInTransitStock)}
+            subtitle={`${inTransitShipments.length} DO`}
+            icon={Truck}
+            color="blue"
+          />
+        </div>
 
-        <StatCard
-          title="Menunggu Review"
-          value={pendingRequests.length}
-          subtitle={`${readyDispatch.length} siap kirim`}
-          icon={Clock}
-          color="amber"
-        />
+        <div className="min-w-[135px] sm:min-w-0 snap-start flex-1">
+          <StatCard
+            title="Review"
+            value={pendingRequests.length}
+            subtitle={`${readyDispatch.length} siap`}
+            icon={Clock}
+            color="amber"
+          />
+        </div>
       </div>
 
       {/* 3. Branch Inventory Bento */}
