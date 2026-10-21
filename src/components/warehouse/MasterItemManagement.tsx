@@ -371,7 +371,7 @@ export const MasterItemManagement: React.FC = () => {
           </button>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2.5 sm:gap-4">
           {filteredItems.map(item => {
             const hubInv = getInv(0, item.id);
             const store1Inv = getInv(1, item.id);
@@ -384,127 +384,116 @@ export const MasterItemManagement: React.FC = () => {
             return (
               <div
                 key={item.id}
-                className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 p-4 shadow-sm hover:border-slate-300 dark:hover:border-slate-700 transition-all flex flex-col justify-between gap-3"
+                className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-sm hover:shadow-md transition-all overflow-hidden"
               >
-                {/* Header Card */}
-                <div>
+                {/* Top: Name + Status + Price */}
+                <div className="p-3.5 pb-2.5">
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-1.5 flex-wrap">
-                        <span className="font-extrabold text-sm text-slate-900 dark:text-white leading-tight">
-                          {item.name}
-                        </span>
-                        {isOutOfStock ? (
-                          <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-900/60 shadow-sm" title="Stok Gudang Kosong (0 unit)">
-                            <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse"></span>
-                            Stok Kosong
-                          </span>
-                        ) : isLowStockInHub ? (
-                          <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-900/60" title="Stok Menipis">
-                            <ShieldAlert className="w-3 h-3 text-amber-500 shrink-0" />
-                            Menipis
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 border border-emerald-200/60 dark:border-emerald-900/60">
-                            Tersedia
-                          </span>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-2 mt-1.5 flex-wrap">
-                        <span className="text-[11px] font-bold font-mono tabular-nums text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 rounded-lg border border-emerald-200/60 dark:border-emerald-900/60">
+                      <h3 className="font-bold text-[13px] text-slate-900 dark:text-white leading-snug truncate">
+                        {item.name}
+                      </h3>
+                      <div className="flex items-center gap-1.5 mt-1">
+                        <span className="text-[11px] font-bold font-mono text-emerald-600 dark:text-emerald-400">
                           {formatRupiah(item.price || 0)}
                         </span>
-                        <span className="text-[10px] text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded">
+                        <span className="text-[10px] text-slate-400">·</span>
+                        <span className="text-[10px] text-slate-500 dark:text-slate-400">
                           {item.category}
                         </span>
                       </div>
                     </div>
-
-                    <div className="flex items-center gap-1.5 shrink-0">
-                      <button
-                        onClick={() => openInboundForItem(item.id)}
-                        className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-800 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 active:scale-95 transition-all"
-                        title="Tambah Stok Masuk"
-                      >
-                        <ArrowDownRight className="w-3.5 h-3.5" />
-                        <span>Masuk</span>
-                      </button>
-
-                      <button
-                        onClick={() => openOutboundForItem(item.id)}
-                        className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-bold text-rose-700 dark:text-rose-300 bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-900/60 hover:bg-rose-100 dark:hover:bg-rose-900/60 active:scale-95 transition-all"
-                        title="Keluarkan Stok (Rusak / Retur / Selisih)"
-                      >
-                        <ArrowUpRight className="w-3.5 h-3.5" />
-                        <span>Keluar</span>
-                      </button>
-
-                      <button
-                        onClick={() => openEditModal(item)}
-                        className="p-1.5 rounded-xl text-xs font-medium text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-200 dark:hover:bg-slate-700 active:scale-95 transition-all"
-                        title="Edit Data Barang"
-                      >
-                        <Pencil className="w-3.5 h-3.5" />
-                      </button>
-
-                      <button
-                        onClick={() => setItemToDelete(item)}
-                        className="p-1.5 rounded-xl text-xs font-medium text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-900/60 hover:bg-rose-100 dark:hover:bg-rose-900/60 active:scale-95 transition-all"
-                        title="Hapus Barang / SKU"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
+                    {/* Status Badge */}
+                    <div className="shrink-0">
+                      {isOutOfStock ? (
+                        <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-1 rounded-lg bg-rose-500/10 text-rose-600 dark:text-rose-400">
+                          <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse"></span>
+                          Kosong
+                        </span>
+                      ) : isLowStockInHub ? (
+                        <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-1 rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400">
+                          <ShieldAlert className="w-3 h-3 shrink-0" />
+                          Menipis
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center text-[10px] font-semibold px-2 py-1 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+                          Tersedia
+                        </span>
+                      )}
                     </div>
                   </div>
                 </div>
 
-                {/* Central Warehouse Quantities */}
-                <div className="grid grid-cols-3 gap-1.5 p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-700/60 text-center">
-                  <div>
-                    <span className="text-[10px] text-slate-400 uppercase font-semibold block">Tersedia</span>
-                    <span className={`text-base font-bold font-mono tabular-nums ${
-                      isOutOfStock
-                        ? 'text-rose-600 dark:text-rose-400 font-black'
-                        : isLowStockInHub
-                          ? 'text-amber-600 dark:text-amber-400'
-                          : 'text-brand-600 dark:text-brand-400'
-                    }`}>
-                      {formatNumber(hubInv.stock_available)}
-                    </span>
-                    {isOutOfStock && (
-                      <span className="text-[9px] font-bold text-rose-500 block">Kosong</span>
-                    )}
-                  </div>
-
-                  <div>
-                    <span className="text-[10px] text-slate-400 uppercase font-semibold block">Disiapkan</span>
-                    <span className="text-base font-bold font-mono tabular-nums text-indigo-600 dark:text-indigo-400">
-                      {formatNumber(hubInv.stock_reserved)}
-                    </span>
-                  </div>
-
-                  <div>
-                    <span className="text-[10px] text-slate-400 uppercase font-semibold block">Di Jalan</span>
-                    <span className="text-base font-bold font-mono tabular-nums text-blue-600 dark:text-blue-400">
-                      {formatNumber(hubInv.stock_in_transit)}
-                    </span>
+                {/* Stock Bar - Visual & Compact */}
+                <div className="mx-3.5 p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/50">
+                  <div className="grid grid-cols-3 gap-2 text-center">
+                    <div>
+                      <span className={`text-lg font-black font-mono tabular-nums block leading-none ${
+                        isOutOfStock
+                          ? 'text-rose-600 dark:text-rose-400'
+                          : isLowStockInHub
+                            ? 'text-amber-600 dark:text-amber-400'
+                            : 'text-slate-900 dark:text-white'
+                      }`}>
+                        {formatNumber(hubInv.stock_available)}
+                      </span>
+                      <span className="text-[9px] text-slate-400 uppercase font-semibold mt-0.5 block">Tersedia</span>
+                    </div>
+                    <div>
+                      <span className="text-lg font-black font-mono tabular-nums text-indigo-600 dark:text-indigo-400 block leading-none">
+                        {formatNumber(hubInv.stock_reserved)}
+                      </span>
+                      <span className="text-[9px] text-slate-400 uppercase font-semibold mt-0.5 block">Disiapkan</span>
+                    </div>
+                    <div>
+                      <span className="text-lg font-black font-mono tabular-nums text-blue-600 dark:text-blue-400 block leading-none">
+                        {formatNumber(hubInv.stock_in_transit)}
+                      </span>
+                      <span className="text-[9px] text-slate-400 uppercase font-semibold mt-0.5 block">Di Jalan</span>
+                    </div>
                   </div>
                 </div>
 
-                {/* Stock across 3 stores breakdown */}
-                <div className="flex items-center justify-between text-[11px] text-slate-500 pt-2 border-t border-slate-100 dark:border-slate-800">
-                  <span className="text-slate-400 font-medium">3 Cabang:</span>
-                  <div className="flex items-center gap-1.5 font-mono tabular-nums font-bold text-[10px]">
-                    <span className="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
-                      T1: {store1Inv.stock_available}
-                    </span>
-                    <span className="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
-                      T2: {store2Inv.stock_available}
-                    </span>
-                    <span className="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
-                      T3: {store3Inv.stock_available}
-                    </span>
+                {/* Store breakdown */}
+                <div className="mx-3.5 mt-2 flex items-center justify-between text-[10px] text-slate-400 font-mono">
+                  <span>Cabang</span>
+                  <div className="flex items-center gap-1">
+                    <span className="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-bold">T1:{store1Inv.stock_available}</span>
+                    <span className="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-bold">T2:{store2Inv.stock_available}</span>
+                    <span className="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-bold">T3:{store3Inv.stock_available}</span>
                   </div>
+                </div>
+
+                {/* Action Buttons - Thumb-friendly row */}
+                <div className="mt-2.5 p-2.5 pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center gap-1.5">
+                  <button
+                    onClick={() => openInboundForItem(item.id)}
+                    className="flex-1 flex items-center justify-center gap-1 py-2.5 rounded-xl text-[11px] font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200/60 dark:border-emerald-800/60 active:scale-95 transition-all"
+                  >
+                    <ArrowDownRight className="w-3.5 h-3.5" />
+                    <span>Masuk</span>
+                  </button>
+                  <button
+                    onClick={() => openOutboundForItem(item.id)}
+                    className="flex-1 flex items-center justify-center gap-1 py-2.5 rounded-xl text-[11px] font-bold text-rose-700 dark:text-rose-300 bg-rose-50 dark:bg-rose-950/40 border border-rose-200/60 dark:border-rose-900/60 active:scale-95 transition-all"
+                  >
+                    <ArrowUpRight className="w-3.5 h-3.5" />
+                    <span>Keluar</span>
+                  </button>
+                  <button
+                    onClick={() => openEditModal(item)}
+                    className="w-10 h-10 rounded-xl flex items-center justify-center text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 active:scale-90 transition-all shrink-0"
+                    title="Edit"
+                  >
+                    <Pencil className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={() => setItemToDelete(item)}
+                    className="w-10 h-10 rounded-xl flex items-center justify-center text-rose-500 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/40 active:scale-90 transition-all shrink-0"
+                    title="Hapus"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
                 </div>
               </div>
             );

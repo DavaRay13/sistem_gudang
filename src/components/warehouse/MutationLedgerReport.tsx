@@ -149,39 +149,44 @@ export const MutationLedgerReport: React.FC = () => {
         </div>
       </div>
 
-      {/* KPI Cards Grid (2 cols mobile, 4 cols desktop) */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-        <StatCard
-          title="Barang Masuk"
-          value={`${formatNumber(totalInboundQty)}`}
-          subtitle="Stok Tambahan Masuk"
-          icon={ArrowDownRight}
-          color="emerald"
-        />
-
-        <StatCard
-          title="Barang Keluar"
-          value={`${formatNumber(totalDispatchQty)}`}
-          subtitle="Dikirim ke Toko"
-          icon={ArrowUpRight}
-          color="indigo"
-        />
-
-        <StatCard
-          title="Rusak / Hilang"
-          value={`${formatNumber(totalDamageLossQty)}`}
-          subtitle="Selisih saat diterima"
-          icon={AlertTriangle}
-          color="rose"
-        />
-
-        <StatCard
-          title="Tingkat Pemenuhan"
-          value={`${fulfillmentRate}%`}
-          subtitle="Permintaan terpenuhi"
-          icon={CheckCircle}
-          color="blue"
-        />
+      {/* KPI - Horizontal scroll on mobile, grid on desktop */}
+      <div className="flex lg:grid lg:grid-cols-4 gap-2.5 sm:gap-4 overflow-x-auto no-scrollbar pb-1 -mx-1 px-1 snap-x snap-mandatory">
+        <div className="min-w-[140px] sm:min-w-0 snap-start">
+          <StatCard
+            title="Barang Masuk"
+            value={`${formatNumber(totalInboundQty)}`}
+            subtitle="Stok Tambahan Masuk"
+            icon={ArrowDownRight}
+            color="emerald"
+          />
+        </div>
+        <div className="min-w-[140px] sm:min-w-0 snap-start">
+          <StatCard
+            title="Barang Keluar"
+            value={`${formatNumber(totalDispatchQty)}`}
+            subtitle="Dikirim ke Toko"
+            icon={ArrowUpRight}
+            color="indigo"
+          />
+        </div>
+        <div className="min-w-[140px] sm:min-w-0 snap-start">
+          <StatCard
+            title="Rusak / Hilang"
+            value={`${formatNumber(totalDamageLossQty)}`}
+            subtitle="Selisih saat diterima"
+            icon={AlertTriangle}
+            color="rose"
+          />
+        </div>
+        <div className="min-w-[140px] sm:min-w-0 snap-start">
+          <StatCard
+            title="Pemenuhan"
+            value={`${fulfillmentRate}%`}
+            subtitle="Permintaan terpenuhi"
+            icon={CheckCircle}
+            color="blue"
+          />
+        </div>
       </div>
 
       {/* Filter Controls Bar */}
@@ -246,57 +251,62 @@ export const MutationLedgerReport: React.FC = () => {
           </p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+        <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-sm overflow-hidden divide-y divide-slate-100 dark:divide-slate-800">
           {filteredMutations.map(m => {
             const item = itemMap.get(m.item_id);
-            const fromLoc = m.from_location_id !== null && m.from_location_id !== undefined ? locMap.get(m.from_location_id)?.name : '-';
-            const toLoc = m.to_location_id !== null && m.to_location_id !== undefined ? locMap.get(m.to_location_id)?.name : (m.transaction_type === 'DAMAGE_LOSS' ? 'AKUN LOSS' : '-');
-
-            const isLoss = m.transaction_type === 'DAMAGE_LOSS';
-            const isOut = m.transaction_type === 'TRANSFER_DISPATCH';
+            const isInbound = m.transaction_type === 'PURCHASE_INBOUND' || m.transaction_type === 'TRANSFER_RECEIVE';
+            const isLoss = m.transaction_type === 'DAMAGE_LOSS' || m.transaction_type === 'MANUAL_ADJUSTMENT';
 
             return (
               <div
                 key={m.id}
-                className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 p-3.5 shadow-sm space-y-2"
+                className="flex items-center gap-3 px-3.5 py-3 active:bg-slate-50 dark:active:bg-slate-800/50 transition-colors"
               >
-                <div className="flex items-center justify-between">
-                  <span className="font-mono text-[10px] text-slate-400">
-                    #{m.id} • {formatDate(m.created_at)}
-                  </span>
-                  <TransactionBadge type={m.transaction_type} />
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <div className="min-w-0 flex-1">
-                    <span className="font-bold text-xs text-slate-900 dark:text-white block truncate">
-                      {item?.name}
-                    </span>
-                  </div>
-
-                  <div className={`text-right font-mono tabular-nums font-bold text-sm ${
-                    isLoss ? 'text-rose-600 dark:text-rose-400' : isOut ? 'text-indigo-600 dark:text-indigo-400' : 'text-emerald-600 dark:text-emerald-400'
-                  }`}>
-                    {m.qty} {item?.unit || 'PCS'}
-                  </div>
-                </div>
-
-                <div className="flex items-center justify-between text-[11px] text-slate-500 pt-1.5 border-t border-slate-100 dark:border-slate-800">
-                  <span className="truncate max-w-[200px]">
-                    {fromLoc} &rarr; <strong>{toLoc}</strong>
-                  </span>
-                  {m.reference_code && (
-                    <span className="font-mono font-bold text-slate-600 dark:text-slate-300">
-                      {m.reference_code}
-                    </span>
+                {/* Direction icon */}
+                <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${
+                  isInbound
+                    ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
+                    : isLoss
+                      ? 'bg-rose-500/10 text-rose-600 dark:text-rose-400'
+                      : 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400'
+                }`}>
+                  {isInbound ? (
+                    <ArrowDownRight className="w-4 h-4" />
+                  ) : (
+                    <ArrowUpRight className="w-4 h-4" />
                   )}
                 </div>
 
-                {m.notes && (
-                  <p className="text-[10px] text-slate-400 italic">
-                    "{m.notes}"
-                  </p>
-                )}
+                {/* Content */}
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="font-bold text-[12px] text-slate-900 dark:text-white truncate">
+                      {item?.name || `#${m.item_id}`}
+                    </span>
+                    <span className={`font-mono font-black text-[13px] tabular-nums whitespace-nowrap ${
+                      isInbound
+                        ? 'text-emerald-600 dark:text-emerald-400'
+                        : isLoss
+                          ? 'text-rose-600 dark:text-rose-400'
+                          : 'text-indigo-600 dark:text-indigo-400'
+                    }`}>
+                      {isInbound ? '+' : '-'}{m.qty} {item?.unit || 'PCS'}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between gap-2 mt-0.5">
+                    <div className="flex items-center gap-1.5 min-w-0">
+                      <TransactionBadge type={m.transaction_type} />
+                      {m.reference_code && (
+                        <span className="text-[10px] font-mono text-slate-400 truncate">
+                          {m.reference_code}
+                        </span>
+                      )}
+                    </div>
+                    <span className="text-[10px] text-slate-400 whitespace-nowrap shrink-0">
+                      {formatDate(m.created_at)}
+                    </span>
+                  </div>
+                </div>
               </div>
             );
           })}

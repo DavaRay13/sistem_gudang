@@ -43,7 +43,7 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({
       label: 'Proses',
       icon: Layers,
       badge: (pendingRequestsCount + approvedForDispatchCount) > 0 ? (pendingRequestsCount + approvedForDispatchCount) : undefined,
-      badgeColor: 'bg-[#FBF3DB] text-[#956400] dark:bg-[#332A15] dark:text-[#E8CA65]',
+      badgeColor: 'bg-amber-500 text-white',
     },
     {
       id: 'warehouse_master_items' as NavigationTab,
@@ -63,7 +63,7 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({
       label: 'Beranda',
       icon: LayoutDashboard,
       badge: lowStockCount > 0 ? lowStockCount : undefined,
-      badgeColor: 'bg-[#FDEBEC] text-[#9F2F2D] dark:bg-[#381B1B] dark:text-[#F8A4A4]',
+      badgeColor: 'bg-rose-500 text-white',
     },
     {
       id: 'store_create_request' as NavigationTab,
@@ -75,7 +75,7 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({
       label: 'Barang Masuk',
       icon: CheckSquare,
       badge: inTransitCount > 0 ? inTransitCount : undefined,
-      badgeColor: 'bg-[#E1F3FE] text-[#1F6C9F] dark:bg-[#142838] dark:text-[#97D2FB]',
+      badgeColor: 'bg-blue-500 text-white',
     },
     {
       id: 'store_request_history' as NavigationTab,
@@ -87,8 +87,9 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({
   const tabs = isWarehouseAdmin ? warehouseTabs : storeTabs;
 
   return (
-    <div className="lg:hidden fixed bottom-3 left-3 right-3 z-40 max-w-md mx-auto pointer-events-none">
-      <nav className="pointer-events-auto bg-white/95 dark:bg-[#16171A]/95 backdrop-blur-md border border-[#EAEAEA] dark:border-[#26282E] rounded-2xl px-2 py-1.5 shadow-sm flex items-center justify-around transition-all">
+    <div className="lg:hidden fixed bottom-0 left-0 right-0 z-40 pointer-events-none">
+      {/* Safe area padding for phones with home indicator */}
+      <nav className="pointer-events-auto bg-white/90 dark:bg-[#16171A]/90 backdrop-blur-xl border-t border-slate-200/60 dark:border-slate-800/60 px-1 pt-1 pb-[max(0.375rem,env(safe-area-inset-bottom))] flex items-stretch justify-around">
         {tabs.map(tab => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.id;
@@ -97,22 +98,30 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({
             <button
               key={tab.id}
               onClick={() => onSelectTab(tab.id)}
-              className={`relative flex flex-col items-center justify-center py-1 px-2.5 rounded-xl transition-colors active:scale-95 ${
+              className={`relative flex flex-col items-center justify-center min-w-0 flex-1 py-1.5 rounded-xl transition-all active:scale-90 ${
                 isActive
-                  ? 'text-[#111111] dark:text-white font-semibold'
-                  : 'text-[#787774] dark:text-[#A1A09E] hover:text-[#111111]'
+                  ? 'text-brand-600 dark:text-brand-400'
+                  : 'text-slate-400 dark:text-slate-500'
               }`}
             >
               <div className="relative">
-                <Icon className="w-4 h-4" />
+                <div className={`w-9 h-9 rounded-2xl flex items-center justify-center transition-all ${
+                  isActive
+                    ? 'bg-brand-600/10 dark:bg-brand-400/10'
+                    : ''
+                }`}>
+                  <Icon className={`transition-all ${isActive ? 'w-5 h-5' : 'w-[18px] h-[18px]'}`} strokeWidth={isActive ? 2.5 : 1.8} />
+                </div>
                 {tab.badge !== undefined && (
-                  <span className={`absolute -top-1.5 -right-2 px-1 rounded-full text-[9px] font-mono font-medium border border-white dark:border-[#16171A] ${tab.badgeColor}`}>
+                  <span className={`absolute -top-1 -right-1 min-w-[16px] h-4 px-1 rounded-full text-[9px] font-bold flex items-center justify-center ${tab.badgeColor} shadow-sm`}>
                     {tab.badge}
                   </span>
                 )}
               </div>
               
-              <span className="text-[10px] mt-0.5 tracking-tight truncate max-w-[60px]">
+              <span className={`text-[10px] mt-0.5 tracking-tight truncate max-w-[64px] transition-all ${
+                isActive ? 'font-bold' : 'font-medium'
+              }`}>
                 {tab.label}
               </span>
             </button>

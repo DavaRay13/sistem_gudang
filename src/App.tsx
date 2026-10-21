@@ -74,7 +74,7 @@ export const App: React.FC = () => {
         />
 
         {/* Dynamic Content Viewport */}
-        <main className="flex-1 p-3.5 sm:p-6 pb-28 lg:pb-8 min-w-0 overflow-x-hidden">
+        <main className="flex-1 p-3 sm:p-6 pb-24 lg:pb-8 min-w-0 overflow-x-hidden">
           {/* Warehouse Admin Views */}
           {isWarehouseAdmin && (
             <>
