@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useInventory } from '../../context/InventoryContext';
 import { useAuth } from '../../context/AuthContext';
 import { Modal } from '../common/Modal';
@@ -6,11 +6,46 @@ import { InboundStockModal } from './InboundStockModal';
 import { OutboundStockModal } from './OutboundStockModal';
 import { 
   Package, Plus, ArrowDownRight, ArrowUpRight, Search, 
-  ShieldAlert, Boxes, Download, Trash2, Pencil
+  ShieldAlert, Boxes, Download, Trash2, Pencil, Sparkles
 } from 'lucide-react';
 import { Item } from '../../types';
 import { formatNumber, formatRupiah } from '../../utils/formatters';
 import { exportMasterItemsToExcel } from '../../utils/exportHelpers';
+
+interface ItemPreset {
+  name: string;
+  category: string;
+  unit: string;
+  price: number;
+}
+
+const COMMON_ITEM_CATALOG: ItemPreset[] = [
+  { name: 'Minyak Goreng 2L', category: 'Sembako', unit: 'POUCH', price: 34000 },
+  { name: 'Minyak Goreng 2L (Dus/Karton)', category: 'Sembako', unit: 'DUS', price: 198000 },
+  { name: 'Beras Premium 5kg', category: 'Sembako', unit: 'KARUNG', price: 72000 },
+  { name: 'Gula Pasir 1kg', category: 'Sembako', unit: 'PACK', price: 17500 },
+  { name: 'Gula Pasir 1kg (Dus/Karton)', category: 'Sembako', unit: 'DUS', price: 345000 },
+  { name: 'Tepung Terigu Segitiga 1kg', category: 'Sembako', unit: 'PACK', price: 13000 },
+  { name: 'Mie Instan Goreng (Dus)', category: 'Makanan', unit: 'DUS', price: 115000 },
+  { name: 'Mie Instan Kuah (Dus)', category: 'Makanan', unit: 'DUS', price: 110000 },
+  { name: 'Kopi Kapal Api 1 Renteng', category: 'Minuman', unit: 'RENCENG', price: 14000 },
+  { name: 'Kopi Instant Sachet (Dus)', category: 'Minuman', unit: 'DUS', price: 135000 },
+  { name: 'Air Mineral 600ml (Dus)', category: 'Minuman', unit: 'DUS', price: 48000 },
+  { name: 'Air Mineral Gelas 240ml (Dus)', category: 'Minuman', unit: 'DUS', price: 24000 },
+  { name: 'Susu UHT 1L (Dus/Karton)', category: 'Minuman', unit: 'KARTON', price: 215000 },
+  { name: 'Sabun Cuci Piring 750ml', category: 'Kebersihan', unit: 'POUCH', price: 14500 },
+  { name: 'Sabun Cuci Piring (Dus)', category: 'Kebersihan', unit: 'DUS', price: 165000 },
+  { name: 'Deterjen Bubuk 800g', category: 'Kebersihan', unit: 'PACK', price: 19500 },
+  { name: 'Kertas Thermal Roll 80x80 (Isi 10)', category: 'Perlengkapan Kasir', unit: 'PACK', price: 65000 },
+  { name: 'Kertas Thermal Roll 58x40 (Isi 10)', category: 'Perlengkapan Kasir', unit: 'PACK', price: 45000 },
+  { name: 'Lakban Coklat 2 Inch (Dus)', category: 'Logistik', unit: 'DUS', price: 185000 },
+  { name: 'Plastik Packing Roll', category: 'Logistik', unit: 'ROLL', price: 42000 },
+  { name: 'Wireless Barcode Scanner 2D', category: 'Elektronik', unit: 'UNIT', price: 450000 },
+  { name: 'Thermal Receipt Printer 80mm', category: 'Elektronik', unit: 'UNIT', price: 750000 },
+];
+
+const QUICK_CATEGORIES = ['Sembako', 'Makanan', 'Minuman', 'Kebersihan', 'Perlengkapan Kasir', 'Logistik', 'Elektronik', 'Umum'];
+const QUICK_UNITS = ['DUS', 'PACK', 'PCS', 'KARTON', 'RENCENG', 'BOX', 'KARUNG', 'POUCH'];
 
 export const MasterItemManagement: React.FC = () => {
   const { items, inventories, addNewItem, updateItem, deleteItem, inboundStock } = useInventory();
@@ -115,16 +150,60 @@ export const MasterItemManagement: React.FC = () => {
     category: string;
     unit: string;
     price: number | string;
-    safety_stock: number | string;
     initial_stock: number | string;
   }>({
     name: '',
-    category: 'Elektronik',
-    unit: 'PCS',
-    price: 50000,
-    safety_stock: 10,
+    category: 'Sembako',
+    unit: 'DUS',
+    price: '',
     initial_stock: '',
   });
+
+  const [showNameSuggestions, setShowNameSuggestions] = useState(false);
+  const suggestionBoxRef = useRef<HTMLDivElement>(null);
+
+  // Pool rekomendasi: gabungan katalog preset umum + data master SKU yang sudah ada di sistem
+  const suggestionsPool: ItemPreset[] = [
+    ...COMMON_ITEM_CATALOG,
+    ...activeItems.map(it => ({
+      name: it.name,
+      category: it.category,
+      unit: it.unit,
+      price: it.price || 0,
+    })),
+  ];
+
+  // Hapus duplikat berdasarkan nama (lowercase)
+  const uniqueSuggestions = Array.from(
+    new Map(suggestionsPool.map(item => [item.name.toLowerCase().trim(), item])).values()
+  );
+
+  const filteredSuggestions = formData.name.trim() === ''
+    ? uniqueSuggestions.slice(0, 6)
+    : uniqueSuggestions
+        .filter(item => item.name.toLowerCase().includes(formData.name.toLowerCase().trim()))
+        .slice(0, 8);
+
+  const handleSelectSuggestion = (preset: ItemPreset) => {
+    setFormData(prev => ({
+      ...prev,
+      name: preset.name,
+      category: preset.category || prev.category,
+      unit: preset.unit || prev.unit,
+      price: preset.price > 0 ? preset.price : prev.price,
+    }));
+    setShowNameSuggestions(false);
+  };
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (suggestionBoxRef.current && !suggestionBoxRef.current.contains(event.target as Node)) {
+        setShowNameSuggestions(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -149,7 +228,7 @@ export const MasterItemManagement: React.FC = () => {
 
   const handleCreateItem = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.name || isSubmitting) return;
+    if (!formData.name.trim() || isSubmitting) return;
 
     setIsSubmitting(true);
     try {
@@ -158,10 +237,10 @@ export const MasterItemManagement: React.FC = () => {
       const created = await addNewItem({
         sku: autoSku,
         name: formData.name.trim(),
-        category: formData.category.trim(),
-        unit: formData.unit.trim().toUpperCase(),
+        category: formData.category.trim() || 'Umum',
+        unit: formData.unit.trim().toUpperCase() || 'PCS',
         price: Number(formData.price) || 0,
-        safety_stock: Number(formData.safety_stock) || 0,
+        safety_stock: 0,
       });
 
       // Otomatis catat saldo stok awal ke database jika kuantiti diisi
@@ -176,12 +255,12 @@ export const MasterItemManagement: React.FC = () => {
       }
 
       setIsAddItemOpen(false);
+      setShowNameSuggestions(false);
       setFormData({
         name: '',
-        category: 'Elektronik',
-        unit: 'PCS',
-        price: 50000,
-        safety_stock: 10,
+        category: 'Sembako',
+        unit: 'DUS',
+        price: '',
         initial_stock: '',
       });
     } catch {
@@ -504,57 +583,172 @@ export const MasterItemManagement: React.FC = () => {
       {/* Modal Add Item */}
       <Modal
         isOpen={isAddItemOpen}
-        onClose={() => setIsAddItemOpen(false)}
-        title="Tambah Data Barang Baru"
-        subtitle="Barang baru akan terdaftar di katalog dan bisa diminta oleh toko cabang"
+        onClose={() => {
+          setIsAddItemOpen(false);
+          setShowNameSuggestions(false);
+        }}
+        title="Tambah Barang Baru"
+        subtitle="Form ringkas: ketik nama untuk rekomendasi instan, kategori, satuan, harga, dan stok masuk"
         maxWidth="md"
       >
         <form onSubmit={handleCreateItem} className="space-y-4">
+          {/* Nama Barang dengan Autocomplete Pintar */}
+          <div className="relative" ref={suggestionBoxRef}>
+            <div className="flex items-center justify-between mb-1.5">
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                Nama Barang / Produk
+              </label>
+              <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-brand-600 dark:text-brand-400">
+                <Sparkles className="w-3 h-3" />
+                Rekomendasi Otomatis
+              </span>
+            </div>
+
+            <div className="relative">
+              <input
+                type="text"
+                required
+                autoFocus
+                placeholder="Ketik nama... (misal: Minyak Goreng, Beras, Kopi, Mie)"
+                value={formData.name}
+                onFocus={() => setShowNameSuggestions(true)}
+                onChange={e => {
+                  setFormData({ ...formData, name: e.target.value });
+                  setShowNameSuggestions(true);
+                }}
+                className="w-full pl-3.5 pr-9 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs font-medium focus:ring-2 focus:ring-brand-500 focus:outline-none"
+              />
+              {formData.name && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setFormData({ ...formData, name: '' });
+                    setShowNameSuggestions(true);
+                  }}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-xs px-1"
+                >
+                  ✕
+                </button>
+              )}
+            </div>
+
+            {/* Dropdown Rekomendasi Nama Relevan */}
+            {showNameSuggestions && filteredSuggestions.length > 0 && (
+              <div className="absolute left-0 right-0 z-50 mt-1 max-h-56 overflow-y-auto bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl shadow-xl divide-y divide-slate-100 dark:divide-slate-800/80 animate-in fade-in zoom-in-95 duration-100">
+                <div className="px-3 py-1.5 bg-slate-50 dark:bg-slate-800/50 text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center justify-between">
+                  <span>Pilih Rekomendasi Relevan</span>
+                  <span className="text-[9px] font-normal text-slate-400">Otomatis isi kategori & satuan</span>
+                </div>
+                {filteredSuggestions.map((suggestion, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => handleSelectSuggestion(suggestion)}
+                    className="w-full text-left px-3 py-2 hover:bg-brand-50/70 dark:hover:bg-brand-950/30 flex items-center justify-between gap-2 group transition-colors"
+                  >
+                    <div className="min-w-0">
+                      <span className="text-xs font-bold text-slate-800 dark:text-slate-200 group-hover:text-brand-600 dark:group-hover:text-brand-400 block truncate">
+                        {suggestion.name}
+                      </span>
+                      <div className="flex items-center gap-1.5 mt-0.5">
+                        <span className="text-[10px] text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded">
+                          {suggestion.category}
+                        </span>
+                        <span className="text-[10px] font-semibold text-slate-600 dark:text-slate-300">
+                          / {suggestion.unit}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="text-right shrink-0">
+                      <span className="text-[11px] font-bold font-mono text-emerald-600 dark:text-emerald-400">
+                        {suggestion.price > 0 ? formatRupiah(suggestion.price) : '-'}
+                      </span>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Kategori (Bisa Ketik Bebas + Chip Cepat) */}
           <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">
-              Nama Barang / Produk
-            </label>
+            <div className="flex items-center justify-between mb-1.5">
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                Kategori (Ketik Bebas)
+              </label>
+              <span className="text-[10px] text-slate-400">atau klik pilihan cepat</span>
+            </div>
             <input
               type="text"
               required
-              placeholder="Contoh: Wireless Barcode Scanner 2D"
-              value={formData.name}
-              onChange={e => setFormData({ ...formData, name: e.target.value })}
-              className="w-full px-3.5 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs font-medium focus:ring-2 focus:ring-brand-500 focus:outline-none"
+              placeholder="Contoh: Sembako, Makanan, Minuman, Logistik..."
+              value={formData.category}
+              onChange={e => setFormData({ ...formData, category: e.target.value })}
+              className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs font-medium focus:ring-2 focus:ring-brand-500 focus:outline-none"
             />
+            {/* Quick Category Chips */}
+            <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
+              {QUICK_CATEGORIES.map(cat => {
+                const isSelected = formData.category.toLowerCase() === cat.toLowerCase();
+                return (
+                  <button
+                    key={cat}
+                    type="button"
+                    onClick={() => setFormData({ ...formData, category: cat })}
+                    className={`text-[10px] font-semibold px-2 py-0.5 rounded-lg border transition-all ${
+                      isSelected
+                        ? 'bg-brand-600 text-white border-brand-600'
+                        : 'bg-slate-100 dark:bg-slate-800/80 text-slate-600 dark:text-slate-400 border-transparent hover:bg-slate-200 dark:hover:bg-slate-700'
+                    }`}
+                  >
+                    {cat}
+                  </button>
+                );
+              })}
+            </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          {/* Satuan & Harga (Grid 2 Kolom) */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {/* Satuan (Bisa Ketik Bebas / Pack / Dus dsb) */}
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">
-                Kategori
-              </label>
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                  Satuan Kemasan
+                </label>
+              </div>
               <input
                 type="text"
                 required
-                placeholder="Elektronik"
-                value={formData.category}
-                onChange={e => setFormData({ ...formData, category: e.target.value })}
-                className="w-full px-3.5 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs font-medium focus:ring-2 focus:ring-brand-500 focus:outline-none"
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">
-                Satuan (Contoh: PCS, BOX)
-              </label>
-              <input
-                type="text"
-                required
-                placeholder="PCS / BOX"
+                placeholder="DUS, PACK, PCS, dll"
                 value={formData.unit}
-                onChange={e => setFormData({ ...formData, unit: e.target.value })}
-                className="w-full px-3.5 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs font-bold uppercase focus:ring-2 focus:ring-brand-500 focus:outline-none"
+                onChange={e => setFormData({ ...formData, unit: e.target.value.toUpperCase() })}
+                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs font-bold uppercase focus:ring-2 focus:ring-brand-500 focus:outline-none"
               />
+              {/* Quick Unit Chips */}
+              <div className="flex items-center gap-1 mt-1.5 flex-wrap">
+                {QUICK_UNITS.map(u => {
+                  const isSelected = formData.unit.toUpperCase() === u;
+                  return (
+                    <button
+                      key={u}
+                      type="button"
+                      onClick={() => setFormData({ ...formData, unit: u })}
+                      className={`text-[10px] font-bold px-1.5 py-0.5 rounded-md border transition-all ${
+                        isSelected
+                          ? 'bg-brand-600 text-white border-brand-600'
+                          : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-transparent hover:bg-slate-200 dark:hover:bg-slate-700'
+                      }`}
+                    >
+                      /{u}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
-          </div>
 
-          <div className="grid grid-cols-2 gap-3">
+            {/* Harga Satuan */}
             <div>
               <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">
                 Harga Satuan (Rp)
@@ -563,90 +757,85 @@ export const MasterItemManagement: React.FC = () => {
                 type="number"
                 min="0"
                 step="500"
-                required
                 placeholder="50000"
                 value={formData.price}
                 onChange={e => {
                   const val = e.target.value;
                   setFormData({ ...formData, price: val === '' ? '' : Math.max(0, parseInt(val) || 0) });
                 }}
-                onBlur={() => {
-                  if (formData.price === '') {
-                    setFormData(prev => ({ ...prev, price: 0 }));
-                  }
-                }}
-                className="w-full px-3.5 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs font-bold focus:ring-2 focus:ring-brand-500 focus:outline-none"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs font-bold focus:ring-2 focus:ring-brand-500 focus:outline-none"
               />
-            </div>
-
-            <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">
-                Batas Minimum Stok Aman
-              </label>
-              <input
-                type="number"
-                min="0"
-                required
-                placeholder="10"
-                value={formData.safety_stock}
-                onChange={e => {
-                  const val = e.target.value;
-                  setFormData({ ...formData, safety_stock: val === '' ? '' : Math.max(0, parseInt(val) || 0) });
-                }}
-                onBlur={() => {
-                  if (formData.safety_stock === '') {
-                    setFormData(prev => ({ ...prev, safety_stock: 0 }));
-                  }
-                }}
-                className="w-full px-3.5 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs font-bold focus:ring-2 focus:ring-brand-500 focus:outline-none"
-              />
+              <span className="text-[10px] text-slate-400 mt-1 block">
+                {formData.price ? formatRupiah(Number(formData.price)) : 'Rp 0'}
+              </span>
             </div>
           </div>
 
-          {/* Opsi Stok Awal Gudang Pusat */}
-          <div className="p-3.5 rounded-2xl bg-emerald-50/70 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-800/60 space-y-3">
-            <div className="flex items-center gap-2">
-              <Boxes className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-              <span className="text-xs font-bold text-emerald-900 dark:text-emerald-200">
-                Stok Awal di Gudang Pusat (Opsional)
+          {/* Jumlah Stok Masuk ke Gudang Pusat */}
+          <div className="p-3.5 rounded-2xl bg-emerald-50/70 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-800/60 space-y-2">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-1.5">
+                <Boxes className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                <span className="text-xs font-bold text-emerald-900 dark:text-emerald-200">
+                  Jumlah Stok Masuk (Gudang Pusat)
+                </span>
+              </div>
+              <span className="text-[10px] font-semibold text-emerald-700 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-900/50 px-2 py-0.5 rounded-full">
+                Saldo Awal
               </span>
             </div>
             <p className="text-[11px] text-slate-600 dark:text-slate-400">
-              Jika diisi, saldo stok barang akan langsung tercatat dan masuk ke database Gudang Pusat.
+              Kuantitas barang yang langsung tersedia di Gudang Pusat saat disimpan.
             </p>
 
-            <div>
-              <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-1">
-                Jumlah Stok Masuk Awal ({formData.unit || 'Unit'})
-              </label>
+            <div className="flex items-center gap-2">
               <input
                 type="number"
                 min="0"
-                placeholder="Contoh: 100 (opsional)"
+                placeholder="0"
                 value={formData.initial_stock}
                 onChange={e => {
                   const val = e.target.value;
                   setFormData({ ...formData, initial_stock: val === '' ? '' : Math.max(0, parseInt(val) || 0) });
                 }}
-                className="w-full px-3.5 py-2.5 rounded-xl border border-emerald-300 dark:border-emerald-800 bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-xs font-bold focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+                className="w-full px-3.5 py-2 rounded-xl border border-emerald-300 dark:border-emerald-800 bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-xs font-bold font-mono focus:ring-2 focus:ring-emerald-500 focus:outline-none"
               />
+              {/* Stepper buttons */}
+              <div className="flex items-center gap-1 shrink-0">
+                {[5, 10, 25, 50, 100].map(addQty => (
+                  <button
+                    key={addQty}
+                    type="button"
+                    onClick={() => {
+                      const cur = Number(formData.initial_stock) || 0;
+                      setFormData({ ...formData, initial_stock: cur + addQty });
+                    }}
+                    className="px-2 py-1.5 rounded-lg text-[10px] font-bold bg-white dark:bg-slate-800 border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 active:scale-95 transition-all"
+                  >
+                    +{addQty}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
 
-          <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
+          <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-slate-100 dark:border-slate-800">
             <button
               type="button"
-              onClick={() => setIsAddItemOpen(false)}
-              className="px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-300"
+              onClick={() => {
+                setIsAddItemOpen(false);
+                setShowNameSuggestions(false);
+              }}
+              className="px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
             >
               Batal
             </button>
             <button
               type="submit"
               disabled={isSubmitting}
-              className="w-full sm:w-auto px-5 py-3 rounded-xl text-xs font-bold text-white bg-brand-600 hover:bg-brand-500 shadow-md active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+              className="flex-1 sm:flex-initial px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-brand-600 hover:bg-brand-500 shadow-md active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
             >
-              {isSubmitting ? 'Menyimpan...' : 'Simpan Data Barang'}
+              {isSubmitting ? 'Menyimpan...' : 'Simpan Barang Baru'}
             </button>
           </div>
         </form>
