@@ -7,10 +7,10 @@ import { StatCard } from '../common/StatCard';
 import { 
   BookOpen, Download, Search, 
   ArrowUpRight, ArrowDownRight, AlertTriangle, 
-  CheckCircle, Printer
+  CheckCircle, Printer, FileText, Loader2
 } from 'lucide-react';
 import { formatDate, formatNumber, getTransactionTypeBadge } from '../../utils/formatters';
-import { exportMutationsToExcel } from '../../utils/exportHelpers';
+import { exportMutationsToExcel, exportMutationsToPdf } from '../../utils/exportHelpers';
 
 export const MutationLedgerReport: React.FC = () => {
   const { mutations, items, requests } = useInventory();
@@ -21,6 +21,7 @@ export const MutationLedgerReport: React.FC = () => {
   const [typeFilter, setTypeFilter] = useState<TransactionType | 'ALL'>('ALL');
   const [timeRange, setTimeRange] = useState<'ALL' | 'TODAY' | '7DAYS' | '30DAYS'>('ALL');
   const [searchTerm, setSearchTerm] = useState('');
+  const [isExportingPdf, setIsExportingPdf] = useState(false);
 
   const itemMap = new Map(items.map(i => [i.id, i]));
   const locMap = new Map(locations.map(l => [l.id, l]));
@@ -86,7 +87,7 @@ export const MutationLedgerReport: React.FC = () => {
   );
   const fulfillmentRate = totalRequested > 0 ? ((totalApproved / totalRequested) * 100).toFixed(1) : '100.0';
 
-  const handleExportExcel = () => {
+  const getExportMeta = () => {
     const storeLabel =
       storeFilter === 'ALL'
         ? 'Semua Lokasi / Cabang'
@@ -104,12 +105,30 @@ export const MutationLedgerReport: React.FC = () => {
         ? '7 Hari Terakhir'
         : '30 Hari Terakhir';
 
-    exportMutationsToExcel(filteredMutations, items, locations, users, {
+    return {
       storeFilterLabel: storeLabel,
       typeFilterLabel: typeLabel,
       timeRangeLabel: timeLabel,
       adminName: currentUser?.full_name || 'Admin Gudang Pusat',
-    });
+    };
+  };
+
+  const handleExportExcel = () => {
+    exportMutationsToExcel(filteredMutations, items, locations, users, getExportMeta());
+  };
+
+  const handleExportPdf = () => {
+    setIsExportingPdf(true);
+    // Timeout microtask to let UI reflect loading state immediately
+    setTimeout(() => {
+      try {
+        exportMutationsToPdf(filteredMutations, items, locations, users, getExportMeta());
+      } catch (err) {
+        console.error('Gagal export PDF mutasi:', err);
+      } finally {
+        setIsExportingPdf(false);
+      }
+    }, 50);
   };
 
   const handlePrint = () => {
@@ -119,7 +138,7 @@ export const MutationLedgerReport: React.FC = () => {
   return (
     <div className="space-y-4">
       {/* Header & Export Actions */}
-      <div className="flex items-center justify-between gap-2">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
         <div>
           <h2 className="text-lg sm:text-xl font-black text-slate-900 dark:text-white flex items-center gap-2">
             <BookOpen className="w-5 h-5 text-brand-600" />
@@ -130,20 +149,39 @@ export const MutationLedgerReport: React.FC = () => {
           </p>
         </div>
 
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-1.5 shrink-0 overflow-x-auto no-scrollbar">
+          {/* Tombol Cetak Langsung Browser */}
           <button
             onClick={handlePrint}
-            className="p-2 sm:px-3 sm:py-2 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 active:scale-95 shadow-sm hover:bg-slate-50 dark:hover:bg-slate-800 transition-all"
-            title="Cetak PDF"
+            className="p-2 sm:px-2.5 sm:py-2 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 active:scale-95 shadow-sm hover:bg-slate-50 dark:hover:bg-slate-800 transition-all"
+            title="Cetak Langsung (Browser Print)"
           >
-            <Printer className="w-4 h-4" />
+            <Printer className="w-3.5 h-3.5" />
           </button>
 
+          {/* Tombol Export Dokumen PDF Resmi */}
+          <button
+            onClick={handleExportPdf}
+            disabled={isExportingPdf || filteredMutations.length === 0}
+            className="flex-1 sm:flex-initial flex items-center justify-center gap-1 px-3 py-2 rounded-xl text-xs font-bold text-rose-700 dark:text-rose-300 bg-rose-50 dark:bg-rose-950/40 border border-rose-200/80 dark:border-rose-900/50 hover:bg-rose-100 dark:hover:bg-rose-900/60 shadow-sm active:scale-95 disabled:opacity-50 transition-all whitespace-nowrap"
+            title="Download Dokumen PDF Laporan Mutasi Berformat Tabel"
+          >
+            {isExportingPdf ? (
+              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+            ) : (
+              <FileText className="w-3.5 h-3.5" />
+            )}
+            <span>PDF</span>
+          </button>
+
+          {/* Tombol Export Excel */}
           <button
             onClick={handleExportExcel}
-            className="flex items-center gap-1 px-3 py-2 rounded-xl text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-500 shadow-sm active:scale-95 transition-all"
+            disabled={filteredMutations.length === 0}
+            className="flex-1 sm:flex-initial flex items-center justify-center gap-1 px-3 py-2 rounded-xl text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-500 shadow-sm active:scale-95 disabled:opacity-50 transition-all whitespace-nowrap"
+            title="Download Spreadsheet Excel Data Mutasi"
           >
-            <Download className="w-4 h-4" />
+            <Download className="w-3.5 h-3.5" />
             <span>Excel</span>
           </button>
         </div>

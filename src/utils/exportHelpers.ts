@@ -1,6 +1,7 @@
 import XLSX from 'xlsx-js-style';
+import jsPDF from 'jspdf';
 import { InventoryMutation, Item, Location, User, Inventory, TransferRequest } from '../types';
-import { formatDate } from './formatters';
+import { formatDate, formatNumber, getTransactionTypeBadge } from './formatters';
 
 // Common Color Palettes & Styles
 const BORDER_THIN = {
@@ -240,11 +241,13 @@ export function exportMutationsToExcel(
 
     totalQty += m.qty;
 
+    const typeDesc = getTransactionTypeBadge(m.transaction_type)?.label || m.transaction_type;
+
     const rowData: [any, 'left' | 'center' | 'right', string?][] = [
       [idx + 1, 'center'],
       [m.id, 'center'],
       [formatDate(m.created_at), 'center'],
-      [m.transaction_type, 'center'],
+      [typeDesc, 'center'],
       [item?.sku || '-', 'center'],
       [item?.name || '-', 'left'],
       [item?.category || '-', 'left'],
@@ -336,6 +339,293 @@ export function exportMutationsToExcel(
 
   XLSX.utils.book_append_sheet(wb, ws, 'Buku Besar Mutasi');
   XLSX.writeFile(wb, filename);
+}
+
+// -------------------------------------------------------------
+// 1B. EXPORT BUKU BESAR MUTASI STOK KE PDF
+// -------------------------------------------------------------
+export function exportMutationsToPdf(
+  mutations: InventoryMutation[],
+  items: Item[],
+  locations: Location[],
+  users: User[],
+  meta?: MutationExportMeta,
+  filename = 'Buku_Besar_Mutasi_Stok.pdf'
+) {
+  const itemMap = new Map(items.map(i => [i.id, i]));
+  const locMap = new Map(locations.map(l => [l.id, l]));
+  const userMap = new Map(users.map(u => [u.id, u]));
+
+  const doc = new jsPDF({
+    orientation: 'landscape',
+    unit: 'mm',
+    format: 'a4',
+  });
+
+  const marginX = 10;
+  const contentWidth = 277;
+
+  // Helper truncate text
+  const fitText = (text: any, maxW: number): string => {
+    const strText = text !== null && text !== undefined ? String(text) : '-';
+    if (doc.getTextWidth(strText) <= maxW) return strText;
+    let str = strText;
+    while (str.length > 0 && doc.getTextWidth(str + '..') > maxW) {
+      str = str.slice(0, -1);
+    }
+    return str + '..';
+  };
+
+  // Definisi Kolom Tabel (Total Lebar = 277 mm)
+  const columns = [
+    { key: 'no', title: 'No', width: 8, align: 'center' as const },
+    { key: 'time', title: 'Waktu', width: 22, align: 'center' as const },
+    { key: 'type', title: 'Tipe Transaksi', width: 25, align: 'center' as const },
+    { key: 'sku', title: 'SKU', width: 18, align: 'center' as const },
+    { key: 'name', title: 'Nama Barang', width: 48, align: 'left' as const },
+    { key: 'qty', title: 'Jumlah', width: 16, align: 'right' as const },
+    { key: 'unit', title: 'Satuan', width: 12, align: 'center' as const },
+    { key: 'from', title: 'Dari Lokasi', width: 27, align: 'left' as const },
+    { key: 'to', title: 'Ke Lokasi', width: 27, align: 'left' as const },
+    { key: 'ref', title: 'No. DO / Ref', width: 24, align: 'center' as const },
+    { key: 'user', title: 'Petugas', width: 22, align: 'left' as const },
+    { key: 'notes', title: 'Catatan', width: 28, align: 'left' as const },
+  ];
+
+  const drawHeaderBanner = () => {
+    // Top Kop Header
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(13);
+    doc.setTextColor(30, 58, 138); // Navy
+    doc.text('PT SISTEM DISTRIBUSI LOGISTIK', marginX, 15);
+
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(9.5);
+    doc.setTextColor(51, 65, 85); // Slate 700
+    doc.text('LAPORAN RESMI BUKU BESAR MUTASI STOK BARANG (LOGISTIK GUDANG & TOKO)', marginX, 20);
+
+    // Divider Line
+    doc.setDrawColor(203, 213, 225); // Slate 300
+    doc.setLineWidth(0.4);
+    doc.line(marginX, 23, marginX + contentWidth, 23);
+
+    // Metadata Info Box (Height: 12mm, Y: 25..37)
+    doc.setFillColor(248, 250, 252); // Slate 50
+    doc.setDrawColor(226, 232, 240); // Slate 200
+    doc.setLineWidth(0.2);
+    doc.roundedRect(marginX, 25, contentWidth, 12, 1, 1, 'FD');
+
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(7.5);
+    doc.setTextColor(71, 85, 105);
+
+    const nowStr = formatDate(new Date().toISOString());
+    const storeLabel = meta?.storeFilterLabel || 'Semua Lokasi / Cabang';
+    const typeLabel = meta?.typeFilterLabel || 'Semua Tipe Transaksi';
+    const timeLabel = meta?.timeRangeLabel || 'Semua Waktu';
+    const adminLabel = meta?.adminName || 'Admin Gudang Pusat';
+
+    // Baris 1
+    doc.text(`Waktu Cetak: ${nowStr}`, marginX + 3, 29.5);
+    doc.text(`Filter Lokasi: ${storeLabel}`, marginX + 80, 29.5);
+    doc.text(`Tipe Mutasi: ${typeLabel}`, marginX + 175, 29.5);
+
+    // Baris 2
+    doc.text(`Petugas Cetak: ${adminLabel}`, marginX + 3, 34);
+    doc.text(`Rentang Waktu: ${timeLabel}`, marginX + 80, 34);
+    doc.text(`Total Catatan: ${formatNumber(mutations.length)} Transaksi`, marginX + 175, 34);
+  };
+
+  const drawTableHeader = (startY: number) => {
+    doc.setFillColor(30, 41, 59); // Slate 800
+    doc.rect(marginX, startY, contentWidth, 6.5, 'F');
+
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(7.5);
+    doc.setTextColor(255, 255, 255);
+
+    let curX = marginX;
+    columns.forEach(col => {
+      let textX = curX + 1;
+      if (col.align === 'center') textX = curX + col.width / 2;
+      else if (col.align === 'right') textX = curX + col.width - 1.5;
+
+      doc.text(col.title, textX, startY + 4.5, { align: col.align });
+      curX += col.width;
+    });
+
+    return startY + 6.5;
+  };
+
+  // Draw First Page Header
+  drawHeaderBanner();
+  let currentY = drawTableHeader(39);
+
+  let totalQty = 0;
+  const rowHeight = 5.6;
+
+  mutations.forEach((m, idx) => {
+    // Check page break
+    if (currentY + rowHeight > 192) {
+      doc.addPage('a4', 'landscape');
+      currentY = drawTableHeader(12);
+    }
+
+    const item = itemMap.get(m.item_id);
+    const fromLoc =
+      m.from_location_id !== null && m.from_location_id !== undefined
+        ? locMap.get(m.from_location_id)?.name || `Lokasi #${m.from_location_id}`
+        : 'Gudang Pusat';
+    const toLoc =
+      m.to_location_id !== null && m.to_location_id !== undefined
+        ? locMap.get(m.to_location_id)?.name || `Lokasi #${m.to_location_id}`
+        : m.transaction_type === 'DAMAGE_LOSS'
+        ? 'Akun Kerugian (Loss)'
+        : '-';
+    const creator = userMap.get(m.created_by)?.full_name || m.created_by || '-';
+    const typeDesc = getTransactionTypeBadge(m.transaction_type)?.label || m.transaction_type;
+
+    totalQty += m.qty;
+
+    // Background zebra
+    const isOdd = idx % 2 === 1;
+    if (isOdd) {
+      doc.setFillColor(248, 250, 252);
+      doc.rect(marginX, currentY, contentWidth, rowHeight, 'F');
+    }
+
+    // Border line bottom
+    doc.setDrawColor(226, 232, 240);
+    doc.setLineWidth(0.15);
+    doc.line(marginX, currentY + rowHeight, marginX + contentWidth, currentY + rowHeight);
+
+    // Row texts
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(7);
+    doc.setTextColor(30, 41, 59);
+
+    const values: Record<string, string> = {
+      no: String(idx + 1),
+      time: formatDate(m.created_at),
+      type: fitText(typeDesc, 23),
+      sku: fitText(item?.sku || '-', 16),
+      name: fitText(item?.name || '-', 46),
+      qty: formatNumber(m.qty),
+      unit: item?.unit || 'PCS',
+      from: fitText(fromLoc, 25),
+      to: fitText(toLoc, 25),
+      ref: fitText(m.reference_code || m.reference_id || '-', 22),
+      user: fitText(creator, 20),
+      notes: fitText(m.notes || '-', 26),
+    };
+
+    let curX = marginX;
+    columns.forEach(col => {
+      let textX = curX + 1.2;
+      if (col.align === 'center') textX = curX + col.width / 2;
+      else if (col.align === 'right') textX = curX + col.width - 1.5;
+
+      // Color accent for Type or Qty
+      if (col.key === 'type') {
+        if (m.transaction_type.includes('INBOUND') || m.transaction_type.includes('RECEIVE')) {
+          doc.setTextColor(22, 101, 52); // green
+        } else if (m.transaction_type === 'DAMAGE_LOSS') {
+          doc.setTextColor(159, 18, 57); // red
+        } else {
+          doc.setTextColor(30, 58, 138); // blue
+        }
+        doc.setFont('helvetica', 'bold');
+      } else if (col.key === 'qty') {
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(15, 23, 42);
+      } else {
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(30, 41, 59);
+      }
+
+      doc.text(values[col.key] || '-', textX, currentY + 3.8, { align: col.align });
+      curX += col.width;
+    });
+
+    currentY += rowHeight;
+  });
+
+  // Total Summary Row
+  if (currentY + 10 > 192) {
+    doc.addPage('a4', 'landscape');
+    currentY = 14;
+  }
+
+  doc.setFillColor(226, 232, 240); // Slate 200
+  doc.rect(marginX, currentY, contentWidth, 6.5, 'F');
+  doc.setDrawColor(148, 163, 184);
+  doc.setLineWidth(0.3);
+  doc.line(marginX, currentY + 6.5, marginX + contentWidth, currentY + 6.5);
+
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(8);
+  doc.setTextColor(15, 23, 42);
+
+  // Label Total
+  doc.text('TOTAL KUANTITI TRANSAKSI MUTASI:', marginX + 3, currentY + 4.5);
+
+  // Qty Total aligned to Qty column
+  const qtyCol = columns.find(c => c.key === 'qty');
+  const qtyColX = columns.slice(0, 5).reduce((sum, c) => sum + c.width, marginX);
+  doc.text(
+    `${formatNumber(totalQty)} UNIT/ITEM`,
+    qtyColX + (qtyCol?.width || 16) - 1.5,
+    currentY + 4.5,
+    { align: 'right' }
+  );
+
+  currentY += 12;
+
+  // Signatures block (if fits, otherwise new page)
+  if (currentY + 28 > 194) {
+    doc.addPage('a4', 'landscape');
+    currentY = 18;
+  }
+
+  const signY = currentY + 2;
+  doc.setFontSize(8);
+  doc.setFont('helvetica', 'normal');
+  doc.setTextColor(71, 85, 105);
+
+  // Sign 1: Petugas Gudang
+  doc.text('Dibuat & Diverifikasi Oleh:', marginX + 15, signY);
+  doc.text('Petugas Pelaksana Gudang', marginX + 15, signY + 4.5);
+  doc.line(marginX + 15, signY + 19, marginX + 65, signY + 19);
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(15, 23, 42);
+  doc.text(meta?.adminName || 'Petugas Gudang', marginX + 15, signY + 23);
+
+  // Sign 2: Kepala Operasional Logistik
+  doc.setFont('helvetica', 'normal');
+  doc.setTextColor(71, 85, 105);
+  doc.text('Mengetahui & Menyetujui:', marginX + contentWidth - 65, signY);
+  doc.text('Kepala Logistik & Distribusi', marginX + contentWidth - 65, signY + 4.5);
+  doc.line(marginX + contentWidth - 65, signY + 19, marginX + contentWidth - 15, signY + 19);
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(15, 23, 42);
+  doc.text('Manager Logistik Pusat', marginX + contentWidth - 65, signY + 23);
+
+  // Page Numbers Footer on All Pages
+  const totalPages = doc.getNumberOfPages();
+  for (let p = 1; p <= totalPages; p++) {
+    doc.setPage(p);
+    doc.setDrawColor(226, 232, 240);
+    doc.setLineWidth(0.2);
+    doc.line(marginX, 201, marginX + contentWidth, 201);
+
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(7);
+    doc.setTextColor(148, 163, 184);
+    doc.text('Sistem Pergudangan & Distribusi Logistik | Dokumen Resmi Perusahaan', marginX, 205);
+    doc.text(`Halaman ${p} dari ${totalPages}`, marginX + contentWidth, 205, { align: 'right' });
+  }
+
+  doc.save(filename);
 }
 
 // -------------------------------------------------------------
