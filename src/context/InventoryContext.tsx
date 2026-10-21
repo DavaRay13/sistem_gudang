@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { Item, Inventory, TransferRequest, InventoryMutation, Notification } from '../types';
+import { Item, Inventory, TransferRequest, InventoryMutation, Notification, TransactionType } from '../types';
 import { StorageRepository } from '../db/storageRepository';
 import { SupabaseService } from '../services/supabaseService';
 import { supabase, isSupabaseConfigured } from '../lib/supabaseClient';
@@ -29,9 +29,10 @@ interface InventoryContextType {
   updateItem: (itemId: number, data: Partial<Omit<Item, 'id' | 'created_at'>>) => Promise<Item>;
   deleteItem: (itemId: number) => Promise<void>;
   inboundStock: (itemId: number, qty: number, notes: string, userId: string, supplierName?: string) => Promise<void>;
+  outboundStock: (itemId: number, qty: number, reasonType: TransactionType, notes: string, userId: string) => Promise<void>;
   createRequest: (toLocationId: number, requestedByUserId: string, itemsData: Array<{ itemId: number; qtyRequested: number }>, notes?: string) => Promise<TransferRequest>;
   authorizeRequest: (requestId: number, adminUserId: string, decision: 'APPROVE_FULL' | 'APPROVE_PARTIAL' | 'REJECT', options?: { approvedItems?: Array<{ itemId: number; qtyApproved: number }>; rejectionNotes?: string }) => Promise<void>;
-  dispatchRequest: (requestId: number, adminUserId: string) => Promise<void>;
+  dispatchRequest: (requestId: number, adminUserId: string, dispatchInfo?: { driverName?: string; vehiclePlate?: string }) => Promise<void>;
   receiveTransfer: (requestId: number, storeUserId: string, receivedItems: Array<{ itemId: number; qtyReceived: number; discrepancyReason?: string }>) => Promise<void>;
   markNotificationRead: (id: string) => void;
   loadSampleDataPreset: () => Promise<void>;
@@ -195,6 +196,24 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     }
   };
 
+  const outboundStock = async (itemId: number, qty: number, reasonType: TransactionType, notes: string, userId: string): Promise<void> => {
+    try {
+      await SupabaseService.outboundStock(itemId, qty, reasonType, notes, userId);
+      const targetItem = items.find(i => i.id === itemId);
+      StorageRepository.addNotification({
+        title: 'Pengeluaran Stok Berhasil',
+        message: `Stok keluar sebanyak ${qty} ${targetItem?.unit || 'unit'} untuk SKU ${targetItem?.sku || itemId} (${reasonType}).`,
+        type: 'warning',
+        targetRole: 'ADMIN_GUDANG',
+      });
+      await refreshData();
+      showToast('success', 'Stok Berhasil Dikeluarkan', `Berhasil memotong ${qty} unit dari Gudang Pusat.`);
+    } catch (err: any) {
+      showToast('error', 'Gagal Mengeluarkan Stok', err.message);
+      throw err;
+    }
+  };
+
   const createRequest = async (
     toLocationId: number,
     requestedByUserId: string,
@@ -246,9 +265,13 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     }
   };
 
-  const dispatchRequest = async (requestId: number, adminUserId: string): Promise<void> => {
+  const dispatchRequest = async (
+    requestId: number, 
+    adminUserId: string,
+    dispatchInfo?: { driverName?: string; vehiclePlate?: string }
+  ): Promise<void> => {
     try {
-      await SupabaseService.dispatchTransferRequest(requestId, adminUserId);
+      await SupabaseService.dispatchTransferRequest(requestId, adminUserId, dispatchInfo);
       const req = requests.find(r => r.id === requestId);
       StorageRepository.addNotification({
         title: 'Pesanan Telah Dikirim (Dispatch)',
@@ -331,6 +354,7 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         updateItem,
         deleteItem,
         inboundStock,
+        outboundStock,
         createRequest,
         authorizeRequest,
         dispatchRequest,

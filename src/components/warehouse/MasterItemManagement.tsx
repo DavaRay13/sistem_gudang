@@ -3,8 +3,9 @@ import { useInventory } from '../../context/InventoryContext';
 import { useAuth } from '../../context/AuthContext';
 import { Modal } from '../common/Modal';
 import { InboundStockModal } from './InboundStockModal';
+import { OutboundStockModal } from './OutboundStockModal';
 import { 
-  Package, Plus, ArrowDownRight, Search, 
+  Package, Plus, ArrowDownRight, ArrowUpRight, Search, 
   ShieldAlert, Boxes, Download, Trash2, Pencil
 } from 'lucide-react';
 import { Item } from '../../types';
@@ -23,6 +24,8 @@ export const MasterItemManagement: React.FC = () => {
   const [isAddItemOpen, setIsAddItemOpen] = useState(false);
   const [isInboundOpen, setIsInboundOpen] = useState(false);
   const [selectedInboundItemId, setSelectedInboundItemId] = useState<number | undefined>(undefined);
+  const [isOutboundOpen, setIsOutboundOpen] = useState(false);
+  const [selectedOutboundItemId, setSelectedOutboundItemId] = useState<number | undefined>(undefined);
   const [itemToDelete, setItemToDelete] = useState<any>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
@@ -191,6 +194,11 @@ export const MasterItemManagement: React.FC = () => {
     setIsInboundOpen(true);
   };
 
+  const openOutboundForItem = (itemId: number) => {
+    setSelectedOutboundItemId(itemId);
+    setIsOutboundOpen(true);
+  };
+
   const handleExportExcel = () => {
     exportMasterItemsToExcel(
       filteredItems,
@@ -235,6 +243,19 @@ export const MasterItemManagement: React.FC = () => {
           >
             <ArrowDownRight className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
             <span>Stok Masuk</span>
+          </button>
+
+          <button
+            onClick={() => {
+              setSelectedOutboundItemId(items[0]?.id);
+              setIsOutboundOpen(true);
+            }}
+            disabled={items.length === 0}
+            className="flex items-center gap-1 px-3 py-2 rounded-xl text-xs font-bold text-rose-700 dark:text-rose-300 bg-rose-50/80 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-900/40 hover:bg-rose-100 dark:hover:bg-rose-900/50 shadow-sm active:scale-95 disabled:opacity-50 transition-all"
+            title="Keluarkan stok (rusak, retur vendor, selisih)"
+          >
+            <ArrowUpRight className="w-4 h-4 text-rose-600 dark:text-rose-400" />
+            <span>Keluarkan Stok</span>
           </button>
 
           <button
@@ -404,7 +425,16 @@ export const MasterItemManagement: React.FC = () => {
                         title="Tambah Stok Masuk"
                       >
                         <ArrowDownRight className="w-3.5 h-3.5" />
-                        <span>Tambah Stok</span>
+                        <span>Masuk</span>
+                      </button>
+
+                      <button
+                        onClick={() => openOutboundForItem(item.id)}
+                        className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-bold text-rose-700 dark:text-rose-300 bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-900/60 hover:bg-rose-100 dark:hover:bg-rose-900/60 active:scale-95 transition-all"
+                        title="Keluarkan Stok (Rusak / Retur / Selisih)"
+                      >
+                        <ArrowUpRight className="w-3.5 h-3.5" />
+                        <span>Keluar</span>
                       </button>
 
                       <button
@@ -798,6 +828,14 @@ export const MasterItemManagement: React.FC = () => {
         onClose={() => setIsInboundOpen(false)}
         items={items}
         preselectedItemId={selectedInboundItemId}
+      />
+
+      {/* Modal Outbound */}
+      <OutboundStockModal
+        isOpen={isOutboundOpen}
+        onClose={() => setIsOutboundOpen(false)}
+        items={items}
+        preselectedItemId={selectedOutboundItemId}
       />
     </div>
   );

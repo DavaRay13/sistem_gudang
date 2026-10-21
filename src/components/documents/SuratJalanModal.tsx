@@ -28,6 +28,11 @@ export const SuratJalanModal: React.FC<SuratJalanModalProps> = ({
   const requester = users.find(u => u.id === request.requested_by);
   const approver = users.find(u => u.id === request.approved_by);
 
+  // Extract courier info if present in request_notes
+  const courierMatch = request.request_notes?.match(/\[Kurir:\s*([^|\]]+)(?:\s*\|\s*Plat:\s*([^\]]+))?\]/);
+  const driverName = courierMatch ? courierMatch[1].trim() : '';
+  const vehiclePlate = courierMatch && courierMatch[2] ? courierMatch[2].trim() : '';
+
   const itemMap = new Map(items.map(i => [i.id, i]));
   const printRef = useRef<HTMLDivElement>(null);
   const [loadingPdf, setLoadingPdf] = useState(false);
@@ -237,11 +242,16 @@ export const SuratJalanModal: React.FC<SuratJalanModalProps> = ({
 
             <div>
               <p className="font-semibold text-slate-700">Driver / Ekspedisi</p>
-              <div className="h-20 flex items-center justify-center">
+              <div className="h-20 flex flex-col items-center justify-center">
                 <PackageCheck className="w-8 h-8 text-slate-300" />
+                {vehiclePlate && (
+                  <span className="text-[10px] font-mono text-slate-600 mt-1 font-bold">
+                    Plat: {vehiclePlate}
+                  </span>
+                )}
               </div>
               <p className="font-bold text-slate-900 border-t border-slate-400 pt-1">
-                ( ..................................... )
+                ( {driverName || '.....................................'} )
               </p>
             </div>
 

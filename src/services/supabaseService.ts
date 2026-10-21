@@ -1,6 +1,6 @@
 import { supabase, isSupabaseConfigured } from '../lib/supabaseClient';
 import { StorageRepository } from '../db/storageRepository';
-import { User, Location, Item, Inventory, TransferRequest, InventoryMutation } from '../types';
+import { User, Location, Item, Inventory, TransferRequest, InventoryMutation, TransactionType } from '../types';
 import { SAMPLE_DATA_PRESET } from '../db/initialData';
 
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -372,6 +372,76 @@ export class SupabaseService {
     StorageRepository.addStockInbound(itemId, qty, notes, userId, supplierName);
   }
 
+  // --- OUTBOUND STOCK (PENGELUARAN STOK LANGSUNG DARI GUDANG PUSAT) ---
+  static async outboundStock(
+    itemId: number,
+    qty: number,
+    reasonType: TransactionType,
+    notes: string,
+    userId: string
+  ): Promise<void> {
+    if (isSupabaseConfigured && supabase) {
+      try {
+        const validUserId = resolveUuid(userId, DEFAULT_ADMIN_UUID);
+
+        // Periksa saldo stok saat ini di Gudang Pusat (Location 0)
+        const { data: inv, error: invError } = await supabase
+          .from('inventories')
+          .select('*')
+          .eq('location_id', 0)
+          .eq('item_id', itemId)
+          .single();
+
+        if (invError) throw invError;
+        if (!inv || inv.stock_available < qty) {
+          throw new Error(`Stok di Gudang Pusat tidak mencukupi (Tersedia: ${inv?.stock_available || 0}, Diminta keluar: ${qty})`);
+        }
+
+        // Potong stok gudang
+        const { error: updateError } = await supabase
+          .from('inventories')
+          .update({
+            stock_available: inv.stock_available - qty,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', inv.id);
+
+        if (updateError) throw updateError;
+
+        // Catat ke Buku Besar Mutasi
+        const { error: mutError } = await supabase
+          .from('inventory_mutations')
+          .insert({
+            item_id: itemId,
+            from_location_id: 0,
+            to_location_id: null,
+            qty: qty,
+            transaction_type: reasonType,
+            notes: notes || `Pengeluaran stok (${reasonType})`,
+            created_by: validUserId,
+          });
+
+        if (mutError) throw mutError;
+
+        try {
+          StorageRepository.addStockOutbound(itemId, qty, reasonType, notes, userId);
+        } catch {
+          // ignore
+        }
+        return;
+      } catch (err: any) {
+        console.warn('Supabase outboundStock error:', err.message);
+        if (isNetworkOrConnectionError(err)) {
+          console.warn('Network unreachable, fallback to local storage');
+          StorageRepository.addStockOutbound(itemId, qty, reasonType, notes, userId);
+          return;
+        }
+        throw err;
+      }
+    }
+    StorageRepository.addStockOutbound(itemId, qty, reasonType, notes, userId);
+  }
+
   // --- TRANSFER REQUESTS (PERMINTAAN TRANSFER TOKO) ---
   static async getRequests(): Promise<TransferRequest[]> {
     if (isSupabaseConfigured && supabase) {
@@ -474,7 +544,11 @@ export class SupabaseService {
     StorageRepository.authorizeRequest(requestId, adminUserId, decision, options);
   }
 
-  static async dispatchTransferRequest(requestId: number, adminUserId: string): Promise<void> {
+  static async dispatchTransferRequest(
+    requestId: number, 
+    adminUserId: string,
+    dispatchInfo?: { driverName?: string; vehiclePlate?: string }
+  ): Promise<void> {
     if (isSupabaseConfigured && supabase) {
       try {
         const validUserId = resolveUuid(adminUserId, DEFAULT_ADMIN_UUID);
@@ -485,18 +559,32 @@ export class SupabaseService {
 
         if (error) throw error;
         if (data && !data.success) throw new Error(data.message || 'Gagal dispatch pengiriman');
+
+        // Update courier info in request_notes if provided
+        if (dispatchInfo?.driverName || dispatchInfo?.vehiclePlate) {
+          const courierTag = `[Kurir: ${dispatchInfo.driverName || '-'} | Plat: ${dispatchInfo.vehiclePlate || '-'}]`;
+          const { data: reqData } = await supabase.from('transfer_requests').select('request_notes').eq('id', requestId).single();
+          const updatedNotes = (reqData?.request_notes ? reqData.request_notes + ' • ' : '') + courierTag;
+          await supabase.from('transfer_requests').update({ request_notes: updatedNotes }).eq('id', requestId);
+        }
+
+        try {
+          StorageRepository.dispatchRequest(requestId, adminUserId, dispatchInfo);
+        } catch {
+          // ignore
+        }
         return;
       } catch (err: any) {
         console.warn('Supabase dispatchTransferRequest error:', err.message);
         if (isNetworkOrConnectionError(err)) {
           console.warn('Network unreachable, falling back to local dispatch');
-          StorageRepository.dispatchRequest(requestId, adminUserId);
+          StorageRepository.dispatchRequest(requestId, adminUserId, dispatchInfo);
           return;
         }
         throw err;
       }
     }
-    StorageRepository.dispatchRequest(requestId, adminUserId);
+    StorageRepository.dispatchRequest(requestId, adminUserId, dispatchInfo);
   }
 
   static async receiveTransferRequest(

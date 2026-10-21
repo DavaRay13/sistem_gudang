@@ -1,6 +1,6 @@
 import { 
   Location, User, Item, Inventory, TransferRequest, TransferRequestItem, 
-  InventoryMutation, Notification 
+  InventoryMutation, Notification, TransactionType 
 } from '../types';
 import { 
   INITIAL_LOCATIONS, INITIAL_USERS, INITIAL_ITEMS, 
@@ -289,6 +289,51 @@ export class StorageRepository {
     return { inventory: inv, mutation };
   }
 
+  // --- OUTBOUND STOCK (PENGELUARAN STOK LANGSUNG / NON-TRANSFER) ---
+  static addStockOutbound(
+    itemId: number,
+    qty: number,
+    reasonType: TransactionType,
+    notes: string,
+    userId: string
+  ): { inventory: Inventory; mutation: InventoryMutation } {
+    if (qty <= 0) throw new Error('Kuantiti barang keluar harus lebih besar dari 0');
+
+    const inventories = this.getInventories();
+    const warehouseId = 0; // Gudang Pusat
+
+    const inv = inventories.find(i => i.location_id === warehouseId && i.item_id === itemId);
+    const available = inv ? inv.stock_available : 0;
+
+    if (available < qty) {
+      throw new Error(`Stok di Gudang Pusat tidak mencukupi (Tersedia: ${available}, Diminta keluar: ${qty})`);
+    }
+
+    inv!.stock_available -= qty;
+    inv!.updated_at = new Date().toISOString();
+    setStorage(STORAGE_KEYS.INVENTORIES, inventories);
+
+    // Record Mutation Ledger
+    const mutations = this.getMutations();
+    const nextMutId = mutations.length > 0 ? Math.max(...mutations.map(m => m.id)) + 1 : 1;
+    const mutation: InventoryMutation = {
+      id: nextMutId,
+      item_id: itemId,
+      from_location_id: warehouseId,
+      to_location_id: null,
+      qty: qty,
+      transaction_type: reasonType,
+      notes: notes || `Pengeluaran stok (${reasonType})`,
+      created_by: userId,
+      created_at: new Date().toISOString(),
+    };
+
+    mutations.push(mutation);
+    setStorage(STORAGE_KEYS.MUTATIONS, mutations);
+
+    return { inventory: inv!, mutation };
+  }
+
   // --- TRANSFER REQUESTS (LIFECYCLE) ---
   static getRequests(): TransferRequest[] {
     return getStorage<TransferRequest[]>(STORAGE_KEYS.REQUESTS, INITIAL_REQUESTS);
@@ -437,7 +482,11 @@ export class StorageRepository {
   }
 
   // Dispatch (Pengiriman & Cetak Surat Jalan DO)
-  static dispatchRequest(requestId: number, adminUserId: string): TransferRequest {
+  static dispatchRequest(
+    requestId: number, 
+    adminUserId: string,
+    dispatchInfo?: { driverName?: string; vehiclePlate?: string }
+  ): TransferRequest {
     const requests = this.getRequests();
     const req = requests.find(r => r.id === requestId);
     if (!req) throw new Error('Transfer Request tidak ditemukan');
@@ -450,6 +499,10 @@ export class StorageRepository {
     const todayStr = new Date().toISOString().slice(0, 10).replace(/-/g, '');
     const doCountToday = requests.filter(r => r.do_number?.includes(todayStr)).length + 1;
     const doNumber = `DO-${todayStr}-${String(doCountToday).padStart(4, '0')}`;
+
+    const courierTag = dispatchInfo?.driverName || dispatchInfo?.vehiclePlate
+      ? ` [Kurir: ${dispatchInfo.driverName || '-'} | Plat: ${dispatchInfo.vehiclePlate || '-'}]`
+      : '';
 
     const mutations = this.getMutations();
 
@@ -476,7 +529,7 @@ export class StorageRepository {
           transaction_type: 'TRANSFER_DISPATCH',
           reference_id: req.id,
           reference_code: doNumber,
-          notes: `Pengiriman ke Toko #${req.to_location_id} (Ref: ${req.request_number})`,
+          notes: `Pengiriman ke Toko #${req.to_location_id} (Ref: ${req.request_number})${courierTag}`,
           created_by: adminUserId,
           created_at: new Date().toISOString(),
         });
@@ -486,6 +539,9 @@ export class StorageRepository {
     req.status = 'IN_TRANSIT';
     req.do_number = doNumber;
     req.dispatched_at = new Date().toISOString();
+    if (courierTag) {
+      req.request_notes = (req.request_notes ? req.request_notes + ' • ' : '') + courierTag.trim();
+    }
 
     setStorage(STORAGE_KEYS.INVENTORIES, inventories);
     setStorage(STORAGE_KEYS.MUTATIONS, mutations);
