@@ -45,7 +45,8 @@ export const OutboundStockModal: React.FC<OutboundStockModalProps> = ({
   const { inventories, outboundStock } = useInventory();
   const { currentUser } = useAuth();
 
-  const [itemId, setItemId] = useState<number>(preselectedItemId || (items[0]?.id ?? 1));
+  const activeItems = items.filter(i => !i.is_archived);
+  const [itemId, setItemId] = useState<number>(preselectedItemId || (activeItems[0]?.id ?? 1));
   const [selectedReasonIdx, setSelectedReasonIdx] = useState<number>(0);
   const [qty, setQty] = useState<number | string>(5);
   const [notes, setNotes] = useState<string>('');
@@ -53,14 +54,14 @@ export const OutboundStockModal: React.FC<OutboundStockModalProps> = ({
 
   // Sync when preselected item changes
   React.useEffect(() => {
-    if (preselectedItemId) {
+    if (preselectedItemId && activeItems.some(i => i.id === preselectedItemId)) {
       setItemId(preselectedItemId);
-    } else if (items.length > 0 && !items.some(i => i.id === itemId)) {
-      setItemId(items[0].id);
+    } else if (activeItems.length > 0 && !activeItems.some(i => i.id === itemId)) {
+      setItemId(activeItems[0].id);
     }
-  }, [preselectedItemId, items]);
+  }, [preselectedItemId, activeItems]);
 
-  const selectedItem = items.find(i => i.id === Number(itemId));
+  const selectedItem = activeItems.find(i => i.id === Number(itemId));
   const hubInv = inventories.find(inv => inv.location_id === 0 && inv.item_id === Number(itemId));
   const availableStock = hubInv?.stock_available || 0;
 
@@ -148,7 +149,7 @@ export const OutboundStockModal: React.FC<OutboundStockModalProps> = ({
           <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">
             2. Pilih Barang
           </label>
-          {items.length === 0 ? (
+          {activeItems.length === 0 ? (
             <div className="p-3 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-xl text-xs text-amber-700 dark:text-amber-300">
               Belum ada data barang di sistem.
             </div>
@@ -158,7 +159,7 @@ export const OutboundStockModal: React.FC<OutboundStockModalProps> = ({
               onChange={e => setItemId(Number(e.target.value))}
               className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs font-medium focus:ring-2 focus:ring-rose-500 focus:outline-none"
             >
-              {items.map(item => {
+              {activeItems.map(item => {
                 const inv = inventories.find(i => i.location_id === 0 && i.item_id === item.id);
                 const stock = inv?.stock_available || 0;
                 return (

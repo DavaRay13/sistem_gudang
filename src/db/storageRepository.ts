@@ -143,7 +143,7 @@ export class StorageRepository {
   static saveItem(itemData: Omit<Item, 'id' | 'created_at'>): Item {
     const items = this.getItems();
     const incomingSku = (itemData.sku || '').trim().toLowerCase();
-    const existingIndex = items.findIndex(i => (i.sku || '').trim().toLowerCase() === incomingSku);
+    const existingIndex = items.findIndex(i => !i.is_archived && (i.sku || '').trim().toLowerCase() === incomingSku);
     
     if (existingIndex >= 0) {
       throw new Error(`SKU "${itemData.sku}" sudah terdaftar! Gunakan SKU yang berbeda.`);
@@ -215,8 +215,12 @@ export class StorageRepository {
   }
 
   static deleteItem(itemId: number): void {
-    const items = this.getItems().filter(i => i.id !== itemId);
-    setStorage(STORAGE_KEYS.ITEMS, items);
+    const items = this.getItems();
+    const item = items.find(i => i.id === itemId);
+    if (item) {
+      item.is_archived = true;
+      setStorage(STORAGE_KEYS.ITEMS, items);
+    }
 
     const inventories = this.getInventories().filter(inv => inv.item_id !== itemId);
     setStorage(STORAGE_KEYS.INVENTORIES, inventories);

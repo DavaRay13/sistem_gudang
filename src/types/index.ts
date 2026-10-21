@@ -30,6 +30,7 @@ export interface Item {
   unit: string;
   price: number;
   safety_stock: number;
+  is_archived?: boolean;
   created_at: string;
 }
 

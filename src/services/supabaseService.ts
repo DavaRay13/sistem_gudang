@@ -284,15 +284,16 @@ export class SupabaseService {
   static async deleteItem(itemId: number): Promise<void> {
     if (isSupabaseConfigured && supabase) {
       try {
-        // Hapus saldo inventori terkait terlebih dahulu
+        // Hapus saldo inventori terkait di seluruh lokasi
         await supabase.from('inventories').delete().eq('item_id', itemId);
 
-        // Hapus master item
-        const { error } = await supabase.from('items').delete().eq('id', itemId);
+        // Soft delete master item agar riwayat mutasi & dokumen masa lalu tetap utuh
+        const { error } = await supabase
+          .from('items')
+          .update({ is_archived: true })
+          .eq('id', itemId);
+
         if (error) {
-          if (error.code === '23503') {
-            throw new Error('Barang tidak dapat dihapus karena masih tercatat di riwayat dokumen/mutasi.');
-          }
           throw error;
         }
 

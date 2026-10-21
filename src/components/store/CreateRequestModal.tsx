@@ -63,6 +63,7 @@ const SearchableItemPicker: React.FC<SearchableItemPickerProps> = ({
   };
 
   const filteredItems = items.filter(item => {
+    if (item.is_archived) return false;
     if (!searchQuery.trim()) return true;
     const q = searchQuery.toLowerCase();
     const nameMatch = (item.name || '').toLowerCase().includes(q);
@@ -211,15 +212,17 @@ export const CreateRequestModal: React.FC<CreateRequestModalProps> = ({
   const { items, inventories, requests, createRequest } = useInventory();
   const { currentUser, currentLocation } = useAuth();
 
-  const [rows, setRows] = useState<ItemRow[]>([{ itemId: initialItemId || items[0]?.id || 1, qtyRequested: 10 }]);
+  const activeItems = items.filter(i => !i.is_archived);
+
+  const [rows, setRows] = useState<ItemRow[]>([{ itemId: initialItemId || activeItems[0]?.id || 1, qtyRequested: 10 }]);
   const [notes, setNotes] = useState<string>('Pengisian stok toko harian');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   React.useEffect(() => {
-    if (initialItemId && items.some(i => i.id === initialItemId)) {
+    if (initialItemId && activeItems.some(i => i.id === initialItemId)) {
       setRows([{ itemId: initialItemId, qtyRequested: 10 }]);
-    } else if (items.length > 0 && (!rows[0] || !items.some(i => i.id === rows[0].itemId))) {
-      setRows([{ itemId: items[0].id, qtyRequested: 10 }]);
+    } else if (activeItems.length > 0 && (!rows[0] || !activeItems.some(i => i.id === rows[0].itemId))) {
+      setRows([{ itemId: activeItems[0].id, qtyRequested: 10 }]);
     }
   }, [items, initialItemId, isOpen]);
 
@@ -243,7 +246,7 @@ export const CreateRequestModal: React.FC<CreateRequestModalProps> = ({
 
   const handleAddRow = () => {
     const usedIds = new Set(rows.map(r => r.itemId));
-    const availableItem = items.find(i => !usedIds.has(i.id)) || items[0];
+    const availableItem = activeItems.find(i => !usedIds.has(i.id)) || activeItems[0];
     if (availableItem) {
       setRows([...rows, { itemId: availableItem.id, qtyRequested: 10 }]);
     }
@@ -312,7 +315,7 @@ export const CreateRequestModal: React.FC<CreateRequestModalProps> = ({
             <button
               type="button"
               onClick={handleAddRow}
-              disabled={items.length === 0}
+              disabled={activeItems.length === 0}
               className="flex items-center gap-1 text-xs font-bold text-brand-600 dark:text-brand-400 active:scale-95"
             >
               <Plus className="w-4 h-4" />
@@ -320,7 +323,7 @@ export const CreateRequestModal: React.FC<CreateRequestModalProps> = ({
             </button>
           </div>
 
-          {items.length === 0 ? (
+          {activeItems.length === 0 ? (
             <div className="p-3 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-xl text-xs text-amber-800 dark:text-amber-300">
               Belum ada katalog barang terdaftar di Gudang Pusat.
             </div>
@@ -339,7 +342,7 @@ export const CreateRequestModal: React.FC<CreateRequestModalProps> = ({
                     <div className="flex items-center justify-between gap-2">
                       <SearchableItemPicker
                         selectedItemId={row.itemId}
-                        items={items}
+                        items={activeItems}
                         inventories={inventories}
                         onSelect={newItemId => handleRowChange(idx, 'itemId', newItemId)}
                         disabledItemIds={usedItemIds}
@@ -463,7 +466,7 @@ export const CreateRequestModal: React.FC<CreateRequestModalProps> = ({
         <div className="pt-3 border-t border-slate-100 dark:border-slate-800">
           <button
             type="submit"
-            disabled={isSubmitting || items.length === 0}
+            disabled={isSubmitting || activeItems.length === 0}
             className="w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-500 shadow-md shadow-emerald-500/20 disabled:opacity-50 active:scale-95 transition-all"
           >
             <Send className="w-4 h-4" />

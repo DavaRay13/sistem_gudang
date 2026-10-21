@@ -38,20 +38,23 @@ export const StoreDashboard: React.FC<StoreDashboardProps> = ({ onNavigate }) =>
   const inTransitRequests = storeRequests.filter(r => r.status === 'IN_TRANSIT');
   const pendingRequests = storeRequests.filter(r => r.status === 'PENDING');
 
+  // Active items (excluding archived)
+  const activeItems = items.filter(item => !item.is_archived);
+
   // Low & out stock items in this store
-  const lowStockItems = items.filter(item => {
+  const lowStockItems = activeItems.filter(item => {
     const inv = myInventories.find(i => i.item_id === item.id);
     const available = inv ? inv.stock_available : 0;
     return available > 0 && available <= item.safety_stock;
   });
 
-  const outOfStockItems = items.filter(item => {
+  const outOfStockItems = activeItems.filter(item => {
     const inv = myInventories.find(i => i.item_id === item.id);
     const available = inv ? inv.stock_available : 0;
     return available <= 0;
   });
 
-  const filteredItems = items.filter(item => {
+  const filteredItems = activeItems.filter(item => {
     const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       (item.category || '').toLowerCase().includes(searchTerm.toLowerCase());
     

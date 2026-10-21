@@ -21,19 +21,20 @@ export const InboundStockModal: React.FC<InboundStockModalProps> = ({
   const { inboundStock } = useInventory();
   const { currentUser } = useAuth();
 
-  const [itemId, setItemId] = useState<number>(preselectedItemId || (items[0]?.id ?? 1));
+  const activeItems = items.filter(i => !i.is_archived);
+  const [itemId, setItemId] = useState<number>(preselectedItemId || (activeItems[0]?.id ?? 1));
   const [qty, setQty] = useState<number | string>(100);
   const [notes, setNotes] = useState<string>('Penerimaan Barang Masuk');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Sync when preselected item changes
   React.useEffect(() => {
-    if (preselectedItemId) {
+    if (preselectedItemId && activeItems.some(i => i.id === preselectedItemId)) {
       setItemId(preselectedItemId);
-    } else if (items.length > 0 && !items.some(i => i.id === itemId)) {
-      setItemId(items[0].id);
+    } else if (activeItems.length > 0 && !activeItems.some(i => i.id === itemId)) {
+      setItemId(activeItems[0].id);
     }
-  }, [preselectedItemId, items]);
+  }, [preselectedItemId, activeItems]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -74,7 +75,7 @@ export const InboundStockModal: React.FC<InboundStockModalProps> = ({
           <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">
             Pilih Barang
           </label>
-          {items.length === 0 ? (
+          {activeItems.length === 0 ? (
             <div className="p-3 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-xl text-xs text-amber-700 dark:text-amber-300">
               Belum ada data barang. Silakan tambahkan barang terlebih dahulu.
             </div>
@@ -84,7 +85,7 @@ export const InboundStockModal: React.FC<InboundStockModalProps> = ({
               onChange={e => setItemId(Number(e.target.value))}
               className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs font-medium focus:ring-2 focus:ring-brand-500 focus:outline-none"
             >
-              {items.map(item => (
+              {activeItems.map(item => (
                 <option key={item.id} value={item.id}>
                   {item.name} ({item.unit})
                 </option>
@@ -168,7 +169,7 @@ export const InboundStockModal: React.FC<InboundStockModalProps> = ({
           </button>
           <button
             type="submit"
-            disabled={isSubmitting || items.length === 0}
+            disabled={isSubmitting || activeItems.length === 0}
             className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-500 shadow-md shadow-emerald-500/20 disabled:opacity-50 transition-all"
           >
             <ArrowDownRight className="w-4 h-4" />

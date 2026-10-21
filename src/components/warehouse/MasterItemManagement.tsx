@@ -88,8 +88,10 @@ export const MasterItemManagement: React.FC = () => {
     };
   };
 
-  const emptyStockCount = items.filter(i => getInv(0, i.id).stock_available <= 0).length;
-  const lowStockCount = items.filter(i => {
+  const activeItems = items.filter(i => !i.is_archived);
+
+  const emptyStockCount = activeItems.filter(i => getInv(0, i.id).stock_available <= 0).length;
+  const lowStockCount = activeItems.filter(i => {
     const avail = getInv(0, i.id).stock_available;
     return avail > 0 && avail <= i.safety_stock;
   }).length;
@@ -126,9 +128,9 @@ export const MasterItemManagement: React.FC = () => {
 
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const categories = ['ALL', ...Array.from(new Set(items.map(i => i.category || 'Umum')))];
+  const categories = ['ALL', ...Array.from(new Set(activeItems.map(i => i.category || 'Umum')))];
 
-  const filteredItems = items.filter(item => {
+  const filteredItems = activeItems.filter(item => {
     const itemName = item?.name || '';
     const matchSearch = itemName.toLowerCase().includes(searchTerm.toLowerCase());
     const matchCategory = selectedCategory === 'ALL' || item.category === selectedCategory;
@@ -218,14 +220,14 @@ export const MasterItemManagement: React.FC = () => {
             <span>Daftar Barang & Stok</span>
           </h2>
           <p className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400">
-            {items.length} jenis barang terdaftar di Gudang Pusat
+            {activeItems.length} jenis barang terdaftar di Gudang Pusat
           </p>
         </div>
 
         <div className="flex items-center gap-1.5">
           <button
             onClick={handleExportExcel}
-            disabled={items.length === 0}
+            disabled={activeItems.length === 0}
             className="flex items-center gap-1 px-3 py-2 rounded-xl text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-500 shadow-sm active:scale-95 disabled:opacity-50 transition-all"
             title="Download Data Barang & Stok ke Excel"
           >
@@ -235,10 +237,10 @@ export const MasterItemManagement: React.FC = () => {
 
           <button
             onClick={() => {
-              setSelectedInboundItemId(items[0]?.id);
+              setSelectedInboundItemId(activeItems[0]?.id);
               setIsInboundOpen(true);
             }}
-            disabled={items.length === 0}
+            disabled={activeItems.length === 0}
             className="flex items-center gap-1 px-3 py-2 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/80 shadow-sm active:scale-95 disabled:opacity-50 transition-all"
           >
             <ArrowDownRight className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
@@ -247,10 +249,10 @@ export const MasterItemManagement: React.FC = () => {
 
           <button
             onClick={() => {
-              setSelectedOutboundItemId(items[0]?.id);
+              setSelectedOutboundItemId(activeItems[0]?.id);
               setIsOutboundOpen(true);
             }}
-            disabled={items.length === 0}
+            disabled={activeItems.length === 0}
             className="flex items-center gap-1 px-3 py-2 rounded-xl text-xs font-bold text-rose-700 dark:text-rose-300 bg-rose-50/80 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-900/40 hover:bg-rose-100 dark:hover:bg-rose-900/50 shadow-sm active:scale-95 disabled:opacity-50 transition-all"
             title="Keluarkan stok (rusak, retur vendor, selisih)"
           >
@@ -792,12 +794,12 @@ export const MasterItemManagement: React.FC = () => {
       >
         <div className="space-y-4">
           <div className="p-4 rounded-2xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 text-xs text-rose-800 dark:text-rose-200 space-y-2">
-            <p className="font-bold text-sm text-rose-700 dark:text-rose-300">Peringatan Penghapusan!</p>
+            <p className="font-bold text-sm text-rose-700 dark:text-rose-300">Konfirmasi Penghapusan Barang</p>
             <p>
               Apakah Anda yakin ingin menghapus barang <strong className="font-bold text-slate-900 dark:text-white">"{itemToDelete?.name}"</strong>?
             </p>
             <p className="text-slate-600 dark:text-slate-400 text-[11px] leading-relaxed">
-              Tindakan ini akan menghapus data barang beserta seluruh catatan saldo stok barang ini di Gudang Pusat dan seluruh Toko Cabang.
+              Barang dan saldo stok aktif akan dihapus dari katalog Gudang dan Toko. Seluruh catatan riwayat mutasi dan dokumen transfer masa lalu tetap tersimpan utuh dan tidak akan hilang.
             </p>
           </div>
 
@@ -826,7 +828,7 @@ export const MasterItemManagement: React.FC = () => {
       <InboundStockModal
         isOpen={isInboundOpen}
         onClose={() => setIsInboundOpen(false)}
-        items={items}
+        items={activeItems}
         preselectedItemId={selectedInboundItemId}
       />
 
@@ -834,7 +836,7 @@ export const MasterItemManagement: React.FC = () => {
       <OutboundStockModal
         isOpen={isOutboundOpen}
         onClose={() => setIsOutboundOpen(false)}
-        items={items}
+        items={activeItems}
         preselectedItemId={selectedOutboundItemId}
       />
     </div>
