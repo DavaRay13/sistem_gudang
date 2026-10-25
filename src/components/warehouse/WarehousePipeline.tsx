@@ -184,23 +184,21 @@ export const WarehousePipeline: React.FC<WarehousePipelineProps> = ({ onNavigate
         </div>
       </div>
 
-      {/* Alur proses visual: 3 tahap */}
-      <div className="hidden sm:flex items-center gap-0 mb-2">
+      {/* Alur proses visual: 3 tahap (Responsive Grid di mobile & desktop) */}
+      <div className="grid grid-cols-3 gap-2 mb-2">
         {[
-          { step: 1, label: 'Permintaan Masuk', count: pendingRequests.length, color: 'bg-[#FBF3DB] text-[#956400] border-[#F4E3B4] dark:bg-[#332A15] dark:text-[#E8CA65] dark:border-[#4D3F1E]' },
-          { step: 2, label: 'Siap Dikirim', count: readyToDispatch.length, color: 'bg-[#EDF3EC] text-[#346538] border-[#D4E5D3] dark:bg-[#172B19] dark:text-[#96D99C] dark:border-[#223F25]' },
-          { step: 3, label: 'Dalam Perjalanan', count: inTransit.length, color: 'bg-[#E1F3FE] text-[#1F6C9F] border-[#C8E7FD] dark:bg-[#142838] dark:text-[#97D2FB] dark:border-[#1E3B52]' },
-        ].map((s, idx) => (
-          <React.Fragment key={s.step}>
-            <div className={`flex items-center gap-2 px-4 py-2.5 rounded-lg border text-xs font-medium ${s.color}`}>
-              <span className="font-mono font-bold">{s.step}</span>
-              <span>{s.label}</span>
-              <span className="font-mono font-black text-sm">{s.count}</span>
+          { step: 1, label: 'Masuk', fullLabel: 'Permintaan Masuk', count: pendingRequests.length, color: 'bg-gradient-to-r from-amber-50 to-amber-100/70 text-amber-800 border-amber-300 dark:from-amber-950/60 dark:to-amber-900/40 dark:text-amber-300 dark:border-amber-700/60 shadow-2xs' },
+          { step: 2, label: 'Siap Kirim', fullLabel: 'Siap Dikirim', count: readyToDispatch.length, color: 'bg-gradient-to-r from-emerald-50 to-emerald-100/70 text-emerald-800 border-emerald-300 dark:from-emerald-950/60 dark:to-emerald-900/40 dark:text-emerald-300 dark:border-emerald-700/60 shadow-2xs' },
+          { step: 3, label: 'Di Jalan', fullLabel: 'Dalam Perjalanan', count: inTransit.length, color: 'bg-gradient-to-r from-sky-50 to-blue-100/70 text-sky-800 border-sky-300 dark:from-sky-950/60 dark:to-blue-900/40 dark:text-sky-300 dark:border-sky-700/60 shadow-2xs' },
+        ].map(s => (
+          <div key={s.step} className={`flex flex-col sm:flex-row sm:items-center justify-between p-2 sm:px-4 sm:py-2.5 rounded-xl border text-xs font-medium ${s.color}`}>
+            <div className="flex items-center gap-1.5 min-w-0">
+              <span className="w-4 h-4 rounded-full bg-black/10 dark:bg-white/10 flex items-center justify-center font-mono font-bold text-[10px] shrink-0">{s.step}</span>
+              <span className="truncate hidden sm:inline">{s.fullLabel}</span>
+              <span className="truncate sm:hidden text-[11px] font-semibold">{s.label}</span>
             </div>
-            {idx < 2 && (
-              <div className="flex-1 h-px bg-[#EAEAEA] dark:bg-[#26282E] mx-2" />
-            )}
-          </React.Fragment>
+            <span className="font-mono font-black text-sm sm:text-base mt-1 sm:mt-0 text-right">{s.count}</span>
+          </div>
         ))}
       </div>
 

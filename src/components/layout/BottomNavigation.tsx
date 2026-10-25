@@ -89,7 +89,7 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({
   return (
     <div className="lg:hidden fixed bottom-0 left-0 right-0 z-40 pointer-events-none">
       {/* Safe area padding for phones with home indicator */}
-      <nav className="pointer-events-auto bg-white/95 dark:bg-[#121316]/95 backdrop-blur-2xl border-t border-slate-200/80 dark:border-slate-800/80 px-1 pt-1 pb-[max(0.375rem,env(safe-area-inset-bottom))] flex items-stretch justify-around shadow-[0_-4px_24px_rgba(0,0,0,0.04)]">
+      <nav className="pointer-events-auto bg-card/95 backdrop-blur-2xl border-t border-border px-1 pt-1 pb-[max(0.375rem,env(safe-area-inset-bottom))] flex items-stretch justify-around shadow-[0_-4px_24px_rgba(0,0,0,0.06)]">
         {tabs.map(tab => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.id;
@@ -100,27 +100,27 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({
               onClick={() => onSelectTab(tab.id)}
               className={`relative flex flex-col items-center justify-center min-w-0 flex-1 py-1 rounded-xl transition-all active:scale-[0.88] ${
                 isActive
-                  ? 'text-brand-600 dark:text-brand-400'
-                  : 'text-slate-400 dark:text-slate-500'
+                  ? 'text-foreground font-bold'
+                  : 'text-muted-foreground font-medium hover:text-foreground'
               }`}
             >
               <div className="relative">
                 <div className={`w-9 h-8 rounded-xl flex items-center justify-center transition-all ${
                   isActive
-                    ? 'bg-brand-600/15 dark:bg-brand-400/15 text-brand-600 dark:text-brand-400'
-                    : 'text-slate-400 dark:text-slate-500'
+                    ? 'bg-foreground text-background shadow-2xs'
+                    : 'text-muted-foreground'
                 }`}>
                   <Icon className="w-[18px] h-[18px]" strokeWidth={isActive ? 2.5 : 1.75} />
                 </div>
                 {tab.badge !== undefined && (
-                  <span className={`absolute -top-1 -right-1 min-w-[16px] h-4 px-1 rounded-full text-[9px] font-bold flex items-center justify-center ${tab.badgeColor} shadow-sm`}>
+                  <span className={`absolute -top-1 -right-1 min-w-[16px] h-4 px-1 rounded-full text-[9px] font-bold flex items-center justify-center ${tab.badgeColor} shadow-xs`}>
                     {tab.badge}
                   </span>
                 )}
               </div>
               
-              <span className={`text-[9px] mt-0.5 tracking-tight truncate max-w-[64px] transition-all ${
-                isActive ? 'font-bold' : 'font-medium'
+              <span className={`text-[9.5px] mt-0.5 tracking-tight truncate max-w-[64px] transition-all ${
+                isActive ? 'font-bold text-foreground' : 'font-medium text-muted-foreground'
               }`}>
                 {tab.label}
               </span>
