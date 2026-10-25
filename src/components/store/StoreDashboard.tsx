@@ -12,6 +12,10 @@ import {
   Search, ChevronRight, AlertCircle
 } from 'lucide-react';
 import { formatNumber, formatRupiah } from '../../utils/formatters';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
 
 interface StoreDashboardProps {
   onNavigate: (tab: NavigationTab) => void;
@@ -348,28 +352,30 @@ export const StoreDashboard: React.FC<StoreDashboardProps> = ({ onNavigate }) =>
       )}
 
       {/* 5. Daftar stok toko */}
-      <div className="bg-white dark:bg-[#16171A] rounded-2xl border border-[#EAEAEA] dark:border-[#26282E] p-4 sm:p-5 shadow-sm space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-[#EAEAEA] dark:border-[#26282E]">
+      <Card className="shadow-xs space-y-4">
+        <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-border">
           <div>
-            <h2 className="text-xs font-bold tracking-tight uppercase text-[#787774] dark:text-[#A1A09E]">
+            <CardTitle className="text-xs font-bold tracking-tight uppercase text-muted-foreground">
               Katalog Stok Barang Toko ({filteredItems.length} barang)
-            </h2>
-            <p className="text-[11px] text-[#A1A09E] dark:text-[#787774]">
+            </CardTitle>
+            <CardDescription className="text-[11px] text-muted-foreground">
               Pantau sisa barang dan minta tambahan pasokan dengan 1 klik.
-            </p>
+            </CardDescription>
           </div>
 
           <div className="relative w-full sm:w-64">
-            <Search className="w-3.5 h-3.5 text-[#787774] absolute left-3 top-2.5" />
-            <input
+            <Search className="w-3.5 h-3.5 text-muted-foreground absolute left-3 top-3" />
+            <Input
               type="text"
               placeholder="Cari nama barang atau kategori..."
               value={searchTerm}
               onChange={e => setSearchTerm(e.target.value)}
-              className="w-full pl-8 pr-3 py-1.5 text-xs rounded-xl bg-[#FBFBFA] dark:bg-[#191A1E] border border-[#EAEAEA] dark:border-[#26282E] text-[#111111] dark:text-[#ECECED] placeholder-[#A1A09E] focus:outline-none focus:border-[#111111] dark:focus:border-white transition-colors"
+              className="pl-8 text-xs h-9"
             />
           </div>
-        </div>
+        </CardHeader>
+
+        <CardContent className="space-y-4">
 
         {/* Filter Chips Ramah Pengguna Awam */}
         <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs">
@@ -470,35 +476,38 @@ export const StoreDashboard: React.FC<StoreDashboardProps> = ({ onNavigate }) =>
                       </span>
 
                       {isOutOfStock ? (
-                        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-bold bg-[#FDEBEC] text-[#9F2F2D] dark:bg-[#381B1B] dark:text-[#F8A4A4]">
+                        <Badge variant="outline" className="text-[9px] font-bold bg-[#FDEBEC] text-[#9F2F2D] dark:bg-[#381B1B] dark:text-[#F8A4A4] border-[#F8D2D4] dark:border-[#522525]">
                           Habis
-                        </span>
+                        </Badge>
                       ) : isLow ? (
-                        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-bold bg-[#FBF3DB] text-[#956400] dark:bg-[#332A15] dark:text-[#E8CA65]">
+                        <Badge variant="outline" className="text-[9px] font-bold bg-[#FBF3DB] text-[#956400] dark:bg-[#332A15] dark:text-[#E8CA65] border-[#F4E3B4] dark:border-[#4D3F1E]">
                           Menipis
-                        </span>
+                        </Badge>
                       ) : (
-                        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-semibold bg-[#EDF3EC] text-[#346538] dark:bg-[#172B19] dark:text-[#96D99C]">
+                        <Badge variant="outline" className="text-[9px] font-semibold bg-[#EDF3EC] text-[#346538] dark:bg-[#172B19] dark:text-[#96D99C] border-[#D4E5D3] dark:border-[#223F25]">
                           Aman
-                        </span>
+                        </Badge>
                       )}
                     </div>
 
-                    <button
+                    <Button
+                      variant="outline"
+                      size="sm"
                       onClick={() => handleOpenRequestForItem(item.id)}
-                      className="px-2.5 py-1.5 rounded-lg sm:rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#16171A] text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 active:scale-90 font-bold text-[11px] flex items-center gap-1 shadow-sm transition-all"
+                      className="h-8 px-2.5 text-xs font-semibold gap-1 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/30"
                       title="Minta pasokan barang ini"
                     >
                       <PlusCircle className="w-3.5 h-3.5" />
                       <span>Minta</span>
-                    </button>
+                    </Button>
                   </div>
                 </div>
               );
             })}
           </div>
         )}
-      </div>
+        </CardContent>
+      </Card>
 
       {/* Create Request Modal */}
       <CreateRequestModal

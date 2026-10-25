@@ -33,6 +33,7 @@ build/
 !.vscode/extensions.json
 .idea
 .claude/
+.agents/
 .DS_Store
 *.suo
 *.ntvs*
