@@ -270,11 +270,11 @@ export const OutboundStockModal: React.FC<OutboundStockModalProps> = ({
         </div>
 
         {/* Tombol Aksi */}
-        <div className="pt-2 flex items-center justify-end gap-2 border-t border-slate-100 dark:border-slate-800">
+        <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-end gap-2.5 pt-3 border-t border-border sticky bottom-0 bg-card py-2 -mx-1 px-1">
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+            className="w-full sm:w-auto px-4 py-2.5 rounded-xl text-xs font-semibold text-muted-foreground hover:bg-muted transition-colors text-center"
           >
             Batal
           </button>
@@ -282,7 +282,7 @@ export const OutboundStockModal: React.FC<OutboundStockModalProps> = ({
           <button
             type="submit"
             disabled={isSubmitting || availableStock <= 0 || Number(qty) > availableStock}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-rose-600 hover:bg-rose-500 disabled:opacity-50 active:scale-95 shadow-md shadow-rose-600/20 transition-all"
+            className="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-3 rounded-xl text-xs font-bold text-white bg-rose-600 hover:bg-rose-500 disabled:opacity-50 active:scale-95 shadow-md shadow-rose-600/20 transition-all text-center"
           >
             <ArrowUpRight className="w-4 h-4" />
             <span>{isSubmitting ? 'Memproses...' : 'Potong Stok Sekarang'}</span>

@@ -294,19 +294,20 @@ export const MasterItemManagement: React.FC = () => {
   return (
     <div className="space-y-4 pb-20 sm:pb-6">
       {/* Header & Quick Action Buttons */}
-      <div className="flex items-center justify-between gap-2">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h2 className="text-lg sm:text-xl font-black text-slate-900 dark:text-white flex items-center gap-2">
+          <h2 className="text-lg sm:text-xl font-black text-foreground flex items-center gap-2">
             <Package className="w-5 h-5 text-brand-600" />
             <span>Daftar Barang & Stok</span>
           </h2>
-          <p className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400">
+          <p className="text-[11px] sm:text-xs text-muted-foreground">
             {activeItems.length} jenis barang terdaftar di Gudang Pusat
           </p>
         </div>
 
-        <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar shrink-0 w-full sm:w-auto">
+        <div className="grid grid-cols-4 sm:flex items-center gap-1.5 w-full sm:w-auto">
           <button
+            type="button"
             onClick={handleExportExcel}
             disabled={activeItems.length === 0}
             className="flex items-center justify-center gap-1 p-2 sm:px-3 sm:py-2 rounded-xl text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-500 shadow-sm active:scale-95 disabled:opacity-50 transition-all"
@@ -317,24 +318,26 @@ export const MasterItemManagement: React.FC = () => {
           </button>
 
           <button
+            type="button"
             onClick={() => {
               setSelectedInboundItemId(activeItems[0]?.id);
               setIsInboundOpen(true);
             }}
             disabled={activeItems.length === 0}
-            className="flex-1 sm:flex-initial flex items-center justify-center gap-1 px-2.5 py-2 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 shadow-sm active:scale-95 disabled:opacity-50 transition-all whitespace-nowrap"
+            className="flex items-center justify-center gap-1 px-2 py-2 sm:px-2.5 rounded-xl text-xs font-bold text-foreground bg-card border border-border hover:bg-muted shadow-2xs active:scale-95 disabled:opacity-50 transition-all whitespace-nowrap"
           >
             <ArrowDownRight className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
             <span>+ Masuk</span>
           </button>
 
           <button
+            type="button"
             onClick={() => {
               setSelectedOutboundItemId(activeItems[0]?.id);
               setIsOutboundOpen(true);
             }}
             disabled={activeItems.length === 0}
-            className="flex-1 sm:flex-initial flex items-center justify-center gap-1 px-2.5 py-2 rounded-xl text-xs font-bold text-rose-700 dark:text-rose-300 bg-rose-50/80 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-900/40 hover:bg-rose-100 shadow-sm active:scale-95 disabled:opacity-50 transition-all whitespace-nowrap"
+            className="flex items-center justify-center gap-1 px-2 py-2 sm:px-2.5 rounded-xl text-xs font-bold text-rose-700 dark:text-rose-300 bg-rose-50/80 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-900/40 hover:bg-rose-100 shadow-2xs active:scale-95 disabled:opacity-50 transition-all whitespace-nowrap"
             title="Keluarkan stok (rusak, retur vendor, selisih)"
           >
             <ArrowUpRight className="w-3.5 h-3.5 text-rose-600 dark:text-rose-400" />
@@ -342,8 +345,9 @@ export const MasterItemManagement: React.FC = () => {
           </button>
 
           <button
+            type="button"
             onClick={() => setIsAddItemOpen(true)}
-            className="flex-1 sm:flex-initial flex items-center justify-center gap-1 px-3 py-2 rounded-xl text-xs font-bold text-white bg-brand-600 hover:bg-brand-500 shadow-sm active:scale-95 transition-all whitespace-nowrap"
+            className="flex items-center justify-center gap-1 px-2 py-2 sm:px-3 rounded-xl text-xs font-bold text-white bg-brand-600 hover:bg-brand-500 shadow-xs active:scale-95 transition-all whitespace-nowrap"
           >
             <Plus className="w-3.5 h-3.5" />
             <span>+ SKU Baru</span>
@@ -496,83 +500,115 @@ export const MasterItemManagement: React.FC = () => {
             return (
               <div
                 key={item.id}
-                className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200/80 dark:border-slate-800 p-2.5 shadow-sm hover:border-slate-300 dark:hover:border-slate-700 transition-all flex items-center justify-between gap-2"
+                className="bg-card rounded-xl border border-border p-2.5 sm:p-3 shadow-2xs hover:border-foreground/20 transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-2.5"
               >
                 {/* Kolom Kiri: Dot Indikator + Nama + Kategori/Harga */}
-                <div className="min-w-0 flex-1 flex items-center gap-2">
-                  <span
-                    className={`w-2 h-2 rounded-full shrink-0 ${
-                      isOutOfStock
-                        ? 'bg-rose-500 animate-pulse'
-                        : isLowStockInHub
-                          ? 'bg-amber-500'
-                          : 'bg-emerald-500'
-                    }`}
-                    title={isOutOfStock ? 'Stok Kosong' : isLowStockInHub ? 'Stok Menipis' : 'Stok Tersedia'}
-                  />
-                  <div className="min-w-0">
-                    <h3 className="font-bold text-xs text-slate-900 dark:text-white leading-tight truncate">
-                      {item.name}
-                    </h3>
-                    <div className="flex items-center gap-1.5 text-[10px] text-slate-400 font-mono truncate mt-0.5">
-                      <span className="text-slate-600 dark:text-slate-300 font-semibold">{item.category}</span>
-                      <span>·</span>
-                      <span className="text-emerald-600 dark:text-emerald-400 font-bold">{formatRupiah(item.price || 0)}</span>
-                      <span>·</span>
-                      <span>/{item.unit || 'PCS'}</span>
+                <div className="min-w-0 flex-1 flex items-center justify-between sm:justify-start gap-2">
+                  <div className="flex items-center gap-2 min-w-0 flex-1">
+                    <span
+                      className={`w-2 h-2 rounded-full shrink-0 ${
+                        isOutOfStock
+                          ? 'bg-rose-500 animate-pulse'
+                          : isLowStockInHub
+                            ? 'bg-amber-500'
+                            : 'bg-emerald-500'
+                      }`}
+                      title={isOutOfStock ? 'Stok Kosong' : isLowStockInHub ? 'Stok Menipis' : 'Stok Tersedia'}
+                    />
+                    <div className="min-w-0 flex-1">
+                      <h3 className="font-bold text-xs sm:text-sm text-foreground leading-tight truncate">
+                        {item.name}
+                      </h3>
+                      <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground font-mono truncate mt-0.5">
+                        <span className="text-foreground/80 font-semibold">{item.category}</span>
+                        <span>·</span>
+                        <span className="text-emerald-600 dark:text-emerald-400 font-bold">{formatRupiah(item.price || 0)}</span>
+                        <span>·</span>
+                        <span>/{item.unit || 'PCS'}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Stock counter on mobile sits on top-right */}
+                  <div className="sm:hidden text-right shrink-0 px-2 py-1 rounded-lg bg-muted/60">
+                    <div className="flex items-baseline justify-end gap-1">
+                      <span className={`text-xs font-black font-mono tabular-nums leading-none ${
+                        isOutOfStock
+                          ? 'text-rose-600 dark:text-rose-400'
+                          : isLowStockInHub
+                            ? 'text-amber-600 dark:text-amber-400'
+                            : 'text-foreground'
+                      }`}>
+                        {formatNumber(hubInv.stock_available)}
+                      </span>
+                      <span className="text-[9px] text-muted-foreground font-bold uppercase">{item.unit || 'PCS'}</span>
                     </div>
                   </div>
                 </div>
 
-                {/* Kolom Tengah: Angka Stok Gudang Pusat + Toko */}
-                <div className="text-right shrink-0 px-2 py-1 rounded-lg bg-slate-50 dark:bg-slate-800/40">
-                  <div className="flex items-baseline justify-end gap-1">
-                    <span className={`text-sm font-black font-mono tabular-nums leading-none ${
-                      isOutOfStock
-                        ? 'text-rose-600 dark:text-rose-400'
-                        : isLowStockInHub
-                          ? 'text-amber-600 dark:text-amber-400'
-                          : 'text-slate-900 dark:text-white'
-                    }`}>
-                      {formatNumber(hubInv.stock_available)}
-                    </span>
-                    <span className="text-[9px] text-slate-400 font-bold uppercase">{item.unit || 'PCS'}</span>
+                {/* Desktop: Middle Stock + Mobile: Bottom Row with Breakdown & Actions */}
+                <div className="flex items-center justify-between sm:justify-end gap-2 pt-1.5 sm:pt-0 border-t sm:border-t-0 border-border/60">
+                  {/* Stock counter desktop */}
+                  <div className="hidden sm:block text-right shrink-0 px-2.5 py-1 rounded-lg bg-muted/50">
+                    <div className="flex items-baseline justify-end gap-1">
+                      <span className={`text-sm font-black font-mono tabular-nums leading-none ${
+                        isOutOfStock
+                          ? 'text-rose-600 dark:text-rose-400'
+                          : isLowStockInHub
+                            ? 'text-amber-600 dark:text-amber-400'
+                            : 'text-foreground'
+                      }`}>
+                        {formatNumber(hubInv.stock_available)}
+                      </span>
+                      <span className="text-[9px] text-muted-foreground font-bold uppercase">{item.unit || 'PCS'}</span>
+                    </div>
+                    <div className="text-[9px] text-muted-foreground font-mono mt-0.5 whitespace-nowrap">
+                      T1:{store1Inv.stock_available} T2:{store2Inv.stock_available} T3:{store3Inv.stock_available}
+                    </div>
                   </div>
-                  <div className="text-[9px] text-slate-400 font-mono mt-0.5 whitespace-nowrap">
+
+                  {/* Mobile breakdown only */}
+                  <div className="sm:hidden text-[9.5px] text-muted-foreground font-mono">
                     T1:{store1Inv.stock_available} T2:{store2Inv.stock_available} T3:{store3Inv.stock_available}
                   </div>
-                </div>
 
-                {/* Kolom Kanan: Aksi Cepat Mini */}
-                <div className="flex items-center gap-1 shrink-0">
-                  <button
-                    onClick={() => openInboundForItem(item.id)}
-                    className="p-1.5 rounded-lg text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200/60 dark:border-emerald-800/60 hover:bg-emerald-100 active:scale-90 transition-all"
-                    title="Tambah Stok Masuk"
-                  >
-                    <ArrowDownRight className="w-3.5 h-3.5" />
-                  </button>
-                  <button
-                    onClick={() => openOutboundForItem(item.id)}
-                    className="p-1.5 rounded-lg text-rose-700 dark:text-rose-300 bg-rose-50 dark:bg-rose-950/40 border border-rose-200/60 dark:border-rose-900/60 hover:bg-rose-100 active:scale-90 transition-all"
-                    title="Keluarkan Stok"
-                  >
-                    <ArrowUpRight className="w-3.5 h-3.5" />
-                  </button>
-                  <button
-                    onClick={() => openEditModal(item)}
-                    className="p-1.5 rounded-lg text-slate-500 hover:text-slate-700 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 active:scale-90 transition-all"
-                    title="Edit Data Barang"
-                  >
-                    <Pencil className="w-3.5 h-3.5" />
-                  </button>
-                  <button
-                    onClick={() => setItemToDelete(item)}
-                    className="p-1.5 rounded-lg text-rose-500 hover:text-rose-700 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/30 active:scale-90 transition-all"
-                    title="Hapus Barang"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </button>
+                  {/* Kolom Kanan: Aksi Cepat Mini */}
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => openInboundForItem(item.id)}
+                      className="h-8 px-2 rounded-lg text-[11px] font-semibold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200/60 dark:border-emerald-800/60 hover:bg-emerald-100 active:scale-95 transition-all flex items-center gap-1"
+                      title="Tambah Stok Masuk"
+                    >
+                      <ArrowDownRight className="w-3.5 h-3.5" />
+                      <span className="sm:hidden">Masuk</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => openOutboundForItem(item.id)}
+                      className="h-8 px-2 rounded-lg text-[11px] font-semibold text-rose-700 dark:text-rose-300 bg-rose-50 dark:bg-rose-950/40 border border-rose-200/60 dark:border-rose-900/60 hover:bg-rose-100 active:scale-95 transition-all flex items-center gap-1"
+                      title="Keluarkan Stok"
+                    >
+                      <ArrowUpRight className="w-3.5 h-3.5" />
+                      <span className="sm:hidden">Keluar</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => openEditModal(item)}
+                      className="w-8 h-8 rounded-lg text-muted-foreground hover:text-foreground bg-muted active:scale-95 transition-all flex items-center justify-center"
+                      title="Edit Data Barang"
+                    >
+                      <Pencil className="w-3.5 h-3.5" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setItemToDelete(item)}
+                      className="w-8 h-8 rounded-lg text-rose-500 hover:text-rose-700 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/30 active:scale-95 transition-all flex items-center justify-center"
+                      title="Hapus Barang"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
                 </div>
               </div>
             );
@@ -902,23 +938,23 @@ export const MasterItemManagement: React.FC = () => {
           </div>
 
           {/* Jumlah Stok Masuk ke Gudang Pusat */}
-          <div className="p-3.5 rounded-2xl bg-emerald-50/70 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-800/60 space-y-2">
+          <div className="p-3.5 rounded-2xl bg-card border border-emerald-300 dark:border-emerald-800/80 space-y-2.5">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-1.5">
                 <Boxes className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-                <span className="text-xs font-bold text-emerald-900 dark:text-emerald-200">
+                <span className="text-xs font-bold text-foreground">
                   Jumlah Stok Masuk (Gudang Pusat)
                 </span>
               </div>
-              <span className="text-[10px] font-semibold text-emerald-700 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-900/50 px-2 py-0.5 rounded-full">
+              <span className="text-[10px] font-semibold text-emerald-800 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-900/50 px-2 py-0.5 rounded-full">
                 Saldo Awal
               </span>
             </div>
-            <p className="text-[11px] text-slate-600 dark:text-slate-400">
+            <p className="text-[11px] text-muted-foreground">
               Kuantitas barang yang langsung tersedia di Gudang Pusat saat disimpan.
             </p>
 
-            <div className="flex items-center gap-2">
+            <div className="space-y-2">
               <input
                 type="number"
                 min="0"
@@ -928,10 +964,11 @@ export const MasterItemManagement: React.FC = () => {
                   const val = e.target.value;
                   setFormData({ ...formData, initial_stock: val === '' ? '' : Math.max(0, parseInt(val) || 0) });
                 }}
-                className="w-full px-3.5 py-2 rounded-xl border border-emerald-300 dark:border-emerald-800 bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-xs font-bold font-mono focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-background text-foreground text-sm font-bold font-mono focus:ring-2 focus:ring-emerald-500 focus:outline-none"
               />
-              {/* Stepper buttons */}
-              <div className="flex items-center gap-1 shrink-0">
+              {/* Stepper buttons wrapped for mobile */}
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <span className="text-[10px] font-semibold text-muted-foreground mr-0.5">Tambah cepat:</span>
                 {[5, 10, 25, 50, 100].map(addQty => (
                   <button
                     key={addQty}
@@ -940,7 +977,7 @@ export const MasterItemManagement: React.FC = () => {
                       const cur = Number(formData.initial_stock) || 0;
                       setFormData({ ...formData, initial_stock: cur + addQty });
                     }}
-                    className="px-2 py-1.5 rounded-lg text-[10px] font-bold bg-white dark:bg-slate-800 border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 active:scale-95 transition-all"
+                    className="px-2.5 py-1 rounded-lg text-xs font-bold bg-muted text-foreground border border-border hover:bg-muted/80 active:scale-95 transition-all"
                   >
                     +{addQty}
                   </button>
@@ -949,21 +986,21 @@ export const MasterItemManagement: React.FC = () => {
             </div>
           </div>
 
-          <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-slate-100 dark:border-slate-800">
+          <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-end gap-2 pt-3 border-t border-border sticky bottom-0 bg-card py-2 -mx-1 px-1">
             <button
               type="button"
               onClick={() => {
                 setIsAddItemOpen(false);
                 setShowNameSuggestions(false);
               }}
-              className="px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+              className="w-full sm:w-auto px-4 py-2.5 rounded-xl text-xs font-semibold text-muted-foreground hover:bg-muted transition-colors text-center"
             >
               Batal
             </button>
             <button
               type="submit"
               disabled={isSubmitting}
-              className="flex-1 sm:flex-initial px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-brand-600 hover:bg-brand-500 shadow-md active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+              className="w-full sm:w-auto px-5 py-3 rounded-xl text-xs font-bold text-white bg-brand-600 hover:bg-brand-500 shadow-md active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed transition-all text-center"
             >
               {isSubmitting ? 'Menyimpan...' : 'Simpan Barang Baru'}
             </button>
@@ -994,7 +1031,7 @@ export const MasterItemManagement: React.FC = () => {
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">
                 Kategori
@@ -1024,7 +1061,7 @@ export const MasterItemManagement: React.FC = () => {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">
                 Harga Satuan (Rp)
@@ -1073,18 +1110,18 @@ export const MasterItemManagement: React.FC = () => {
             </div>
           </div>
 
-          <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
+          <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-end gap-2 pt-4 border-t border-border sticky bottom-0 bg-card py-2 -mx-1 px-1">
             <button
               type="button"
               onClick={() => setItemToEdit(null)}
-              className="px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all"
+              className="w-full sm:w-auto px-4 py-2.5 rounded-xl text-xs font-semibold text-muted-foreground hover:bg-muted transition-all text-center"
             >
               Batal
             </button>
             <button
               type="submit"
               disabled={isEditing}
-              className="w-full sm:w-auto px-5 py-3 rounded-xl text-xs font-bold text-white bg-brand-600 hover:bg-brand-500 shadow-md active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+              className="w-full sm:w-auto px-5 py-3 rounded-xl text-xs font-bold text-white bg-brand-600 hover:bg-brand-500 shadow-md active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed transition-all text-center"
             >
               {isEditing ? 'Menyimpan...' : 'Simpan Perubahan'}
             </button>

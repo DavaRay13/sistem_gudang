@@ -47,40 +47,42 @@ export const Modal: React.FC<ModalProps> = ({
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 overflow-y-auto overflow-x-hidden">
       {/* Backdrop */}
       <div 
-        className="fixed inset-0 bg-black/40 backdrop-blur-sm transition-opacity"
+        className="fixed inset-0 bg-black/50 backdrop-blur-xs transition-opacity"
         onClick={onClose}
       />
 
       {/* Modal Dialog / Bottom Sheet on Mobile */}
-      <div className={`relative w-full max-w-full ${maxWidthClasses} bg-white dark:bg-[#16171A] rounded-t-2xl sm:rounded-xl border-t sm:border border-[#EAEAEA] dark:border-[#26282E] overflow-hidden transform transition-all max-h-[92vh] sm:max-h-[85vh] flex flex-col`}>
+      <div className={`relative w-full max-w-full ${maxWidthClasses} bg-card text-card-foreground rounded-t-2xl sm:rounded-2xl border-t sm:border border-border shadow-2xl overflow-hidden transform transition-all max-h-[90dvh] sm:max-h-[88vh] flex flex-col`}>
         
         {/* Mobile Swipe / Drag Indicator */}
-        <div className="sm:hidden w-full flex items-center justify-center pt-2.5 pb-1 bg-[#FBFBFA] dark:bg-[#191A1E]">
-          <div className="w-8 h-1 rounded-full bg-[#EAEAEA] dark:bg-[#26282E]" />
+        <div className="sm:hidden w-full flex items-center justify-center pt-2.5 pb-1 bg-muted/40 shrink-0">
+          <div className="w-10 h-1.5 rounded-full bg-border" />
         </div>
 
         {/* Header */}
-        <div className="flex items-center justify-between px-5 sm:px-6 py-3.5 border-b border-[#EAEAEA] dark:border-[#26282E] bg-[#FBFBFA] dark:bg-[#191A1E] shrink-0">
-          <div className="min-w-0 pr-3">
-            <h3 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white truncate">
+        <div className="flex items-start justify-between px-4 sm:px-6 py-3 sm:py-3.5 border-b border-border bg-muted/20 shrink-0 gap-2">
+          <div className="min-w-0 flex-1">
+            <h3 className="text-base sm:text-lg font-bold text-foreground leading-snug">
               {title}
             </h3>
             {subtitle && (
-              <p className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 mt-0.5 truncate">
+              <p className="text-[11px] sm:text-xs text-muted-foreground mt-0.5 line-clamp-2">
                 {subtitle}
               </p>
             )}
           </div>
           <button
+            type="button"
             onClick={onClose}
-            className="rounded-full p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors active:scale-90 shrink-0"
+            aria-label="Tutup"
+            className="rounded-full p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted transition-colors active:scale-90 shrink-0 -mr-1"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        {/* Content Body with smooth scrolling */}
-        <div className="p-5 sm:p-6 overflow-y-auto overscroll-contain flex-1 pb-8 sm:pb-6">
+        {/* Content Body with smooth scrolling and bottom safe padding */}
+        <div className="p-4 sm:p-6 overflow-y-auto overscroll-contain flex-1 pb-6 sm:pb-6">
           {children}
         </div>
       </div>

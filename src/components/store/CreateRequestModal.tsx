@@ -103,7 +103,7 @@ const SearchableItemPicker: React.FC<SearchableItemPickerProps> = ({
                 ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-400' 
                 : 'bg-rose-50 text-rose-700 dark:bg-rose-950/50 dark:text-rose-400'
             }`}>
-              Stok Gudang: {formatNumber(hubStock)}
+              <span className="hidden sm:inline">Stok Gudang: </span><span className="sm:hidden">Gudang: </span>{formatNumber(hubStock)}
             </span>
           )}
           <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
@@ -360,36 +360,49 @@ export const CreateRequestModal: React.FC<CreateRequestModalProps> = ({
                     </div>
 
                     {/* Quantity Stepper & Subtotal on Mobile */}
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-1.5 border-t border-slate-200/60 dark:border-slate-700/60">
-                      <div>
-                        <span className="text-[10px] text-slate-400 block font-semibold">
-                          Subtotal: <strong className="text-emerald-600 dark:text-emerald-400">{formatRupiah(subtotal)}</strong>
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-2 border-t border-border">
+                      <div className="flex items-center justify-between w-full sm:w-auto">
+                        <span className="text-[11px] text-muted-foreground font-semibold">
+                          Subtotal: <strong className="text-emerald-600 dark:text-emerald-400 font-mono">{formatRupiah(subtotal)}</strong>
                         </span>
-                      </div>
-
-                      <div className="flex items-center justify-between sm:justify-end gap-2">
-                        {/* Preset quick buttons */}
-                        <div className="flex items-center gap-1">
+                        {/* Preset quick buttons on mobile */}
+                        <div className="flex items-center gap-1 sm:hidden">
                           {[5, 10, 25].map(preset => (
                             <button
                               key={preset}
                               type="button"
                               onClick={() => handleRowChange(idx, 'qtyRequested', (Number(row.qtyRequested) || 0) + preset)}
-                              className="px-2 py-1 rounded-md text-[10px] font-semibold bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-600 active:scale-95"
+                              className="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-muted border border-border text-foreground hover:bg-muted/80 active:scale-95"
+                            >
+                              +{preset}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div className="flex items-center justify-end gap-2 w-full sm:w-auto">
+                        {/* Preset on desktop */}
+                        <div className="hidden sm:flex items-center gap-1">
+                          {[5, 10, 25].map(preset => (
+                            <button
+                              key={preset}
+                              type="button"
+                              onClick={() => handleRowChange(idx, 'qtyRequested', (Number(row.qtyRequested) || 0) + preset)}
+                              className="px-2 py-1 rounded-md text-[10px] font-semibold bg-muted border border-border text-foreground hover:bg-muted/80 active:scale-95"
                             >
                               +{preset}
                             </button>
                           ))}
                         </div>
 
-                        <div className="flex items-center gap-1.5">
+                        <div className="flex items-center gap-1.5 w-full sm:w-auto justify-end">
                           <button
                             type="button"
                             onClick={() => handleRowChange(idx, 'qtyRequested', Math.max(1, (Number(row.qtyRequested) || 0) - 1))}
-                            className="w-8 h-8 rounded-lg bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 flex items-center justify-center active:scale-90 font-bold"
+                            className="w-9 h-9 rounded-lg bg-muted text-foreground flex items-center justify-center active:scale-90 font-bold border border-border shrink-0"
                             title="Kurang 1"
                           >
-                            <Minus className="w-3.5 h-3.5" />
+                            <Minus className="w-4 h-4" />
                           </button>
 
                           <input
@@ -406,16 +419,16 @@ export const CreateRequestModal: React.FC<CreateRequestModalProps> = ({
                                 handleRowChange(idx, 'qtyRequested', 1);
                               }
                             }}
-                            className="w-14 py-1 text-center font-black text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white"
+                            className="w-16 h-9 py-1 text-center font-bold font-mono text-sm rounded-lg border border-border bg-background text-foreground"
                           />
 
                           <button
                             type="button"
                             onClick={() => handleRowChange(idx, 'qtyRequested', (Number(row.qtyRequested) || 0) + 1)}
-                            className="w-8 h-8 rounded-lg bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 flex items-center justify-center active:scale-90 font-bold"
+                            className="w-9 h-9 rounded-lg bg-muted text-foreground flex items-center justify-center active:scale-90 font-bold border border-border shrink-0"
                             title="Tambah 1"
                           >
-                            <Plus className="w-3.5 h-3.5" />
+                            <Plus className="w-4 h-4" />
                           </button>
                         </div>
                       </div>
@@ -463,7 +476,7 @@ export const CreateRequestModal: React.FC<CreateRequestModalProps> = ({
         </div>
 
         {/* Submit Button */}
-        <div className="pt-3 border-t border-slate-100 dark:border-slate-800">
+        <div className="pt-3 border-t border-border sticky bottom-0 bg-card py-2 -mx-1 px-1">
           <button
             type="submit"
             disabled={isSubmitting || activeItems.length === 0}

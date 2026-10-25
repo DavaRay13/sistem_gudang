@@ -314,7 +314,7 @@ export const UserManagement: React.FC = () => {
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1">
                 Peran (Role)
@@ -354,10 +354,10 @@ export const UserManagement: React.FC = () => {
             </div>
           </div>
 
-          <div className="pt-3 border-t border-slate-100 dark:border-slate-800">
+          <div className="pt-3 border-t border-border sticky bottom-0 bg-card py-2 -mx-1 px-1">
             <button
               type="submit"
-              className="w-full py-3 rounded-xl text-xs font-bold text-white bg-brand-600 hover:bg-brand-500 shadow-md active:scale-95 transition-all"
+              className="w-full py-3 rounded-xl text-xs font-bold text-white bg-brand-600 hover:bg-brand-500 shadow-md active:scale-95 transition-all text-center"
             >
               Daftarkan Akun
             </button>
@@ -386,7 +386,7 @@ export const UserManagement: React.FC = () => {
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1">
                 Peran (Role)
@@ -419,10 +419,10 @@ export const UserManagement: React.FC = () => {
             </div>
           </div>
 
-          <div className="pt-3 border-t border-slate-100 dark:border-slate-800">
+          <div className="pt-3 border-t border-border sticky bottom-0 bg-card py-2 -mx-1 px-1">
             <button
               type="submit"
-              className="w-full py-3 rounded-xl text-xs font-bold text-white bg-brand-600 hover:bg-brand-500 shadow-md active:scale-95"
+              className="w-full py-3 rounded-xl text-xs font-bold text-white bg-brand-600 hover:bg-brand-500 shadow-md active:scale-95 transition-all text-center"
             >
               Simpan Perubahan
             </button>
