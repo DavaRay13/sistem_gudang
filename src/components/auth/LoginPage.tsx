@@ -58,26 +58,26 @@ export const LoginPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col justify-between p-4 sm:p-6 relative overflow-hidden overflow-x-hidden w-full max-w-full font-sans">
-      {/* Background Ambient Pattern */}
-      <div className="absolute inset-0 bg-[linear-gradient(to_right,var(--border)_1px,transparent_1px),linear-gradient(to_bottom,var(--border)_1px,transparent_1px)] bg-[size:36px_36px] opacity-40 pointer-events-none" />
-      <div className="absolute -top-32 left-1/2 -translate-x-1/2 w-[600px] max-w-[90vw] h-[350px] bg-primary/10 blur-[120px] rounded-full pointer-events-none" />
+      {/* Precision Background Grid & Focused Vignette (No Muddy Bleed) */}
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_60%_at_50%_-20%,rgba(99,102,241,0.08),transparent_70%)] dark:bg-[radial-gradient(ellipse_80%_60%_at_50%_-20%,rgba(99,102,241,0.15),transparent_70%)] pointer-events-none" />
+      <div className="absolute inset-0 bg-[linear-gradient(to_right,var(--border)_1px,transparent_1px),linear-gradient(to_bottom,var(--border)_1px,transparent_1px)] bg-[size:48px_48px] opacity-25 dark:opacity-15 pointer-events-none" />
 
       {/* Brand Header */}
-      <div className="relative pt-6 sm:pt-10 text-center">
-        <div className="inline-flex w-14 h-14 rounded-2xl bg-foreground text-background items-center justify-center shadow-lg mb-3">
+      <div className="relative pt-6 sm:pt-10 text-center z-10">
+        <div className="inline-flex w-14 h-14 rounded-2xl bg-gradient-to-b from-foreground to-foreground/90 text-background items-center justify-center shadow-md border border-foreground/10 mb-3">
           <Package2 className="w-8 h-8" />
         </div>
         <h1 className="text-2xl sm:text-3xl font-black text-foreground tracking-tight font-display">
-          Sistem<span className="text-muted-foreground">Gudang</span>
+          Sistem<span className="text-muted-foreground font-light">Gudang</span>
         </h1>
         <p className="text-xs sm:text-sm text-muted-foreground mt-1 max-w-sm mx-auto">
           Sistem Distribusi Gudang Pusat & Manajemen Toko Cabang
         </p>
       </div>
 
-      {/* Main Login Card */}
+      {/* Main Login Card - Opaque High Contrast Card to Prevent Background Bleed */}
       <div className="relative w-full max-w-md mx-auto my-auto space-y-4 py-4 z-10">
-        <Card className="backdrop-blur-xl bg-card/90 shadow-xl border-border">
+        <Card className="bg-card shadow-2xl border-border/90 ring-1 ring-foreground/5 dark:ring-white/10">
           <CardHeader className="space-y-1 pb-4">
             <CardTitle className="text-lg font-bold text-card-foreground tracking-tight">
               Masuk ke Portal Operasional

@@ -53,66 +53,66 @@ export function getStatusBadgeConfig(status: TransferRequestStatus): {
     case 'PENDING':
       return {
         label: 'Menunggu Persetujuan',
-        bgClass: 'bg-[#FBF3DB] dark:bg-[#332A15]',
-        textClass: 'text-[#956400] dark:text-[#E8CA65]',
-        borderClass: 'border-[#F4E3B4] dark:border-[#4D3F1E]',
-        dotClass: 'bg-[#956400]',
+        bgClass: 'bg-gradient-to-r from-amber-50 to-amber-100/70 dark:from-amber-950/60 dark:to-amber-900/40',
+        textClass: 'text-amber-800 dark:text-amber-300 font-semibold',
+        borderClass: 'border-amber-300 dark:border-amber-700/60 shadow-2xs',
+        dotClass: 'bg-amber-500 ring-2 ring-amber-400/30',
       };
     case 'APPROVED':
       return {
         label: 'Disetujui Penuh',
-        bgClass: 'bg-[#EDF3EC] dark:bg-[#172B19]',
-        textClass: 'text-[#346538] dark:text-[#96D99C]',
-        borderClass: 'border-[#D4E5D3] dark:border-[#223F25]',
-        dotClass: 'bg-[#346538]',
+        bgClass: 'bg-gradient-to-r from-emerald-50 to-emerald-100/70 dark:from-emerald-950/60 dark:to-emerald-900/40',
+        textClass: 'text-emerald-800 dark:text-emerald-300 font-semibold',
+        borderClass: 'border-emerald-300 dark:border-emerald-700/60 shadow-2xs',
+        dotClass: 'bg-emerald-500 ring-2 ring-emerald-400/30',
       };
     case 'PARTIAL':
       return {
         label: 'Disetujui Sebagian',
-        bgClass: 'bg-[#FBF3DB] dark:bg-[#332A15]',
-        textClass: 'text-[#956400] dark:text-[#E8CA65]',
-        borderClass: 'border-[#F4E3B4] dark:border-[#4D3F1E]',
-        dotClass: 'bg-[#956400]',
+        bgClass: 'bg-gradient-to-r from-amber-50 to-amber-100/70 dark:from-amber-950/60 dark:to-amber-900/40',
+        textClass: 'text-amber-800 dark:text-amber-300 font-semibold',
+        borderClass: 'border-amber-300 dark:border-amber-700/60 shadow-2xs',
+        dotClass: 'bg-amber-500 ring-2 ring-amber-400/30',
       };
     case 'IN_TRANSIT':
       return {
         label: 'Dalam Pengiriman',
-        bgClass: 'bg-[#E1F3FE] dark:bg-[#142838]',
-        textClass: 'text-[#1F6C9F] dark:text-[#97D2FB]',
-        borderClass: 'border-[#C8E7FD] dark:border-[#1E3B52]',
-        dotClass: 'bg-[#1F6C9F]',
+        bgClass: 'bg-gradient-to-r from-sky-50 to-blue-100/70 dark:from-sky-950/60 dark:to-blue-900/40',
+        textClass: 'text-sky-800 dark:text-sky-300 font-semibold',
+        borderClass: 'border-sky-300 dark:border-sky-700/60 shadow-2xs',
+        dotClass: 'bg-sky-500 ring-2 ring-sky-400/30',
       };
     case 'COMPLETED':
       return {
         label: 'Selesai (Sesuai)',
-        bgClass: 'bg-[#EDF3EC] dark:bg-[#172B19]',
-        textClass: 'text-[#346538] dark:text-[#96D99C]',
-        borderClass: 'border-[#D4E5D3] dark:border-[#223F25]',
-        dotClass: 'bg-[#346538]',
+        bgClass: 'bg-gradient-to-r from-emerald-50 to-emerald-100/70 dark:from-emerald-950/60 dark:to-emerald-900/40',
+        textClass: 'text-emerald-800 dark:text-emerald-300 font-semibold',
+        borderClass: 'border-emerald-300 dark:border-emerald-700/60 shadow-2xs',
+        dotClass: 'bg-emerald-500 ring-2 ring-emerald-400/30',
       };
     case 'DISCREPANCY':
       return {
         label: 'Ada Selisih / Kerusakan',
-        bgClass: 'bg-[#FDEBEC] dark:bg-[#381B1B]',
-        textClass: 'text-[#9F2F2D] dark:text-[#F8A4A4]',
-        borderClass: 'border-[#F8D2D4] dark:border-[#522525]',
-        dotClass: 'bg-[#9F2F2D]',
+        bgClass: 'bg-gradient-to-r from-rose-50 to-rose-100/70 dark:from-rose-950/60 dark:to-rose-900/40',
+        textClass: 'text-rose-800 dark:text-rose-300 font-semibold',
+        borderClass: 'border-rose-300 dark:border-rose-700/60 shadow-2xs',
+        dotClass: 'bg-rose-500 ring-2 ring-rose-400/30',
       };
     case 'REJECTED':
       return {
         label: 'Ditolak',
-        bgClass: 'bg-[#FDEBEC] dark:bg-[#381B1B]',
-        textClass: 'text-[#9F2F2D] dark:text-[#F8A4A4]',
-        borderClass: 'border-[#F8D2D4] dark:border-[#522525]',
-        dotClass: 'bg-[#9F2F2D]',
+        bgClass: 'bg-gradient-to-r from-rose-50 to-rose-100/70 dark:from-rose-950/60 dark:to-rose-900/40',
+        textClass: 'text-rose-800 dark:text-rose-300 font-semibold',
+        borderClass: 'border-rose-300 dark:border-rose-700/60 shadow-2xs',
+        dotClass: 'bg-rose-500 ring-2 ring-rose-400/30',
       };
     default:
       return {
         label: status,
-        bgClass: 'bg-[#F7F6F3] dark:bg-[#1C1E22]',
-        textClass: 'text-[#787774] dark:text-[#A1A09E]',
-        borderClass: 'border-[#EAEAEA] dark:border-[#26282E]',
-        dotClass: 'bg-[#787774]',
+        bgClass: 'bg-muted/80',
+        textClass: 'text-foreground font-medium',
+        borderClass: 'border-border shadow-2xs',
+        dotClass: 'bg-muted-foreground',
       };
   }
 }
@@ -124,16 +124,40 @@ export function getTransactionTypeBadge(type: TransactionType): {
 } {
   switch (type) {
     case 'PURCHASE_INBOUND':
-      return { label: 'Barang Masuk', bgClass: 'bg-[#EDF3EC] dark:bg-[#172B19]', textClass: 'text-[#346538] dark:text-[#96D99C]' };
+      return { 
+        label: 'Barang Masuk', 
+        bgClass: 'bg-gradient-to-r from-emerald-50 to-emerald-100/70 border border-emerald-300 dark:from-emerald-950/60 dark:to-emerald-900/40 dark:border-emerald-700/50', 
+        textClass: 'text-emerald-800 dark:text-emerald-300 font-medium' 
+      };
     case 'TRANSFER_DISPATCH':
-      return { label: 'Dikirim ke Toko', bgClass: 'bg-[#E1F3FE] dark:bg-[#142838]', textClass: 'text-[#1F6C9F] dark:text-[#97D2FB]' };
+      return { 
+        label: 'Dikirim ke Toko', 
+        bgClass: 'bg-gradient-to-r from-sky-50 to-blue-100/70 border border-sky-300 dark:from-sky-950/60 dark:to-blue-900/40 dark:border-sky-700/50', 
+        textClass: 'text-sky-800 dark:text-sky-300 font-medium' 
+      };
     case 'TRANSFER_RECEIVE':
-      return { label: 'Diterima Toko', bgClass: 'bg-[#EDF3EC] dark:bg-[#172B19]', textClass: 'text-[#346538] dark:text-[#96D99C]' };
+      return { 
+        label: 'Diterima Toko', 
+        bgClass: 'bg-gradient-to-r from-emerald-50 to-emerald-100/70 border border-emerald-300 dark:from-emerald-950/60 dark:to-emerald-900/40 dark:border-emerald-700/50', 
+        textClass: 'text-emerald-800 dark:text-emerald-300 font-medium' 
+      };
     case 'DAMAGE_LOSS':
-      return { label: 'Rusak / Hilang', bgClass: 'bg-[#FDEBEC] dark:bg-[#381B1B]', textClass: 'text-[#9F2F2D] dark:text-[#F8A4A4]' };
+      return { 
+        label: 'Rusak / Hilang', 
+        bgClass: 'bg-gradient-to-r from-rose-50 to-rose-100/70 border border-rose-300 dark:from-rose-950/60 dark:to-rose-900/40 dark:border-rose-700/50', 
+        textClass: 'text-rose-800 dark:text-rose-300 font-medium' 
+      };
     case 'MANUAL_ADJUSTMENT':
-      return { label: 'Penyesuaian', bgClass: 'bg-[#FBF3DB] dark:bg-[#332A15]', textClass: 'text-[#956400] dark:text-[#E8CA65]' };
+      return { 
+        label: 'Penyesuaian', 
+        bgClass: 'bg-gradient-to-r from-amber-50 to-amber-100/70 border border-amber-300 dark:from-amber-950/60 dark:to-amber-900/40 dark:border-amber-700/50', 
+        textClass: 'text-amber-800 dark:text-amber-300 font-medium' 
+      };
     default:
-      return { label: type, bgClass: 'bg-[#F7F6F3] dark:bg-[#1C1E22]', textClass: 'text-[#787774] dark:text-[#A1A09E]' };
+      return { 
+        label: type, 
+        bgClass: 'bg-muted border border-border', 
+        textClass: 'text-muted-foreground' 
+      };
   }
 }

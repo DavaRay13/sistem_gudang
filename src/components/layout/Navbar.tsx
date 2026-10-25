@@ -57,8 +57,8 @@ export const Navbar: React.FC<NavbarProps> = ({ onToggleMobileMenu }) => {
               variant="outline"
               className={`px-2 py-0.5 text-[9px] sm:text-[10px] font-mono uppercase tracking-wider font-bold shrink-0 ${
                 isWarehouseAdmin 
-                  ? 'bg-muted text-foreground border-border'
-                  : 'bg-[#EDF3EC] text-[#346538] border-[#D4E5D3] dark:bg-[#172B19] dark:text-[#96D99C] dark:border-[#223F25]'
+                  ? 'bg-muted/80 text-foreground border-border/80 shadow-2xs'
+                  : 'bg-gradient-to-r from-emerald-50 to-emerald-100/70 text-emerald-800 border-emerald-300 dark:from-emerald-950/60 dark:to-emerald-900/40 dark:text-emerald-300 dark:border-emerald-700/60 shadow-2xs'
               }`}
             >
               {isWarehouseAdmin 
@@ -70,7 +70,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onToggleMobileMenu }) => {
             {isOfflineMode && (
               <Badge 
                 variant="outline"
-                className="flex items-center gap-1 px-1.5 py-0.5 text-[9px] font-mono font-medium tracking-tight bg-[#FFF7D6] text-[#8F6B00] border-[#FFE885] dark:bg-[#332B00] dark:text-[#FFDF6D] dark:border-[#5C4F00] shrink-0 animate-pulse"
+                className="flex items-center gap-1 px-1.5 py-0.5 text-[9px] font-mono font-medium tracking-tight bg-gradient-to-r from-amber-50 to-amber-100/70 text-amber-800 border-amber-300 dark:from-amber-950/60 dark:to-amber-900/40 dark:text-amber-300 dark:border-amber-700/60 shrink-0 animate-pulse"
                 title="Aplikasi berjalan dalam mode offline / penyimpanan lokal"
               >
                 <WifiOff className="w-2.5 h-2.5" />

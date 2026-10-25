@@ -140,7 +140,7 @@ export const WarehouseDashboard: React.FC<WarehouseDashboardProps> = ({ onNaviga
               Data terintegrasi langsung dengan penerimaan masing-masing toko.
             </CardDescription>
           </div>
-          <Badge variant="outline" className="text-[10px] font-mono uppercase bg-[#EDF3EC] text-[#346538] dark:bg-[#172B19] dark:text-[#96D99C] border-[#D4E5D3] dark:border-[#223F25]">
+          <Badge variant="outline" className="text-[10px] font-mono uppercase bg-gradient-to-r from-emerald-50 to-emerald-100/70 text-emerald-800 border-emerald-300 dark:from-emerald-950/60 dark:to-emerald-900/40 dark:text-emerald-300 dark:border-emerald-700/60 shadow-2xs">
             Live Sinkron
           </Badge>
         </CardHeader>
@@ -180,7 +180,7 @@ export const WarehouseDashboard: React.FC<WarehouseDashboardProps> = ({ onNaviga
                   <div className="pt-2 border-t border-border flex items-center justify-between text-[11px]">
                     <span className="text-muted-foreground">Status Pengiriman:</span>
                     {storeInTransit > 0 ? (
-                      <Badge variant="outline" className="text-[10px] font-mono font-medium bg-[#E1F3FE] text-[#1F6C9F] dark:bg-[#142838] dark:text-[#97D2FB] border-[#C8E7FD] dark:border-[#1E3B52]">
+                      <Badge variant="outline" className="text-[10px] font-mono font-medium bg-gradient-to-r from-sky-50 to-blue-100/70 text-sky-800 border-sky-300 dark:from-sky-950/60 dark:to-blue-900/40 dark:text-sky-300 dark:border-sky-700/60 shadow-2xs">
                         +{storeInTransit} Unit In-Transit
                       </Badge>
                     ) : (
@@ -258,7 +258,7 @@ export const WarehouseDashboard: React.FC<WarehouseDashboardProps> = ({ onNaviga
         <Card className="shadow-xs">
           <CardHeader className="flex flex-row items-center justify-between pb-3 border-b border-border">
             <div className="flex items-center gap-2">
-              <ShieldAlert className="w-4 h-4 text-[#956400] dark:text-[#E8CA65]" />
+              <ShieldAlert className="w-4 h-4 text-amber-600 dark:text-amber-400" />
               <CardTitle className="text-xs font-bold uppercase tracking-wider text-foreground">
                 Pantauan Stok Gudang ({lowStockItems.length})
               </CardTitle>
@@ -296,11 +296,11 @@ export const WarehouseDashboard: React.FC<WarehouseDashboardProps> = ({ onNaviga
                             {item.name}
                           </span>
                           {isOutOfStock ? (
-                            <Badge variant="outline" className="text-[10px] font-mono bg-[#FDEBEC] text-[#9F2F2D] dark:bg-[#381B1B] dark:text-[#F8A4A4] border-[#F8D2D4] dark:border-[#522525]">
+                            <Badge variant="outline" className="text-[10px] font-mono font-medium bg-gradient-to-r from-rose-50 to-rose-100/70 text-rose-800 border-rose-300 dark:from-rose-950/60 dark:to-rose-900/40 dark:text-rose-300 dark:border-rose-700/60 shadow-2xs">
                               Stok Kosong
                             </Badge>
                           ) : (
-                            <Badge variant="outline" className="text-[10px] font-mono bg-[#FBF3DB] text-[#956400] dark:bg-[#332A15] dark:text-[#E8CA65] border-[#F4E3B4] dark:border-[#4D3F1E]">
+                            <Badge variant="outline" className="text-[10px] font-mono font-medium bg-gradient-to-r from-amber-50 to-amber-100/70 text-amber-800 border-amber-300 dark:from-amber-950/60 dark:to-amber-900/40 dark:text-amber-300 dark:border-amber-700/60 shadow-2xs">
                               Menipis
                             </Badge>
                           )}
@@ -312,7 +312,7 @@ export const WarehouseDashboard: React.FC<WarehouseDashboardProps> = ({ onNaviga
 
                       <div className="text-right shrink-0">
                         <span className={`font-mono tabular-nums text-sm font-semibold ${
-                          isOutOfStock ? 'text-destructive' : 'text-[#956400] dark:text-[#E8CA65]'
+                          isOutOfStock ? 'text-rose-600 dark:text-rose-400' : 'text-amber-600 dark:text-amber-400'
                         }`}>
                           {available} {item.unit}
                         </span>
