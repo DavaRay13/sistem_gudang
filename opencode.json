@@ -14,6 +14,14 @@
         "@playwright/mcp@latest"
       ],
       "enabled": true
+    },
+    "figcraft": {
+      "type": "local",
+      "command": "D:\\figcraft\\figcraft-0.11.2-windows-x64-portable\\figcraft-cli.exe",
+      "args": [
+        "mcp"
+      ],
+      "enabled": true
     }
   }
 }

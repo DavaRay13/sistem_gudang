@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { formatNumber, formatRupiah } from '../../utils/formatters';
 import { Item, Inventory } from '../../types';
+import { Badge } from '../ui/badge';
 
 interface CreateRequestModalProps {
   isOpen: boolean;
@@ -215,6 +216,7 @@ export const CreateRequestModal: React.FC<CreateRequestModalProps> = ({
   const activeItems = items.filter(i => !i.is_archived);
 
   const [rows, setRows] = useState<ItemRow[]>([{ itemId: initialItemId || activeItems[0]?.id || 1, qtyRequested: 10 }]);
+  const [priority, setPriority] = useState<'EXPRESS' | 'REGULAR' | 'SCHEDULED'>('EXPRESS');
   const [notes, setNotes] = useState<string>('Pengisian stok toko harian');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -283,7 +285,9 @@ export const CreateRequestModal: React.FC<CreateRequestModalProps> = ({
 
     setIsSubmitting(true);
     try {
-      await createRequest(myLocationId, currentUser.id, validRows, notes);
+      const priorityLabel = priority === 'EXPRESS' ? '[Prioritas: Express ⚡]' : priority === 'REGULAR' ? '[Prioritas: Reguler 🚚]' : '[Prioritas: Jadwal Rutin 🏢]';
+      const finalNotes = `${priorityLabel} ${notes}`.trim();
+      await createRequest(myLocationId, currentUser.id, validRows, finalNotes);
       onClose();
       setRows([{ itemId: items[0]?.id || 1, qtyRequested: 10 }]);
       setNotes('Pengisian stok toko harian');
@@ -300,154 +304,271 @@ export const CreateRequestModal: React.FC<CreateRequestModalProps> = ({
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title="Ajukan Permintaan Stok Barang"
+      title="Buat Permintaan Stok Baru"
       subtitle={`Pengajuan kebutuhan dari ${currentLocation?.name}`}
       maxWidth="lg"
     >
       <form onSubmit={handleSubmit} className="space-y-4">
-        
-        {/* Items Input List */}
-        <div>
-          <div className="flex items-center justify-between mb-2">
-            <label className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
-              Pilih Barang & Jumlah yang Diminta:
-            </label>
-            <button
-              type="button"
-              onClick={handleAddRow}
-              disabled={activeItems.length === 0}
-              className="flex items-center gap-1 text-xs font-bold text-brand-600 dark:text-brand-400 active:scale-95"
-            >
-              <Plus className="w-4 h-4" />
-              <span>+ Tambah Barang</span>
-            </button>
+        {/* Section 1: Package / Location & Items Information */}
+        <div className="space-y-3">
+          <div className="flex items-center gap-1.5 text-xs font-bold text-foreground">
+            <span className="w-5 h-5 rounded-md bg-orange-500/10 text-orange-600 flex items-center justify-center text-[11px]">1</span>
+            <span>Informasi Lokasi & Barang</span>
           </div>
 
-          {activeItems.length === 0 ? (
-            <div className="p-3 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-xl text-xs text-amber-800 dark:text-amber-300">
-              Belum ada katalog barang terdaftar di Gudang Pusat.
+          {/* Location Origin & Destination Cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+            <div className="p-2.5 rounded-xl bg-muted/40 border border-border flex items-center gap-2.5">
+              <div className="w-7 h-7 rounded-lg bg-orange-500/10 text-orange-600 flex items-center justify-center shrink-0">
+                <span className="text-xs">📍</span>
+              </div>
+              <div className="min-w-0 flex-1">
+                <span className="text-[9px] uppercase font-bold text-muted-foreground block">Lokasi Asal (Gudang)</span>
+                <span className="font-bold text-foreground truncate block">Gudang Pusat</span>
+              </div>
             </div>
-          ) : (
-            <div className="space-y-2.5">
-              {rows.map((row, idx) => {
-                const currentItem = itemMap.get(row.itemId);
-                const subtotal = (currentItem?.price || 0) * (Number(row.qtyRequested) || 0);
 
-                return (
-                  <div
-                    key={idx}
-                    className="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-2xl border border-slate-200/80 dark:border-slate-700/80 space-y-2 relative"
-                  >
-                    {/* Searchable Item Selector */}
-                    <div className="flex items-center justify-between gap-2">
-                      <SearchableItemPicker
-                        selectedItemId={row.itemId}
-                        items={activeItems}
-                        inventories={inventories}
-                        onSelect={newItemId => handleRowChange(idx, 'itemId', newItemId)}
-                        disabledItemIds={usedItemIds}
-                      />
+            <div className="p-2.5 rounded-xl bg-muted/40 border border-border flex items-center gap-2.5">
+              <div className="w-7 h-7 rounded-lg bg-blue-500/10 text-blue-600 flex items-center justify-center shrink-0">
+                <span className="text-xs">🏪</span>
+              </div>
+              <div className="min-w-0 flex-1">
+                <span className="text-[9px] uppercase font-bold text-muted-foreground block">Lokasi Tujuan (Toko)</span>
+                <span className="font-bold text-foreground truncate block">{currentLocation?.name}</span>
+              </div>
+            </div>
+          </div>
 
-                      <button
-                        type="button"
-                        onClick={() => handleRemoveRow(idx)}
-                        disabled={rows.length === 1}
-                        className="p-2 text-slate-400 hover:text-rose-500 disabled:opacity-20 active:scale-90 shrink-0"
-                        title="Hapus baris"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
+          {/* Items Input List */}
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                Pilih Barang & Jumlah yang Diminta:
+              </label>
+              <button
+                type="button"
+                onClick={handleAddRow}
+                disabled={activeItems.length === 0}
+                className="flex items-center gap-1 text-xs font-bold text-orange-600 dark:text-orange-400 active:scale-95"
+              >
+                <Plus className="w-4 h-4" />
+                <span>+ Tambah Barang</span>
+              </button>
+            </div>
 
-                    {/* Quantity Stepper & Subtotal on Mobile */}
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-2 border-t border-border">
-                      <div className="flex items-center justify-between w-full sm:w-auto">
-                        <span className="text-[11px] text-muted-foreground font-semibold">
-                          Subtotal: <strong className="text-emerald-600 dark:text-emerald-400 font-mono">{formatRupiah(subtotal)}</strong>
-                        </span>
-                        {/* Preset quick buttons on mobile */}
-                        <div className="flex items-center gap-1 sm:hidden">
-                          {[5, 10, 25].map(preset => (
-                            <button
-                              key={preset}
-                              type="button"
-                              onClick={() => handleRowChange(idx, 'qtyRequested', (Number(row.qtyRequested) || 0) + preset)}
-                              className="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-muted border border-border text-foreground hover:bg-muted/80 active:scale-95"
-                            >
-                              +{preset}
-                            </button>
-                          ))}
-                        </div>
+            {activeItems.length === 0 ? (
+              <div className="p-3 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-xl text-xs text-amber-800 dark:text-amber-300">
+                Belum ada katalog barang terdaftar di Gudang Pusat.
+              </div>
+            ) : (
+              <div className="space-y-2.5">
+                {rows.map((row, idx) => {
+                  const currentItem = itemMap.get(row.itemId);
+                  const subtotal = (currentItem?.price || 0) * (Number(row.qtyRequested) || 0);
+
+                  return (
+                    <div
+                      key={idx}
+                      className="p-3 bg-card rounded-2xl border border-border space-y-2 relative shadow-xs"
+                    >
+                      {/* Searchable Item Selector */}
+                      <div className="flex items-center justify-between gap-2">
+                        <SearchableItemPicker
+                          selectedItemId={row.itemId}
+                          items={activeItems}
+                          inventories={inventories}
+                          onSelect={newItemId => handleRowChange(idx, 'itemId', newItemId)}
+                          disabledItemIds={usedItemIds}
+                        />
+
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveRow(idx)}
+                          disabled={rows.length === 1}
+                          className="p-2 text-muted-foreground hover:text-rose-500 disabled:opacity-20 active:scale-90 shrink-0"
+                          title="Hapus baris"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
                       </div>
 
-                      <div className="flex items-center justify-end gap-2 w-full sm:w-auto">
-                        {/* Preset on desktop */}
-                        <div className="hidden sm:flex items-center gap-1">
-                          {[5, 10, 25].map(preset => (
-                            <button
-                              key={preset}
-                              type="button"
-                              onClick={() => handleRowChange(idx, 'qtyRequested', (Number(row.qtyRequested) || 0) + preset)}
-                              className="px-2 py-1 rounded-md text-[10px] font-semibold bg-muted border border-border text-foreground hover:bg-muted/80 active:scale-95"
-                            >
-                              +{preset}
-                            </button>
-                          ))}
+                      {/* Quantity Stepper & Subtotal on Mobile */}
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-2 border-t border-border">
+                        <div className="flex items-center justify-between w-full sm:w-auto">
+                          <span className="text-[11px] text-muted-foreground font-semibold">
+                            Subtotal: <strong className="text-orange-600 dark:text-orange-400 font-mono">{formatRupiah(subtotal)}</strong>
+                          </span>
+                          {/* Preset quick buttons on mobile */}
+                          <div className="flex items-center gap-1 sm:hidden">
+                            {[5, 10, 25].map(preset => (
+                              <button
+                                key={preset}
+                                type="button"
+                                onClick={() => handleRowChange(idx, 'qtyRequested', (Number(row.qtyRequested) || 0) + preset)}
+                                className="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-muted border border-border text-foreground hover:bg-muted/80 active:scale-95"
+                              >
+                                +{preset}
+                              </button>
+                            ))}
+                          </div>
                         </div>
 
-                        <div className="flex items-center gap-1.5 w-full sm:w-auto justify-end">
-                          <button
-                            type="button"
-                            onClick={() => handleRowChange(idx, 'qtyRequested', Math.max(1, (Number(row.qtyRequested) || 0) - 1))}
-                            className="w-9 h-9 rounded-lg bg-muted text-foreground flex items-center justify-center active:scale-90 font-bold border border-border shrink-0"
-                            title="Kurang 1"
-                          >
-                            <Minus className="w-4 h-4" />
-                          </button>
+                        <div className="flex items-center justify-end gap-2 w-full sm:w-auto">
+                          {/* Preset on desktop */}
+                          <div className="hidden sm:flex items-center gap-1">
+                            {[5, 10, 25].map(preset => (
+                              <button
+                                key={preset}
+                                type="button"
+                                onClick={() => handleRowChange(idx, 'qtyRequested', (Number(row.qtyRequested) || 0) + preset)}
+                                className="px-2 py-1 rounded-md text-[10px] font-semibold bg-muted border border-border text-foreground hover:bg-muted/80 active:scale-95"
+                              >
+                                +{preset}
+                              </button>
+                            ))}
+                          </div>
 
-                          <input
-                            type="number"
-                            min="1"
-                            required
-                            value={row.qtyRequested}
-                            onChange={e => {
-                              const val = e.target.value;
-                              handleRowChange(idx, 'qtyRequested', val === '' ? '' : Math.max(0, parseInt(val) || 0));
-                            }}
-                            onBlur={() => {
-                              if (!row.qtyRequested || Number(row.qtyRequested) < 1) {
-                                handleRowChange(idx, 'qtyRequested', 1);
-                              }
-                            }}
-                            className="w-16 h-9 py-1 text-center font-bold font-mono text-sm rounded-lg border border-border bg-background text-foreground"
-                          />
+                          <div className="flex items-center gap-1.5 w-full sm:w-auto justify-end">
+                            <button
+                              type="button"
+                              onClick={() => handleRowChange(idx, 'qtyRequested', Math.max(1, (Number(row.qtyRequested) || 0) - 1))}
+                              className="w-9 h-9 rounded-lg bg-muted text-foreground flex items-center justify-center active:scale-90 font-bold border border-border shrink-0"
+                              title="Kurang 1"
+                            >
+                              <Minus className="w-4 h-4" />
+                            </button>
 
-                          <button
-                            type="button"
-                            onClick={() => handleRowChange(idx, 'qtyRequested', (Number(row.qtyRequested) || 0) + 1)}
-                            className="w-9 h-9 rounded-lg bg-muted text-foreground flex items-center justify-center active:scale-90 font-bold border border-border shrink-0"
-                            title="Tambah 1"
-                          >
-                            <Plus className="w-4 h-4" />
-                          </button>
+                            <input
+                              type="number"
+                              min="1"
+                              required
+                              value={row.qtyRequested}
+                              onChange={e => {
+                                const val = e.target.value;
+                                handleRowChange(idx, 'qtyRequested', val === '' ? '' : Math.max(0, parseInt(val) || 0));
+                              }}
+                              onBlur={() => {
+                                if (!row.qtyRequested || Number(row.qtyRequested) < 1) {
+                                  handleRowChange(idx, 'qtyRequested', 1);
+                                }
+                              }}
+                              className="w-16 h-9 py-1 text-center font-bold font-mono text-sm rounded-lg border border-border bg-background text-foreground"
+                            />
+
+                            <button
+                              type="button"
+                              onClick={() => handleRowChange(idx, 'qtyRequested', (Number(row.qtyRequested) || 0) + 1)}
+                              className="w-9 h-9 rounded-lg bg-muted text-foreground flex items-center justify-center active:scale-90 font-bold border border-border shrink-0"
+                              title="Tambah 1"
+                            >
+                              <Plus className="w-4 h-4" />
+                            </button>
+                          </div>
                         </div>
                       </div>
                     </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
+                  );
+                })}
+              </div>
+            )}
+          </div>
         </div>
 
-        {/* Total Estimated Value Summary */}
-        <div className="p-3 rounded-2xl bg-emerald-50/70 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-900/40 flex items-center justify-between text-xs">
-          <span className="font-semibold text-emerald-800 dark:text-emerald-300">
-            Estimasi Total Nilai Barang:
-          </span>
-          <span className="font-black text-sm text-emerald-700 dark:text-emerald-400">
-            {formatRupiah(totalEstimatedValue)}
-          </span>
+        {/* Section 2: Prioritas Pengiriman & Jadwal */}
+        <div className="space-y-2 pt-2 border-t border-border">
+          <div className="flex items-center gap-1.5 text-xs font-bold text-foreground">
+            <span className="w-5 h-5 rounded-md bg-orange-500/10 text-orange-600 flex items-center justify-center text-[11px]">2</span>
+            <span>Prioritas Pengiriman & Jadwal</span>
+          </div>
+
+          <div className="grid grid-cols-3 gap-2">
+            {/* Express Card */}
+            <button
+              type="button"
+              onClick={() => setPriority('EXPRESS')}
+              className={`p-2.5 rounded-xl border text-center transition-all ${
+                priority === 'EXPRESS'
+                  ? 'bg-orange-50/80 dark:bg-orange-950/40 border-orange-500 text-orange-600 dark:text-orange-400 shadow-2xs font-bold'
+                  : 'bg-card border-border text-muted-foreground hover:bg-muted/40'
+              }`}
+            >
+              <span className="text-base block mb-0.5">⚡</span>
+              <span className="text-xs font-bold block">Express</span>
+              <span className="text-[10px] opacity-75 block">Hari Ini</span>
+              <span className={`text-[10px] block mt-1 ${priority === 'EXPRESS' ? 'text-orange-600 font-bold' : 'text-muted-foreground/50'}`}>●</span>
+            </button>
+
+            {/* Regular Card */}
+            <button
+              type="button"
+              onClick={() => setPriority('REGULAR')}
+              className={`p-2.5 rounded-xl border text-center transition-all ${
+                priority === 'REGULAR'
+                  ? 'bg-orange-50/80 dark:bg-orange-950/40 border-orange-500 text-orange-600 dark:text-orange-400 shadow-2xs font-bold'
+                  : 'bg-card border-border text-muted-foreground hover:bg-muted/40'
+              }`}
+            >
+              <span className="text-base block mb-0.5">🚚</span>
+              <span className="text-xs font-bold block">Reguler</span>
+              <span className="text-[10px] opacity-75 block">1-2 Hari</span>
+              <span className={`text-[10px] block mt-1 ${priority === 'REGULAR' ? 'text-orange-600 font-bold' : 'text-muted-foreground/50'}`}>●</span>
+            </button>
+
+            {/* Scheduled Card */}
+            <button
+              type="button"
+              onClick={() => setPriority('SCHEDULED')}
+              className={`p-2.5 rounded-xl border text-center transition-all ${
+                priority === 'SCHEDULED'
+                  ? 'bg-orange-50/80 dark:bg-orange-950/40 border-orange-500 text-orange-600 dark:text-orange-400 shadow-2xs font-bold'
+                  : 'bg-card border-border text-muted-foreground hover:bg-muted/40'
+              }`}
+            >
+              <span className="text-base block mb-0.5">🏢</span>
+              <span className="text-xs font-bold block">Rutin</span>
+              <span className="text-[10px] opacity-75 block">Mingguan</span>
+              <span className={`text-[10px] block mt-1 ${priority === 'SCHEDULED' ? 'text-orange-600 font-bold' : 'text-muted-foreground/50'}`}>●</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Section 3: Ringkasan Permintaan Mutasi */}
+        <div className="space-y-2 pt-2 border-t border-border">
+          <div className="flex items-center gap-1.5 text-xs font-bold text-foreground">
+            <span className="w-5 h-5 rounded-md bg-orange-500/10 text-orange-600 flex items-center justify-center text-[11px]">3</span>
+            <span>Ringkasan Permintaan Mutasi</span>
+          </div>
+
+          <div className="p-3 rounded-2xl bg-card border border-border space-y-1.5 text-xs">
+            <div className="flex justify-between text-muted-foreground">
+              <span>Total Kuantitas Barang:</span>
+              <span className="font-bold text-foreground font-mono">
+                {rows.reduce((s, r) => s + (Number(r.qtyRequested) || 0), 0)} Unit
+              </span>
+            </div>
+            <div className="flex justify-between text-muted-foreground">
+              <span>Total Nilai Barang:</span>
+              <span className="font-bold text-foreground font-mono">
+                {formatRupiah(totalEstimatedValue)}
+              </span>
+            </div>
+            <div className="flex justify-between text-muted-foreground">
+              <span>Petugas Pemohon:</span>
+              <span className="font-semibold text-foreground">{currentUser?.full_name || currentUser?.username}</span>
+            </div>
+            <div className="pt-1.5 border-t border-border flex justify-between items-center">
+              <span className="font-bold text-foreground">Status Otomatis:</span>
+              <Badge variant="outline" className="text-[10px] font-bold text-orange-600 border-orange-300 dark:border-orange-800">
+                PENDING
+              </Badge>
+            </div>
+          </div>
+        </div>
+
+        {/* Info Callout */}
+        <div className="p-2.5 rounded-xl bg-blue-50/70 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-900/40 text-[11px] text-blue-800 dark:text-blue-300 flex items-start gap-2">
+          <span className="shrink-0 mt-0.5">ℹ️</span>
+          <span>Setelah dikirim, Admin Gudang akan menerima notifikasi persetujuan & menyiapkan Surat Jalan (DO).</span>
         </div>
 
         {/* Warning Banner for Duplicate Pending Items */}
@@ -460,8 +581,8 @@ export const CreateRequestModal: React.FC<CreateRequestModalProps> = ({
 
         {/* Request Notes */}
         <div>
-          <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">
-            Catatan Tambahan
+          <label className="block text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1.5">
+            Catatan Tambahan (Opsional)
           </label>
           <div className="relative">
             <textarea
@@ -469,18 +590,18 @@ export const CreateRequestModal: React.FC<CreateRequestModalProps> = ({
               value={notes}
               onChange={e => setNotes(e.target.value)}
               placeholder="Contoh: Stok akhir pekan menipis..."
-              className="w-full pl-9 pr-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs font-medium focus:ring-2 focus:ring-brand-500 focus:outline-none"
+              className="w-full pl-9 pr-3.5 py-2 rounded-xl border border-border bg-background text-foreground text-xs font-medium focus:ring-2 focus:ring-orange-500 focus:outline-none"
             />
-            <FileText className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
+            <FileText className="w-4 h-4 text-muted-foreground absolute left-3 top-3" />
           </div>
         </div>
 
         {/* Submit Button */}
-        <div className="pt-3 border-t border-border sticky bottom-0 bg-card py-2 -mx-1 px-1">
+        <div className="pt-2 border-t border-border sticky bottom-0 bg-card py-2 -mx-1 px-1">
           <button
             type="submit"
             disabled={isSubmitting || activeItems.length === 0}
-            className="w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-500 shadow-md shadow-emerald-500/20 disabled:opacity-50 active:scale-95 transition-all"
+            className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-xs font-bold text-white bg-orange-600 hover:bg-orange-500 shadow-md shadow-orange-500/20 disabled:opacity-50 active:scale-95 transition-all"
           >
             <Send className="w-4 h-4" />
             <span>Kirim Permintaan Stok ({formatRupiah(totalEstimatedValue)})</span>
