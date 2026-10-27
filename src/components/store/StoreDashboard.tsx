@@ -5,6 +5,7 @@ import { CreateRequestModal } from './CreateRequestModal';
 import { ReceivingHandshakeModal } from './ReceivingHandshakeModal';
 import { ShipmentTrackingModal } from '../documents/ShipmentTrackingModal';
 import { SuratJalanModal } from '../documents/SuratJalanModal';
+import { WorkflowStatusLooper } from '../common/WorkflowStatusLooper';
 import { NavigationTab } from '../layout/Sidebar';
 import { TransferRequest } from '../../types';
 import { 
@@ -101,66 +102,42 @@ export const StoreDashboard: React.FC<StoreDashboardProps> = ({ onNavigate }) =>
         </div>
       </div>
 
-      {/* 2. Real In-Transit Shipment Alert (Only rendered if there are real shipments in transit) */}
+      {/* 2. Real In-Transit Shipment Alert with Live GSAP Horizon Looper */}
       {inTransitRequests.length > 0 && (
-        <div className="p-4 rounded-2xl bg-gradient-to-r from-orange-50/80 via-white to-orange-50/40 dark:from-orange-950/30 dark:via-card dark:to-orange-950/10 border border-orange-200 dark:border-orange-900/60 shadow-xs space-y-3">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-orange-500 animate-ping" />
-              <span className="text-xs font-bold text-orange-600 dark:text-orange-400 uppercase tracking-wider">
-                Kiriman Menuju Toko ({inTransitRequests.length} Paket)
-              </span>
-            </div>
-            <span className="text-[11px] text-muted-foreground font-medium">
-              Silakan periksa fisik saat armada tiba
-            </span>
-          </div>
-
-          <div className="space-y-2">
-            {inTransitRequests.map(req => {
-              const totalDispatched = req.items.reduce((s, i) => s + (i.qty_dispatched || i.qty_requested), 0);
-              return (
-                <div
-                  key={req.id}
-                  className="p-3 rounded-xl bg-card border border-border flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs"
-                >
-                  <div className="space-y-0.5">
-                    <div className="flex items-center gap-2">
-                      <span className="font-mono text-sm font-extrabold text-foreground">
-                        {req.do_number || req.request_number}
-                      </span>
-                      <Badge className="bg-orange-500 text-white text-[9px] font-bold">
-                        IN TRANSIT
-                      </Badge>
-                    </div>
-                    <p className="text-xs text-muted-foreground">
-                      Total: <strong>{totalDispatched} unit</strong> ({req.items.length} item) dikirim dari Gudang Pusat
-                    </p>
-                  </div>
-
-                  <div className="flex items-center gap-2 shrink-0">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setTrackingReq(req)}
-                      className="text-xs h-8 text-orange-600 border-orange-200 dark:border-orange-900/50 hover:bg-orange-50 dark:hover:bg-orange-950"
-                    >
-                      <Truck className="w-3.5 h-3.5 mr-1" />
-                      Lacak
-                    </Button>
-                    <Button
-                      size="sm"
-                      onClick={() => setActiveReceivingReq(req)}
-                      className="text-xs h-8 bg-orange-600 hover:bg-orange-500 text-white font-bold"
-                    >
-                      <CheckSquare className="w-3.5 h-3.5 mr-1" />
-                      Terima Barang
-                    </Button>
-                  </div>
+        <div className="space-y-3">
+          {inTransitRequests.map(req => {
+            const totalDispatched = req.items.reduce((s, i) => s + (i.qty_dispatched || i.qty_requested), 0);
+            return (
+              <div key={req.id} className="space-y-2">
+                <WorkflowStatusLooper
+                  status={req.status}
+                  fromName="Gudang Pusat"
+                  toName={currentLocation?.name || 'Toko Cabang'}
+                  doNumber={req.do_number || req.request_number}
+                  totalQty={totalDispatched}
+                />
+                <div className="flex items-center justify-end gap-2 px-1">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setTrackingReq(req)}
+                    className="text-xs h-8 text-orange-600 border-orange-200 dark:border-orange-900/50 hover:bg-orange-50 dark:hover:bg-orange-950"
+                  >
+                    <Truck className="w-3.5 h-3.5 mr-1" />
+                    Detail Rute
+                  </Button>
+                  <Button
+                    size="sm"
+                    onClick={() => setActiveReceivingReq(req)}
+                    className="text-xs h-8 bg-orange-600 hover:bg-orange-500 text-white font-bold"
+                  >
+                    <CheckSquare className="w-3.5 h-3.5 mr-1" />
+                    Terima Barang Datang
+                  </Button>
                 </div>
-              );
-            })}
-          </div>
+              </div>
+            );
+          })}
         </div>
       )}
 

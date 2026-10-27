@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { TransferRequest, Location, Item } from '../../types';
 import { Modal } from '../common/Modal';
+import { WorkflowStatusLooper } from '../common/WorkflowStatusLooper';
 import { 
   Copy, Check, Truck, CheckCircle2, 
-  Clock, MapPin, FileText
+  Clock, FileText
 } from 'lucide-react';
 import { formatDate } from '../../utils/formatters';
 import { Button } from '../ui/button';
@@ -146,52 +147,24 @@ export const ShipmentTrackingModal: React.FC<ShipmentTrackingModalProps> = ({
           </div>
         </div>
 
-        {/* Visual Route Map Box */}
-        <div className="p-4 rounded-2xl bg-card border border-border space-y-3">
-          <div className="relative py-4 px-2">
-            {/* Visual dashed road */}
-            <div className="absolute top-1/2 left-8 right-8 -translate-y-1/2 h-0.5 border-t-2 border-dashed border-orange-400/80"></div>
+        {/* Interactive Workflow GSAP Animated Horizon */}
+        <WorkflowStatusLooper
+          status={request.status}
+          fromName={fromLoc?.name || 'Gudang Pusat'}
+          toName={toLoc?.name || 'Toko Cabang'}
+          doNumber={doNumber}
+          totalQty={totalQty}
+        />
 
-            <div className="relative flex items-center justify-between">
-              {/* Origin Point */}
-              <div className="flex flex-col items-center text-center max-w-[100px]">
-                <div className="w-7 h-7 rounded-full bg-orange-100 dark:bg-orange-950/80 border-2 border-orange-500 flex items-center justify-center shadow-xs">
-                  <div className="w-2.5 h-2.5 rounded-full bg-orange-600"></div>
-                </div>
-                <span className="text-[10px] font-bold text-foreground mt-1.5 leading-tight">
-                  {fromLoc?.name || 'Gudang Pusat'}
-                </span>
-                <span className="text-[9px] text-muted-foreground">Asal</span>
-              </div>
-
-              {/* Moving Truck Icon */}
-              <div className="p-2 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-md transform -translate-y-0.5 z-10 animate-bounce">
-                <Truck className="w-4 h-4" />
-              </div>
-
-              {/* Destination Point */}
-              <div className="flex flex-col items-center text-center max-w-[100px]">
-                <div className="w-7 h-7 rounded-full bg-emerald-100 dark:bg-emerald-950/80 border-2 border-emerald-500 flex items-center justify-center shadow-xs">
-                  <MapPin className="w-3.5 h-3.5 text-emerald-600" />
-                </div>
-                <span className="text-[10px] font-bold text-foreground mt-1.5 leading-tight">
-                  {toLoc?.name || 'Toko Cabang'}
-                </span>
-                <span className="text-[9px] text-muted-foreground">Tujuan</span>
-              </div>
-            </div>
+        {/* Armada info if available */}
+        {(driverName || vehiclePlate) && (
+          <div className="p-2.5 rounded-xl bg-muted/50 text-[11px] flex items-center justify-between text-muted-foreground border border-border">
+            <span>Armada Pengantar:</span>
+            <span className="font-semibold text-foreground">
+              {driverName} {vehiclePlate && `(${vehiclePlate})`}
+            </span>
           </div>
-
-          {/* Armada info if available */}
-          {(driverName || vehiclePlate) && (
-            <div className="p-2 rounded-xl bg-muted/50 text-[11px] flex items-center justify-between text-muted-foreground">
-              <span>Armada Pengantar:</span>
-              <span className="font-semibold text-foreground">
-                {driverName} {vehiclePlate && `(${vehiclePlate})`}
-              </span>
-            </div>
-          )}
-        </div>
+        )}
 
         {/* Tracking Timeline */}
         <div className="space-y-2">
