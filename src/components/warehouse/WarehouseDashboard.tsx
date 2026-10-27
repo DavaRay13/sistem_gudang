@@ -1,13 +1,16 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useInventory } from '../../context/InventoryContext';
 import { useAuth } from '../../context/AuthContext';
 import { StatCard } from '../common/StatCard';
 import { StatusBadge } from '../common/Badge';
+import { ShipmentTrackingModal } from '../documents/ShipmentTrackingModal';
+import { SuratJalanModal } from '../documents/SuratJalanModal';
 import { NavigationTab } from '../layout/Sidebar';
+import { TransferRequest } from '../../types';
 import { 
   Package, Boxes, Truck, Clock, 
   Store, ClipboardList, ArrowDownRight, 
-  ShieldAlert
+  ChevronRight, FileText, ShieldAlert
 } from 'lucide-react';
 import { formatNumber } from '../../utils/formatters';
 import { Button } from '@/components/ui/button';
@@ -20,7 +23,10 @@ interface WarehouseDashboardProps {
 
 export const WarehouseDashboard: React.FC<WarehouseDashboardProps> = ({ onNavigate }) => {
   const { items, inventories, requests } = useInventory();
-  const { locations } = useAuth();
+  const { locations, currentUser, users } = useAuth();
+
+  const [trackingReq, setTrackingReq] = useState<TransferRequest | null>(null);
+  const [suratJalanReq, setSuratJalanReq] = useState<TransferRequest | null>(null);
 
   const locMap = new Map(locations.map(l => [l.id, l]));
 
@@ -42,47 +48,169 @@ export const WarehouseDashboard: React.FC<WarehouseDashboardProps> = ({ onNaviga
     return available <= item.safety_stock;
   });
 
+  const activeShipment = inTransitShipments[0] || readyDispatch[0] || requests[0];
+
   return (
     <div className="space-y-6 max-w-6xl mx-auto">
-      {/* 1. Minimalist Editorial Header */}
-      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 pb-4 border-b border-border">
-        <div>
-          <div className="flex items-center gap-2 mb-1.5">
-            <Badge variant="outline" className="text-[10px] font-mono uppercase tracking-wider">
-              Hub Operasional
-            </Badge>
-            <span className="text-xs text-muted-foreground">
-              Gudang Pusat
+      {/* FlowShip Hero Banner (Clean Light with Vibrant Orange Accent) */}
+      <div className="p-4 sm:p-6 rounded-2xl sm:rounded-3xl bg-gradient-to-br from-orange-50 via-white to-orange-50/40 dark:from-orange-950/30 dark:via-card dark:to-orange-950/10 border border-orange-200/80 dark:border-orange-900/40 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="space-y-1 sm:space-y-1.5 max-w-xl">
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-bold text-orange-600 dark:text-orange-400">
+              Selamat datang, {currentUser?.full_name || 'Admin Gudang'} 👋
             </span>
+            <Badge variant="outline" className="text-[10px] uppercase font-bold text-orange-700 bg-orange-100/60 dark:bg-orange-950 dark:text-orange-300 border-orange-300 dark:border-orange-800">
+              Gudang Pusat (Hub)
+            </Badge>
           </div>
-          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">
-            Distribusi Stok & Logistik Cabang
+          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-foreground leading-tight">
+            Ship Smarter, <span className="text-orange-600 dark:text-orange-500">Deliver Faster.</span>
           </h1>
-          <p className="text-xs text-muted-foreground mt-0.5">
-            Ringkasan saldo stok, verifikasi permintaan toko, dan pengiriman barang terpadu.
+          <p className="text-xs text-muted-foreground leading-relaxed">
+            Distribusi stok hub-and-spoke, otorisasi permohonan toko cabang & pelacakan ekspedisi real-time.
           </p>
         </div>
 
-        {/* Utilitarian Primary Actions */}
-        <div className="flex items-center gap-2 shrink-0">
-          <Button
-            size="sm"
-            onClick={() => onNavigate('warehouse_approval_queue')}
-            className="gap-2"
-          >
-            <ClipboardList className="w-3.5 h-3.5" />
-            <span>Otorisasi ({pendingRequests.length})</span>
-          </Button>
+        <div className="flex items-center gap-3 shrink-0 self-end sm:self-center">
+          <div className="p-3.5 sm:p-4 rounded-2xl bg-white dark:bg-card border border-orange-200 dark:border-orange-900/50 shadow-sm flex items-center gap-3">
+            <div className="w-12 h-12 rounded-xl bg-orange-500/10 text-orange-600 flex items-center justify-center text-2xl">
+              🚚
+            </div>
+            <div>
+              <span className="text-[10px] uppercase font-bold text-orange-600 block">Status Pengiriman</span>
+              <span className="text-xs font-bold text-foreground">
+                {inTransitShipments.length > 0 ? `${inTransitShipments.length} Armada Sedang Kirim` : 'Semua Terkirim'}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
 
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => onNavigate('warehouse_master_items')}
-            className="gap-1.5"
+      {/* Active Shipment Card */}
+      {activeShipment && (
+        <div
+          onClick={() => setTrackingReq(activeShipment)}
+          className="p-4 sm:p-5 rounded-2xl bg-card border border-border hover:border-orange-400/80 dark:hover:border-orange-500 transition-all cursor-pointer shadow-xs group"
+        >
+          <div className="flex items-center justify-between gap-2 mb-2">
+            <div className="flex items-center gap-2">
+              <span className={`w-2 h-2 rounded-full ${activeShipment.status === 'IN_TRANSIT' ? 'bg-orange-500 animate-ping' : 'bg-emerald-500'}`} />
+              <span className="text-[11px] font-bold text-orange-600 dark:text-orange-400 uppercase tracking-wider">
+                {activeShipment.status === 'IN_TRANSIT' ? 'Pengiriman Berlangsung (In-Transit)' : 'Permintaan Terkini'}
+              </span>
+            </div>
+            <span className="text-xs font-semibold text-orange-600 dark:text-orange-400 group-hover:translate-x-0.5 transition-transform flex items-center gap-1">
+              <span>Lacak Posisi</span>
+              <ChevronRight className="w-3.5 h-3.5" />
+            </span>
+          </div>
+
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="space-y-1">
+              <div className="flex items-center gap-2">
+                <span className="text-base sm:text-lg font-extrabold text-foreground tracking-tight font-mono">
+                  {activeShipment.do_number || activeShipment.request_number}
+                </span>
+                <Badge className={`text-[10px] font-bold uppercase ${
+                  activeShipment.status === 'IN_TRANSIT' ? 'bg-orange-500 text-white' : 'bg-muted text-muted-foreground'
+                }`}>
+                  {activeShipment.status.replace('_', ' ')}
+                </Badge>
+              </div>
+              <p className="text-xs text-muted-foreground flex items-center gap-1.5">
+                <span>Gudang Pusat</span>
+                <span>➔</span>
+                <span className="font-semibold text-foreground">
+                  {locMap.get(activeShipment.to_location_id)?.name || 'Toko Cabang'}
+                </span>
+              </p>
+            </div>
+
+            <div className="flex items-center gap-2 shrink-0">
+              <div className="px-3 py-1.5 rounded-xl bg-muted/60 border border-border text-xs">
+                <span className="text-[10px] text-muted-foreground block">Estimasi Kedatangan</span>
+                <span className="font-bold text-orange-600 dark:text-orange-400">
+                  {activeShipment.status === 'COMPLETED' ? 'Telah Diterima' : 'Hari Ini, 17:30'}
+                </span>
+              </div>
+              <div className="w-10 h-10 rounded-xl bg-orange-500/10 text-orange-600 flex items-center justify-center text-xl shrink-0">
+                📦
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 4 Quick Actions (Aksi Cepat) */}
+      <div className="space-y-2">
+        <h2 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+          Aksi Cepat
+        </h2>
+
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+          {/* Action 1: Otorisasi */}
+          <button
+            onClick={() => onNavigate('warehouse_approval_queue')}
+            className="p-3 sm:p-3.5 rounded-2xl bg-card border border-border hover:border-orange-500/60 text-left transition-all shadow-2xs hover:shadow-sm active:scale-[0.98] group"
           >
-            <ArrowDownRight className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-            <span>Stok Masuk</span>
-          </Button>
+            <div className="w-9 h-9 rounded-xl bg-orange-500/10 text-orange-600 flex items-center justify-center mb-2 group-hover:scale-110 transition-transform">
+              <ClipboardList className="w-5 h-5" />
+            </div>
+            <span className="text-xs sm:text-sm font-bold block text-foreground leading-tight">
+              Otorisasi ({pendingRequests.length})
+            </span>
+            <span className="text-[10px] text-muted-foreground mt-0.5 block">
+              Persetujuan permohonan
+            </span>
+          </button>
+
+          {/* Action 2: Dispatch & Surat Jalan */}
+          <button
+            onClick={() => onNavigate('warehouse_dispatch')}
+            className="p-3 sm:p-3.5 rounded-2xl bg-card border border-border hover:border-blue-500/60 text-left transition-all shadow-2xs hover:shadow-sm active:scale-[0.98] group"
+          >
+            <div className="w-9 h-9 rounded-xl bg-blue-500/10 text-blue-600 flex items-center justify-center mb-2 group-hover:scale-110 transition-transform">
+              <Truck className="w-5 h-5" />
+            </div>
+            <span className="text-xs sm:text-sm font-bold block text-foreground leading-tight">
+              Dispatch DO ({readyDispatch.length})
+            </span>
+            <span className="text-[10px] text-muted-foreground mt-0.5 block">
+              Kirim paket armada
+            </span>
+          </button>
+
+          {/* Action 3: Stok Masuk */}
+          <button
+            onClick={() => onNavigate('warehouse_master_items')}
+            className="p-3 sm:p-3.5 rounded-2xl bg-card border border-border hover:border-emerald-500/60 text-left transition-all shadow-2xs hover:shadow-sm active:scale-[0.98] group"
+          >
+            <div className="w-9 h-9 rounded-xl bg-emerald-500/10 text-emerald-600 flex items-center justify-center mb-2 group-hover:scale-110 transition-transform">
+              <ArrowDownRight className="w-5 h-5" />
+            </div>
+            <span className="text-xs sm:text-sm font-bold block text-foreground leading-tight">
+              Katalog & Stok
+            </span>
+            <span className="text-[10px] text-muted-foreground mt-0.5 block">
+              {items.length} master barang
+            </span>
+          </button>
+
+          {/* Action 4: Riwayat Ledger */}
+          <button
+            onClick={() => onNavigate('warehouse_mutation_ledger')}
+            className="p-3 sm:p-3.5 rounded-2xl bg-card border border-border hover:border-teal-500/60 text-left transition-all shadow-2xs hover:shadow-sm active:scale-[0.98] group"
+          >
+            <div className="w-9 h-9 rounded-xl bg-teal-500/10 text-teal-600 flex items-center justify-center mb-2 group-hover:scale-110 transition-transform">
+              <FileText className="w-5 h-5" />
+            </div>
+            <span className="text-xs sm:text-sm font-bold block text-foreground leading-tight">
+              Ledger Mutasi
+            </span>
+            <span className="text-[10px] text-muted-foreground mt-0.5 block">
+              Audit trail stok
+            </span>
+          </button>
         </div>
       </div>
 
@@ -229,15 +357,16 @@ export const WarehouseDashboard: React.FC<WarehouseDashboardProps> = ({ onNaviga
                   return (
                     <div
                       key={req.id}
-                      className="p-3 rounded-lg bg-muted/40 border border-border hover:border-foreground/20 flex items-center justify-between text-xs transition-colors"
+                      onClick={() => setTrackingReq(req)}
+                      className="p-3 rounded-xl bg-card border border-border hover:border-orange-500/50 flex items-center justify-between text-xs transition-all cursor-pointer shadow-xs group"
                     >
                       <div>
                         <div className="flex items-center gap-2">
-                          <span className="font-mono font-semibold text-foreground">
+                          <span className="font-mono font-bold text-foreground group-hover:text-orange-600 transition-colors">
                             {req.request_number}
                           </span>
                           <span className="text-muted-foreground">•</span>
-                          <span className="text-muted-foreground">
+                          <span className="text-muted-foreground font-medium">
                             {toLoc?.name.split(' ')[0]} Cabang {req.to_location_id}
                           </span>
                         </div>
@@ -245,7 +374,12 @@ export const WarehouseDashboard: React.FC<WarehouseDashboardProps> = ({ onNaviga
                           Total Permintaan: <strong className="font-mono text-foreground">{totalQty}</strong> Unit ({req.items.length} item)
                         </span>
                       </div>
-                      <StatusBadge status={req.status} size="sm" />
+                      <div className="flex items-center gap-2">
+                        <StatusBadge status={req.status} size="sm" />
+                        <span className="text-[10px] font-bold text-orange-600 opacity-0 group-hover:opacity-100 transition-opacity">
+                          Lacak &rarr;
+                        </span>
+                      </div>
                     </div>
                   );
                 })}
@@ -325,6 +459,34 @@ export const WarehouseDashboard: React.FC<WarehouseDashboardProps> = ({ onNaviga
           </CardContent>
         </Card>
       </div>
+
+      {/* Shipment Live Tracking Modal */}
+      {trackingReq && (
+        <ShipmentTrackingModal
+          isOpen={trackingReq !== null}
+          onClose={() => setTrackingReq(null)}
+          request={trackingReq}
+          locations={locations}
+          items={items}
+          isStoreStaff={false}
+          onOpenSuratJalan={req => {
+            setTrackingReq(null);
+            setSuratJalanReq(req);
+          }}
+        />
+      )}
+
+      {/* Surat Jalan DO Modal */}
+      {suratJalanReq && (
+        <SuratJalanModal
+          isOpen={suratJalanReq !== null}
+          onClose={() => setSuratJalanReq(null)}
+          request={suratJalanReq}
+          locations={locations}
+          items={items}
+          users={users}
+        />
+      )}
     </div>
   );
 };
