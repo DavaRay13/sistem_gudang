@@ -215,13 +215,19 @@ export const CreateRequestModal: React.FC<CreateRequestModalProps> = ({
 
   const activeItems = items.filter(i => !i.is_archived);
 
-  const [rows, setRows] = useState<ItemRow[]>([{ itemId: initialItemId || activeItems[0]?.id || 1, qtyRequested: 10 }]);
+  const [rows, setRows] = useState<ItemRow[]>(() => {
+    if (initialItemId && activeItems.some(i => i.id === initialItemId)) return [{ itemId: initialItemId, qtyRequested: 10 }];
+    if (activeItems[0]) return [{ itemId: activeItems[0].id, qtyRequested: 10 }];
+    return [];
+  });
   const [priority, setPriority] = useState<'EXPRESS' | 'REGULAR' | 'SCHEDULED'>('EXPRESS');
-  const [notes, setNotes] = useState<string>('Pengisian stok toko harian');
+  const [notes, setNotes] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   React.useEffect(() => {
-    if (initialItemId && activeItems.some(i => i.id === initialItemId)) {
+    if (activeItems.length === 0) {
+      setRows([]);
+    } else if (initialItemId && activeItems.some(i => i.id === initialItemId)) {
       setRows([{ itemId: initialItemId, qtyRequested: 10 }]);
     } else if (activeItems.length > 0 && (!rows[0] || !activeItems.some(i => i.id === rows[0].itemId))) {
       setRows([{ itemId: activeItems[0].id, qtyRequested: 10 }]);

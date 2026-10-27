@@ -9,8 +9,8 @@ import { NavigationTab } from '../layout/Sidebar';
 import { TransferRequest } from '../../types';
 import { 
   Package, Boxes, Truck, Clock, 
-  Store, ClipboardList, ArrowDownRight, 
-  ChevronRight, FileText, ShieldAlert
+  Store, ClipboardList, 
+  FileText, PlusCircle
 } from 'lucide-react';
 import { formatNumber } from '../../utils/formatters';
 import { Button } from '@/components/ui/button';
@@ -23,7 +23,7 @@ interface WarehouseDashboardProps {
 
 export const WarehouseDashboard: React.FC<WarehouseDashboardProps> = ({ onNavigate }) => {
   const { items, inventories, requests } = useInventory();
-  const { locations, currentUser, users } = useAuth();
+  const { locations, users } = useAuth();
 
   const [trackingReq, setTrackingReq] = useState<TransferRequest | null>(null);
   const [suratJalanReq, setSuratJalanReq] = useState<TransferRequest | null>(null);
@@ -48,179 +48,123 @@ export const WarehouseDashboard: React.FC<WarehouseDashboardProps> = ({ onNaviga
     return available <= item.safety_stock;
   });
 
-  const activeShipment = inTransitShipments[0] || readyDispatch[0] || requests[0];
-
   return (
-    <div className="space-y-6 max-w-6xl mx-auto">
-      {/* FlowShip Hero Banner (Clean Light with Vibrant Orange Accent) */}
-      <div className="p-4 sm:p-6 rounded-2xl sm:rounded-3xl bg-gradient-to-br from-orange-50 via-white to-orange-50/40 dark:from-orange-950/30 dark:via-card dark:to-orange-950/10 border border-orange-200/80 dark:border-orange-900/40 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="space-y-1 sm:space-y-1.5 max-w-xl">
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-bold text-orange-600 dark:text-orange-400">
-              Selamat datang, {currentUser?.full_name || 'Admin Gudang'} 👋
-            </span>
-            <Badge variant="outline" className="text-[10px] uppercase font-bold text-orange-700 bg-orange-100/60 dark:bg-orange-950 dark:text-orange-300 border-orange-300 dark:border-orange-800">
-              Gudang Pusat (Hub)
+    <div className="space-y-5 max-w-6xl mx-auto">
+      {/* 1. Header & Actions */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-border">
+        <div>
+          <div className="flex items-center gap-2 mb-1">
+            <Badge variant="outline" className="text-[10px] font-mono uppercase tracking-wider bg-orange-500/10 text-orange-600 border-orange-300 dark:border-orange-800">
+              Hub Master
             </Badge>
+            <span className="text-xs font-semibold text-foreground">
+              Gudang Pusat
+            </span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-foreground leading-tight">
-            Ship Smarter, <span className="text-orange-600 dark:text-orange-500">Deliver Faster.</span>
+          <h1 className="text-xl sm:text-2xl font-black tracking-tight text-foreground">
+            Distribusi Stok & Logistik
           </h1>
-          <p className="text-xs text-muted-foreground leading-relaxed">
-            Distribusi stok hub-and-spoke, otorisasi permohonan toko cabang & pelacakan ekspedisi real-time.
+          <p className="text-xs text-muted-foreground mt-0.5">
+            Manajemen stok hub, otorisasi permohonan toko cabang & dispatch pengiriman armada.
           </p>
         </div>
 
-        <div className="flex items-center gap-3 shrink-0 self-end sm:self-center">
-          <div className="p-3.5 sm:p-4 rounded-2xl bg-white dark:bg-card border border-orange-200 dark:border-orange-900/50 shadow-sm flex items-center gap-3">
-            <div className="w-12 h-12 rounded-xl bg-orange-500/10 text-orange-600 flex items-center justify-center text-2xl">
-              🚚
-            </div>
-            <div>
-              <span className="text-[10px] uppercase font-bold text-orange-600 block">Status Pengiriman</span>
-              <span className="text-xs font-bold text-foreground">
-                {inTransitShipments.length > 0 ? `${inTransitShipments.length} Armada Sedang Kirim` : 'Semua Terkirim'}
-              </span>
-            </div>
-          </div>
+        <div className="flex items-center gap-2 shrink-0">
+          <Button
+            size="sm"
+            onClick={() => onNavigate('warehouse_approval_queue')}
+            className="bg-orange-600 hover:bg-orange-500 text-white font-bold text-xs gap-1.5 shadow-sm"
+          >
+            <ClipboardList className="w-3.5 h-3.5" />
+            <span>Otorisasi ({pendingRequests.length})</span>
+          </Button>
+
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => onNavigate('warehouse_master_items')}
+            className="text-xs font-bold gap-1.5"
+          >
+            <PlusCircle className="w-3.5 h-3.5 text-orange-600" />
+            <span>Katalog Barang</span>
+          </Button>
         </div>
       </div>
 
-      {/* Active Shipment Card */}
-      {activeShipment && (
-        <div
-          onClick={() => setTrackingReq(activeShipment)}
-          className="p-4 sm:p-5 rounded-2xl bg-card border border-border hover:border-orange-400/80 dark:hover:border-orange-500 transition-all cursor-pointer shadow-xs group"
-        >
-          <div className="flex items-center justify-between gap-2 mb-2">
+      {/* 2. Real In-Transit Shipments Alert (Only when active) */}
+      {inTransitShipments.length > 0 && (
+        <div className="p-4 rounded-2xl bg-gradient-to-r from-orange-50/80 via-white to-orange-50/40 dark:from-orange-950/30 dark:via-card dark:to-orange-950/10 border border-orange-200 dark:border-orange-900/60 shadow-xs space-y-3">
+          <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <span className={`w-2 h-2 rounded-full ${activeShipment.status === 'IN_TRANSIT' ? 'bg-orange-500 animate-ping' : 'bg-emerald-500'}`} />
-              <span className="text-[11px] font-bold text-orange-600 dark:text-orange-400 uppercase tracking-wider">
-                {activeShipment.status === 'IN_TRANSIT' ? 'Pengiriman Berlangsung (In-Transit)' : 'Permintaan Terkini'}
+              <span className="w-2 h-2 rounded-full bg-orange-500 animate-ping" />
+              <span className="text-xs font-bold text-orange-600 dark:text-orange-400 uppercase tracking-wider">
+                Armada Dalam Perjalanan ({inTransitShipments.length} Surat Jalan)
               </span>
             </div>
-            <span className="text-xs font-semibold text-orange-600 dark:text-orange-400 group-hover:translate-x-0.5 transition-transform flex items-center gap-1">
-              <span>Lacak Posisi</span>
-              <ChevronRight className="w-3.5 h-3.5" />
+            <span className="text-[11px] text-muted-foreground font-medium">
+              Menuju toko cabang tujuan
             </span>
           </div>
 
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <div className="space-y-1">
-              <div className="flex items-center gap-2">
-                <span className="text-base sm:text-lg font-extrabold text-foreground tracking-tight font-mono">
-                  {activeShipment.do_number || activeShipment.request_number}
-                </span>
-                <Badge className={`text-[10px] font-bold uppercase ${
-                  activeShipment.status === 'IN_TRANSIT' ? 'bg-orange-500 text-white' : 'bg-muted text-muted-foreground'
-                }`}>
-                  {activeShipment.status.replace('_', ' ')}
-                </Badge>
-              </div>
-              <p className="text-xs text-muted-foreground flex items-center gap-1.5">
-                <span>Gudang Pusat</span>
-                <span>➔</span>
-                <span className="font-semibold text-foreground">
-                  {locMap.get(activeShipment.to_location_id)?.name || 'Toko Cabang'}
-                </span>
-              </p>
-            </div>
+          <div className="space-y-2">
+            {inTransitShipments.map(req => {
+              const toLoc = locMap.get(req.to_location_id);
+              const totalDispatched = req.items.reduce((s, i) => s + (i.qty_dispatched || i.qty_requested), 0);
 
-            <div className="flex items-center gap-2 shrink-0">
-              <div className="px-3 py-1.5 rounded-xl bg-muted/60 border border-border text-xs">
-                <span className="text-[10px] text-muted-foreground block">Estimasi Kedatangan</span>
-                <span className="font-bold text-orange-600 dark:text-orange-400">
-                  {activeShipment.status === 'COMPLETED' ? 'Telah Diterima' : 'Hari Ini, 17:30'}
-                </span>
-              </div>
-              <div className="w-10 h-10 rounded-xl bg-orange-500/10 text-orange-600 flex items-center justify-center text-xl shrink-0">
-                📦
-              </div>
-            </div>
+              return (
+                <div
+                  key={req.id}
+                  className="p-3 rounded-xl bg-card border border-border flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs"
+                >
+                  <div className="space-y-0.5">
+                    <div className="flex items-center gap-2">
+                      <span className="font-mono text-sm font-extrabold text-foreground">
+                        {req.do_number || req.request_number}
+                      </span>
+                      <Badge className="bg-orange-500 text-white text-[9px] font-bold">
+                        IN TRANSIT
+                      </Badge>
+                      <span className="text-xs text-muted-foreground">• Tujuan: <strong>{toLoc?.name}</strong></span>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Total: <strong>{totalDispatched} unit</strong> ({req.items.length} item)
+                    </p>
+                  </div>
+
+                  <div className="flex items-center gap-2 shrink-0">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setTrackingReq(req)}
+                      className="text-xs h-8 text-orange-600 border-orange-200 dark:border-orange-900/50 hover:bg-orange-50 dark:hover:bg-orange-950"
+                    >
+                      <Truck className="w-3.5 h-3.5 mr-1" />
+                      Lacak Rute
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setSuratJalanReq(req)}
+                      className="text-xs h-8"
+                    >
+                      <FileText className="w-3.5 h-3.5 mr-1" />
+                      Surat Jalan
+                    </Button>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
       )}
 
-      {/* 4 Quick Actions (Aksi Cepat) */}
-      <div className="space-y-2">
-        <h2 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-          Aksi Cepat
-        </h2>
-
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-          {/* Action 1: Otorisasi */}
-          <button
-            onClick={() => onNavigate('warehouse_approval_queue')}
-            className="p-3 sm:p-3.5 rounded-2xl bg-card border border-border hover:border-orange-500/60 text-left transition-all shadow-2xs hover:shadow-sm active:scale-[0.98] group"
-          >
-            <div className="w-9 h-9 rounded-xl bg-orange-500/10 text-orange-600 flex items-center justify-center mb-2 group-hover:scale-110 transition-transform">
-              <ClipboardList className="w-5 h-5" />
-            </div>
-            <span className="text-xs sm:text-sm font-bold block text-foreground leading-tight">
-              Otorisasi ({pendingRequests.length})
-            </span>
-            <span className="text-[10px] text-muted-foreground mt-0.5 block">
-              Persetujuan permohonan
-            </span>
-          </button>
-
-          {/* Action 2: Dispatch & Surat Jalan */}
-          <button
-            onClick={() => onNavigate('warehouse_dispatch')}
-            className="p-3 sm:p-3.5 rounded-2xl bg-card border border-border hover:border-blue-500/60 text-left transition-all shadow-2xs hover:shadow-sm active:scale-[0.98] group"
-          >
-            <div className="w-9 h-9 rounded-xl bg-blue-500/10 text-blue-600 flex items-center justify-center mb-2 group-hover:scale-110 transition-transform">
-              <Truck className="w-5 h-5" />
-            </div>
-            <span className="text-xs sm:text-sm font-bold block text-foreground leading-tight">
-              Dispatch DO ({readyDispatch.length})
-            </span>
-            <span className="text-[10px] text-muted-foreground mt-0.5 block">
-              Kirim paket armada
-            </span>
-          </button>
-
-          {/* Action 3: Stok Masuk */}
-          <button
-            onClick={() => onNavigate('warehouse_master_items')}
-            className="p-3 sm:p-3.5 rounded-2xl bg-card border border-border hover:border-emerald-500/60 text-left transition-all shadow-2xs hover:shadow-sm active:scale-[0.98] group"
-          >
-            <div className="w-9 h-9 rounded-xl bg-emerald-500/10 text-emerald-600 flex items-center justify-center mb-2 group-hover:scale-110 transition-transform">
-              <ArrowDownRight className="w-5 h-5" />
-            </div>
-            <span className="text-xs sm:text-sm font-bold block text-foreground leading-tight">
-              Katalog & Stok
-            </span>
-            <span className="text-[10px] text-muted-foreground mt-0.5 block">
-              {items.length} master barang
-            </span>
-          </button>
-
-          {/* Action 4: Riwayat Ledger */}
-          <button
-            onClick={() => onNavigate('warehouse_mutation_ledger')}
-            className="p-3 sm:p-3.5 rounded-2xl bg-card border border-border hover:border-teal-500/60 text-left transition-all shadow-2xs hover:shadow-sm active:scale-[0.98] group"
-          >
-            <div className="w-9 h-9 rounded-xl bg-teal-500/10 text-teal-600 flex items-center justify-center mb-2 group-hover:scale-110 transition-transform">
-              <FileText className="w-5 h-5" />
-            </div>
-            <span className="text-xs sm:text-sm font-bold block text-foreground leading-tight">
-              Ledger Mutasi
-            </span>
-            <span className="text-[10px] text-muted-foreground mt-0.5 block">
-              Audit trail stok
-            </span>
-          </button>
-        </div>
-      </div>
-
-      {/* 2. Bento Grid KPI Metrics */}
+      {/* 3. Real Bento Grid KPI Metrics */}
       <div className="flex lg:grid lg:grid-cols-4 gap-2 sm:gap-4 overflow-x-auto no-scrollbar pb-1 -mx-1 px-1 snap-x snap-mandatory">
         <div className="min-w-[135px] sm:min-w-0 snap-start flex-1">
           <StatCard
             title="Stok Tersedia"
             value={formatNumber(totalAvailableStock)}
-            subtitle={`${items.length} SKU`}
+            subtitle={`${items.length} Master SKU`}
             icon={Package}
             color="emerald"
           />
@@ -228,9 +172,9 @@ export const WarehouseDashboard: React.FC<WarehouseDashboardProps> = ({ onNaviga
 
         <div className="min-w-[135px] sm:min-w-0 snap-start flex-1">
           <StatCard
-            title="Disiapkan"
+            title="Disiapkan (Reserved)"
             value={formatNumber(totalReservedStock)}
-            subtitle="Alokasi DO"
+            subtitle={`${readyDispatch.length} DO Siap Kirim`}
             icon={Boxes}
             color="indigo"
           />
@@ -238,9 +182,9 @@ export const WarehouseDashboard: React.FC<WarehouseDashboardProps> = ({ onNaviga
 
         <div className="min-w-[135px] sm:min-w-0 snap-start flex-1">
           <StatCard
-            title="Di Jalan"
+            title="Di Jalan (In-Transit)"
             value={formatNumber(totalInTransitStock)}
-            subtitle={`${inTransitShipments.length} DO`}
+            subtitle={`${inTransitShipments.length} Armada OTW`}
             icon={Truck}
             color="blue"
           />
@@ -248,16 +192,16 @@ export const WarehouseDashboard: React.FC<WarehouseDashboardProps> = ({ onNaviga
 
         <div className="min-w-[135px] sm:min-w-0 snap-start flex-1">
           <StatCard
-            title="Review"
+            title="Perlu Review"
             value={pendingRequests.length}
-            subtitle={`${readyDispatch.length} siap`}
+            subtitle="Permintaan Masuk"
             icon={Clock}
             color="amber"
           />
         </div>
       </div>
 
-      {/* 3. Branch Inventory Bento */}
+      {/* 4. Branch Inventory Cards */}
       <Card className="shadow-xs">
         <CardHeader className="flex flex-row items-center justify-between pb-3">
           <div>
@@ -265,12 +209,9 @@ export const WarehouseDashboard: React.FC<WarehouseDashboardProps> = ({ onNaviga
               Ketersediaan Stok di 3 Toko Cabang
             </CardTitle>
             <CardDescription className="text-[11px] text-muted-foreground">
-              Data terintegrasi langsung dengan penerimaan masing-masing toko.
+              Data stok sinkron langsung dari sistem database.
             </CardDescription>
           </div>
-          <Badge variant="outline" className="text-[10px] font-mono uppercase bg-gradient-to-r from-emerald-50 to-emerald-100/70 text-emerald-800 border-emerald-300 dark:from-emerald-950/60 dark:to-emerald-900/40 dark:text-emerald-300 dark:border-emerald-700/60 shadow-2xs">
-            Live Sinkron
-          </Badge>
         </CardHeader>
 
         <CardContent>
@@ -281,17 +222,17 @@ export const WarehouseDashboard: React.FC<WarehouseDashboardProps> = ({ onNaviga
               const totalStock = storeInvs.reduce((sum, inv) => sum + inv.stock_available, 0);
               const storeInTransit = requests
                 .filter(r => r.to_location_id === storeId && r.status === 'IN_TRANSIT')
-                .reduce((sum, r) => sum + r.items.reduce((iSum, i) => iSum + i.qty_dispatched, 0), 0);
+                .reduce((sum, r) => sum + r.items.reduce((iSum, i) => iSum + (i.qty_dispatched || 0), 0), 0);
 
               return (
                 <div
                   key={storeId}
-                  className="p-3.5 rounded-lg bg-muted/40 border border-border flex flex-col justify-between gap-3"
+                  className="p-3.5 rounded-xl bg-muted/30 border border-border flex flex-col justify-between gap-3 shadow-2xs"
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <Store className="w-3.5 h-3.5 text-muted-foreground" />
-                      <span className="text-xs font-semibold text-foreground">
+                      <span className="text-xs font-bold text-foreground">
                         {storeLoc?.name.replace(' (Cabang Barat)', '').replace(' (Cabang Selatan)', '').replace(' (Cabang Timur)', '')}
                       </span>
                     </div>
@@ -299,20 +240,20 @@ export const WarehouseDashboard: React.FC<WarehouseDashboardProps> = ({ onNaviga
                   </div>
 
                   <div>
-                    <span className="text-xl sm:text-2xl font-semibold font-mono tabular-nums text-foreground">
+                    <span className="text-xl sm:text-2xl font-black font-mono tabular-nums text-foreground">
                       {formatNumber(totalStock)}
                     </span>
-                    <span className="text-[11px] text-muted-foreground ml-1.5">unit tersedia</span>
+                    <span className="text-[11px] text-muted-foreground ml-1.5">unit fisik</span>
                   </div>
 
                   <div className="pt-2 border-t border-border flex items-center justify-between text-[11px]">
-                    <span className="text-muted-foreground">Status Pengiriman:</span>
+                    <span className="text-muted-foreground">In-Transit:</span>
                     {storeInTransit > 0 ? (
-                      <Badge variant="outline" className="text-[10px] font-mono font-medium bg-gradient-to-r from-sky-50 to-blue-100/70 text-sky-800 border-sky-300 dark:from-sky-950/60 dark:to-blue-900/40 dark:text-sky-300 dark:border-sky-700/60 shadow-2xs">
-                        +{storeInTransit} Unit In-Transit
+                      <Badge variant="outline" className="text-[10px] font-mono font-bold text-orange-600 border-orange-300">
+                        +{storeInTransit} Unit
                       </Badge>
                     ) : (
-                      <span className="text-muted-foreground">Nihil</span>
+                      <span className="text-muted-foreground">0 Unit</span>
                     )}
                   </div>
                 </div>
@@ -322,7 +263,7 @@ export const WarehouseDashboard: React.FC<WarehouseDashboardProps> = ({ onNaviga
         </CardContent>
       </Card>
 
-      {/* 4. Two-Column Operational Bento: Pending Queue & Stock Monitor */}
+      {/* 5. Two-Column Operational Bento: Pending Queue & Stock Monitor */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Left Column: Recent Requests Queue */}
         <Card className="shadow-xs">
@@ -333,26 +274,29 @@ export const WarehouseDashboard: React.FC<WarehouseDashboardProps> = ({ onNaviga
                 Permintaan Masuk dari Toko
               </CardTitle>
             </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => onNavigate('warehouse_approval_queue')}
-              className="text-[11px] h-7 px-2 text-muted-foreground hover:text-foreground"
-            >
-              Lihat Semua &rarr;
-            </Button>
+            {requests.length > 0 && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => onNavigate('warehouse_approval_queue')}
+                className="text-[11px] h-7 px-2 text-muted-foreground hover:text-foreground"
+              >
+                Lihat Semua &rarr;
+              </Button>
+            )}
           </CardHeader>
 
           <CardContent className="pt-3">
             {requests.length === 0 ? (
-              <p className="text-xs text-muted-foreground text-center py-6">
-                Belum ada permohonan stok dari toko cabang.
-              </p>
+              <div className="py-8 text-center text-xs text-muted-foreground">
+                <p className="font-semibold text-foreground">Belum ada permintaan dari toko</p>
+                <p className="text-[11px] mt-0.5">Semua cabang belum mengajukan kebutuhan stok.</p>
+              </div>
             ) : (
               <div className="space-y-2">
                 {requests.slice(0, 4).map(req => {
                   const toLoc = locMap.get(req.to_location_id);
-                  const totalQty = req.items.reduce((s, i) => s + i.qty_requested, 0);
+                  const totalQty = req.items.reduce((s, i) => s + (i.qty_requested || 0), 0);
 
                   return (
                     <div
@@ -363,7 +307,7 @@ export const WarehouseDashboard: React.FC<WarehouseDashboardProps> = ({ onNaviga
                       <div>
                         <div className="flex items-center gap-2">
                           <span className="font-mono font-bold text-foreground group-hover:text-orange-600 transition-colors">
-                            {req.request_number}
+                            {req.do_number || req.request_number}
                           </span>
                           <span className="text-muted-foreground">•</span>
                           <span className="text-muted-foreground font-medium">
@@ -371,7 +315,7 @@ export const WarehouseDashboard: React.FC<WarehouseDashboardProps> = ({ onNaviga
                           </span>
                         </div>
                         <span className="text-[11px] text-muted-foreground mt-0.5 block">
-                          Total Permintaan: <strong className="font-mono text-foreground">{totalQty}</strong> Unit ({req.items.length} item)
+                          Total: <strong className="font-mono text-foreground">{totalQty}</strong> Unit ({req.items.length} item)
                         </span>
                       </div>
                       <div className="flex items-center gap-2">
@@ -392,26 +336,33 @@ export const WarehouseDashboard: React.FC<WarehouseDashboardProps> = ({ onNaviga
         <Card className="shadow-xs">
           <CardHeader className="flex flex-row items-center justify-between pb-3 border-b border-border">
             <div className="flex items-center gap-2">
-              <ShieldAlert className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+              <Package className="w-4 h-4 text-orange-600" />
               <CardTitle className="text-xs font-bold uppercase tracking-wider text-foreground">
-                Pantauan Stok Gudang ({lowStockItems.length})
+                Pantauan Stok Gudang Pusat ({items.length} SKU)
               </CardTitle>
             </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => onNavigate('warehouse_master_items')}
-              className="text-[11px] h-7 px-2 text-muted-foreground hover:text-foreground"
-            >
-              Kelola Stok &rarr;
-            </Button>
+            {items.length > 0 && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => onNavigate('warehouse_master_items')}
+                className="text-[11px] h-7 px-2 text-muted-foreground hover:text-foreground"
+              >
+                Kelola Stok &rarr;
+              </Button>
+            )}
           </CardHeader>
 
           <CardContent className="pt-3">
-            {lowStockItems.length === 0 ? (
-              <p className="text-xs text-muted-foreground text-center py-6">
-                Semua stok barang gudang berada dalam batas aman.
-              </p>
+            {items.length === 0 ? (
+              <div className="py-8 text-center text-xs text-muted-foreground">
+                <p className="font-semibold text-foreground">Master barang masih 0</p>
+                <p className="text-[11px] mt-0.5">Mulai dengan mendaftarkan produk di menu Master Barang.</p>
+              </div>
+            ) : lowStockItems.length === 0 ? (
+              <div className="py-8 text-center text-xs text-emerald-600 dark:text-emerald-400 font-medium">
+                ✓ Semua {items.length} barang di gudang pusat berada di atas batas safety stock.
+              </div>
             ) : (
               <div className="space-y-2">
                 {lowStockItems.slice(0, 4).map(item => {
@@ -422,31 +373,24 @@ export const WarehouseDashboard: React.FC<WarehouseDashboardProps> = ({ onNaviga
                   return (
                     <div 
                       key={item.id} 
-                      className="p-3 rounded-lg bg-muted/40 border border-border flex items-center justify-between text-xs"
+                      className="p-3 rounded-lg bg-card border border-border flex items-center justify-between text-xs"
                     >
                       <div className="min-w-0 flex-1 pr-2">
                         <div className="flex items-center gap-2 flex-wrap">
                           <span className="font-medium text-foreground truncate">
                             {item.name}
                           </span>
-                          {isOutOfStock ? (
-                            <Badge variant="outline" className="text-[10px] font-mono font-medium bg-gradient-to-r from-rose-50 to-rose-100/70 text-rose-800 border-rose-300 dark:from-rose-950/60 dark:to-rose-900/40 dark:text-rose-300 dark:border-rose-700/60 shadow-2xs">
-                              Stok Kosong
-                            </Badge>
-                          ) : (
-                            <Badge variant="outline" className="text-[10px] font-mono font-medium bg-gradient-to-r from-amber-50 to-amber-100/70 text-amber-800 border-amber-300 dark:from-amber-950/60 dark:to-amber-900/40 dark:text-amber-300 dark:border-amber-700/60 shadow-2xs">
-                              Menipis
-                            </Badge>
-                          )}
+                          <Badge variant="outline" className={`text-[9px] font-bold ${
+                            isOutOfStock ? 'text-rose-600 border-rose-300' : 'text-amber-600 border-amber-300'
+                          }`}>
+                            {isOutOfStock ? 'Stok Kosong' : 'Menipis'}
+                          </Badge>
                         </div>
-                        <span className="text-[11px] font-mono text-muted-foreground block mt-0.5">
-                          Batas Aman: {item.safety_stock} {item.unit}
-                        </span>
                       </div>
 
                       <div className="text-right shrink-0">
                         <span className={`font-mono tabular-nums text-sm font-semibold ${
-                          isOutOfStock ? 'text-rose-600 dark:text-rose-400' : 'text-amber-600 dark:text-amber-400'
+                          isOutOfStock ? 'text-rose-600' : 'text-amber-600'
                         }`}>
                           {available} {item.unit}
                         </span>

@@ -128,15 +128,19 @@ export const ShipmentTrackingModal: React.FC<ShipmentTrackingModalProps> = ({
 
           <div className="grid grid-cols-2 gap-2 pt-2 border-t border-orange-200/60 dark:border-orange-900/30 text-xs">
             <div>
-              <span className="text-[10px] text-muted-foreground block">Estimasi Tiba</span>
+              <span className="text-[10px] text-muted-foreground block">Status Pengiriman</span>
               <span className="font-bold text-orange-600 dark:text-orange-400">
-                {isCompleted ? 'Telah Sampai' : 'Hari Ini, 17:30'}
+                {isCompleted 
+                  ? 'Telah Diterima' 
+                  : isInTransit 
+                  ? 'Dalam Perjalanan Armada' 
+                  : 'Menunggu Pengiriman'}
               </span>
             </div>
             <div>
-              <span className="text-[10px] text-muted-foreground block">Layanan Pengiriman</span>
+              <span className="text-[10px] text-muted-foreground block">Prioritas Layanan</span>
               <span className="font-bold text-foreground flex items-center gap-1">
-                {isExpress ? 'Express ⚡' : 'Reguler 🚚'}
+                {isExpress ? 'Express ⚡' : 'Reguler / Standar 🚚'}
               </span>
             </div>
           </div>
