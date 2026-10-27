@@ -103,6 +103,29 @@ export interface InventoryMutation {
   created_at: string;
 }
 
+export interface ParsedImportItem {
+  rowNumber: number;
+  rawSku?: string;
+  sku: string;
+  name: string;
+  category: string;
+  unit: string;
+  price: number;
+  initial_stock: number;
+  action: 'CREATE' | 'UPDATE';
+  existingItemId?: number;
+  isValid: boolean;
+  errorMessage?: string;
+}
+
+export interface BulkImportSummary {
+  total: number;
+  createdCount: number;
+  updatedCount: number;
+  failedCount: number;
+  errors: Array<{ row: number; name: string; error: string }>;
+}
+
 export interface Notification {
   id: string;
   title: string;

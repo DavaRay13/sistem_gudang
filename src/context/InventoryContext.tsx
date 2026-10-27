@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { Item, Inventory, TransferRequest, InventoryMutation, Notification, TransactionType } from '../types';
+import { Item, Inventory, TransferRequest, InventoryMutation, Notification, TransactionType, ParsedImportItem, BulkImportSummary } from '../types';
 import { StorageRepository } from '../db/storageRepository';
 import { SupabaseService } from '../services/supabaseService';
 import { supabase, isSupabaseConfigured } from '../lib/supabaseClient';
@@ -28,6 +28,7 @@ interface InventoryContextType {
   addNewItem: (data: Omit<Item, 'id' | 'created_at'>) => Promise<Item>;
   updateItem: (itemId: number, data: Partial<Omit<Item, 'id' | 'created_at'>>) => Promise<Item>;
   deleteItem: (itemId: number) => Promise<void>;
+  bulkImportItems: (parsedItems: ParsedImportItem[], userId: string, onProgress?: (current: number, total: number) => void) => Promise<BulkImportSummary>;
   inboundStock: (itemId: number, qty: number, notes: string, userId: string, supplierName?: string) => Promise<void>;
   outboundStock: (itemId: number, qty: number, reasonType: TransactionType, notes: string, userId: string) => Promise<void>;
   createRequest: (toLocationId: number, requestedByUserId: string, itemsData: Array<{ itemId: number; qtyRequested: number }>, notes?: string) => Promise<TransferRequest>;
@@ -176,6 +177,99 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       showToast('error', 'Gagal Menghapus Barang', err.message);
       throw err;
     }
+  };
+
+  const bulkImportItems = async (
+    parsedItems: ParsedImportItem[],
+    userId: string,
+    onProgress?: (current: number, total: number) => void
+  ): Promise<BulkImportSummary> => {
+    let createdCount = 0;
+    let updatedCount = 0;
+    let failedCount = 0;
+    const errors: Array<{ row: number; name: string; error: string }> = [];
+    const total = parsedItems.length;
+
+    for (let i = 0; i < total; i++) {
+      const item = parsedItems[i];
+      if (onProgress) {
+        onProgress(i + 1, total);
+      }
+
+      try {
+        if (item.action === 'UPDATE' && item.existingItemId) {
+          await SupabaseService.updateItem(item.existingItemId, {
+            sku: item.sku,
+            name: item.name,
+            category: item.category,
+            unit: item.unit,
+            price: item.price,
+          });
+
+          if (item.initial_stock > 0) {
+            await SupabaseService.inboundStock(
+              item.existingItemId,
+              item.initial_stock,
+              'Saldo stok awal via import Excel/CSV',
+              userId,
+              'Import Excel/CSV'
+            );
+          }
+          updatedCount++;
+        } else {
+          const created = await SupabaseService.createItem({
+            sku: item.sku,
+            name: item.name,
+            category: item.category,
+            unit: item.unit,
+            price: item.price,
+            safety_stock: 10,
+          });
+
+          if (item.initial_stock > 0) {
+            await SupabaseService.inboundStock(
+              created.id,
+              item.initial_stock,
+              'Saldo stok awal via import Excel/CSV',
+              userId,
+              'Import Excel/CSV'
+            );
+          }
+          createdCount++;
+        }
+      } catch (err: any) {
+        failedCount++;
+        errors.push({
+          row: item.rowNumber,
+          name: item.name,
+          error: err?.message || 'Gagal memproses baris',
+        });
+      }
+    }
+
+    await refreshData();
+
+    if (failedCount === 0) {
+      showToast(
+        'success',
+        'Import Selesai',
+        `Berhasil import ${createdCount} barang baru dan update ${updatedCount} barang.`
+      );
+    } else {
+      showToast(
+        'warning',
+        'Import Selesai Sebagian',
+        `${createdCount} barang baru, ${updatedCount} di-update, ${failedCount} gagal.`
+      );
+    }
+
+    return {
+      total,
+      createdCount,
+      updatedCount,
+      failedCount,
+      errors,
+    };
   };
 
   const inboundStock = async (itemId: number, qty: number, notes: string, userId: string, supplierName?: string): Promise<void> => {
@@ -353,6 +447,7 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         addNewItem,
         updateItem,
         deleteItem,
+        bulkImportItems,
         inboundStock,
         outboundStock,
         createRequest,

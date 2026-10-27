@@ -4,9 +4,10 @@ import { useAuth } from '../../context/AuthContext';
 import { Modal } from '../common/Modal';
 import { InboundStockModal } from './InboundStockModal';
 import { OutboundStockModal } from './OutboundStockModal';
+import { ImportSkuModal } from './ImportSkuModal';
 import { 
   Package, Plus, ArrowDownRight, ArrowUpRight, Search, 
-  ShieldAlert, Boxes, Download, Trash2, Pencil, Sparkles,
+  ShieldAlert, Boxes, Download, Upload, Trash2, Pencil, Sparkles,
   LayoutList, LayoutGrid
 } from 'lucide-react';
 import { Item } from '../../types';
@@ -59,6 +60,7 @@ export const MasterItemManagement: React.FC = () => {
   
   // Modals state
   const [isAddItemOpen, setIsAddItemOpen] = useState(false);
+  const [isImportOpen, setIsImportOpen] = useState(false);
   const [isInboundOpen, setIsInboundOpen] = useState(false);
   const [selectedInboundItemId, setSelectedInboundItemId] = useState<number | undefined>(undefined);
   const [isOutboundOpen, setIsOutboundOpen] = useState(false);
@@ -305,7 +307,7 @@ export const MasterItemManagement: React.FC = () => {
           </p>
         </div>
 
-        <div className="grid grid-cols-4 sm:flex items-center gap-1.5 w-full sm:w-auto">
+        <div className="grid grid-cols-5 sm:flex items-center gap-1 sm:gap-1.5 w-full sm:w-auto">
           <button
             type="button"
             onClick={handleExportExcel}
@@ -319,12 +321,22 @@ export const MasterItemManagement: React.FC = () => {
 
           <button
             type="button"
+            onClick={() => setIsImportOpen(true)}
+            className="flex items-center justify-center gap-1 px-1.5 py-2 sm:px-2.5 rounded-xl text-xs font-bold text-foreground bg-card border border-border hover:bg-muted shadow-2xs active:scale-95 transition-all whitespace-nowrap"
+            title="Import Master SKU dari Excel / CSV"
+          >
+            <Upload className="w-3.5 h-3.5 text-brand-600 dark:text-brand-400" />
+            <span>Import</span>
+          </button>
+
+          <button
+            type="button"
             onClick={() => {
               setSelectedInboundItemId(activeItems[0]?.id);
               setIsInboundOpen(true);
             }}
             disabled={activeItems.length === 0}
-            className="flex items-center justify-center gap-1 px-2 py-2 sm:px-2.5 rounded-xl text-xs font-bold text-foreground bg-card border border-border hover:bg-muted shadow-2xs active:scale-95 disabled:opacity-50 transition-all whitespace-nowrap"
+            className="flex items-center justify-center gap-1 px-1.5 py-2 sm:px-2.5 rounded-xl text-xs font-bold text-foreground bg-card border border-border hover:bg-muted shadow-2xs active:scale-95 disabled:opacity-50 transition-all whitespace-nowrap"
           >
             <ArrowDownRight className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
             <span>+ Masuk</span>
@@ -337,7 +349,7 @@ export const MasterItemManagement: React.FC = () => {
               setIsOutboundOpen(true);
             }}
             disabled={activeItems.length === 0}
-            className="flex items-center justify-center gap-1 px-2 py-2 sm:px-2.5 rounded-xl text-xs font-bold text-rose-700 dark:text-rose-300 bg-rose-50/80 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-900/40 hover:bg-rose-100 shadow-2xs active:scale-95 disabled:opacity-50 transition-all whitespace-nowrap"
+            className="flex items-center justify-center gap-1 px-1.5 py-2 sm:px-2.5 rounded-xl text-xs font-bold text-rose-700 dark:text-rose-300 bg-rose-50/80 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-900/40 hover:bg-rose-100 shadow-2xs active:scale-95 disabled:opacity-50 transition-all whitespace-nowrap"
             title="Keluarkan stok (rusak, retur vendor, selisih)"
           >
             <ArrowUpRight className="w-3.5 h-3.5 text-rose-600 dark:text-rose-400" />
@@ -350,7 +362,7 @@ export const MasterItemManagement: React.FC = () => {
             className="flex items-center justify-center gap-1 px-2 py-2 sm:px-3 rounded-xl text-xs font-bold text-white bg-brand-600 hover:bg-brand-500 shadow-xs active:scale-95 transition-all whitespace-nowrap"
           >
             <Plus className="w-3.5 h-3.5" />
-            <span>+ SKU Baru</span>
+            <span>+ SKU</span>
           </button>
         </div>
       </div>
@@ -1183,6 +1195,13 @@ export const MasterItemManagement: React.FC = () => {
         onClose={() => setIsOutboundOpen(false)}
         items={activeItems}
         preselectedItemId={selectedOutboundItemId}
+      />
+
+      {/* Modal Import SKU Massal */}
+      <ImportSkuModal
+        isOpen={isImportOpen}
+        onClose={() => setIsImportOpen(false)}
+        items={items}
       />
     </div>
   );

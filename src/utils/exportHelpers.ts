@@ -1101,3 +1101,85 @@ export function exportTransferRequestsToExcel(
   XLSX.utils.book_append_sheet(wb, ws, 'Rekap Permintaan Toko');
   XLSX.writeFile(wb, filename);
 }
+
+// -------------------------------------------------------------
+// 5. DOWNLOAD TEMPLATE IMPORT MASTER SKU (EXCEL & CSV)
+// -------------------------------------------------------------
+export function downloadSkuImportTemplateExcel() {
+  const wb = XLSX.utils.book_new();
+  const ws: any = {};
+  
+  const headers = ['sku', 'name', 'category', 'unit', 'price', 'initial_stock'];
+  headers.forEach((h, c) => {
+    ws[XLSX.utils.encode_cell({ r: 0, c })] = {
+      t: 's',
+      v: h,
+      s: {
+        font: { name: 'Calibri', sz: 10, bold: true, color: { rgb: 'FFFFFF' } },
+        fill: { fgColor: { rgb: '1E3A8A' } },
+        alignment: { horizontal: 'center', vertical: 'center' },
+        border: BORDER_THIN,
+      },
+    };
+  });
+
+  const sampleRows = [
+    ['SKU-SMP-001', 'Minyak Goreng Sawit 2L', 'Sembako', 'POUCH', 34000, 50],
+    ['', 'Gula Pasir Kristal Putih 1kg', 'Sembako', 'PACK', 17500, 100],
+    ['ELK-SCAN-2D', 'Wireless Barcode Scanner 2D', 'Elektronik', 'UNIT', 450000, 10],
+  ];
+
+  sampleRows.forEach((row, rIdx) => {
+    row.forEach((val, cIdx) => {
+      const isNum = typeof val === 'number';
+      ws[XLSX.utils.encode_cell({ r: rIdx + 1, c: cIdx })] = {
+        t: isNum ? 'n' : 's',
+        v: val,
+        s: {
+          font: { name: 'Calibri', sz: 9 },
+          alignment: { horizontal: isNum ? 'right' : 'left', vertical: 'center' },
+          border: BORDER_THIN,
+        },
+      };
+    });
+  });
+
+  ws['!cols'] = [
+    { wch: 16 }, // sku
+    { wch: 32 }, // name
+    { wch: 18 }, // category
+    { wch: 12 }, // unit
+    { wch: 16 }, // price
+    { wch: 16 }, // initial_stock
+  ];
+
+  ws['!ref'] = XLSX.utils.encode_range({
+    s: { r: 0, c: 0 },
+    e: { r: sampleRows.length, c: headers.length - 1 },
+  });
+
+  XLSX.utils.book_append_sheet(wb, ws, 'Template_Import_SKU');
+  XLSX.writeFile(wb, 'Template_Import_Master_SKU.xlsx');
+}
+
+export function downloadSkuImportTemplateCsv() {
+  const headers = ['sku', 'name', 'category', 'unit', 'price', 'initial_stock'];
+  const sampleRows = [
+    ['SKU-SMP-001', 'Minyak Goreng Sawit 2L', 'Sembako', 'POUCH', '34000', '50'],
+    ['', 'Gula Pasir Kristal Putih 1kg', 'Sembako', 'PACK', '17500', '100'],
+    ['ELK-SCAN-2D', 'Wireless Barcode Scanner 2D', 'Elektronik', 'UNIT', '450000', '10'],
+  ];
+  const csvLines = [
+    headers.join(','),
+    ...sampleRows.map(row => row.map(val => `"${String(val).replace(/"/g, '""')}"`).join(',')),
+  ];
+  const blob = new Blob([csvLines.join('\r\n')], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.setAttribute('download', 'Template_Import_Master_SKU.csv');
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+}
