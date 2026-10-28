@@ -87,12 +87,24 @@ class MainActivity : AppCompatActivity() {
             override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {
                 val uri = request?.url ?: return false
                 val scheme = uri.scheme ?: return false
+                val host = uri.host?.lowercase() ?: ""
+
+                // Jika link WhatsApp via https (wa.me atau api.whatsapp.com), lempar ke aplikasi WhatsApp luar
+                if (host == "wa.me" || host == "api.whatsapp.com" || host.endsWith(".whatsapp.com")) {
+                    return try {
+                        val intent = Intent(Intent.ACTION_VIEW, uri)
+                        startActivity(intent)
+                        true
+                    } catch (e: Exception) {
+                        false
+                    }
+                }
 
                 if (scheme.equals("http", ignoreCase = true) || scheme.equals("https", ignoreCase = true)) {
                     return false
                 }
 
-                // Eksternal: tel, mailto, whatsapp, dsb.
+                // Eksternal: tel, mailto, whatsapp://, dsb.
                 return try {
                     val intent = Intent(Intent.ACTION_VIEW, uri)
                     startActivity(intent)
@@ -205,7 +217,13 @@ class MainActivity : AppCompatActivity() {
             mimetype.contains("pdf") || dataUri.contains("application/pdf") -> ".pdf"
             else -> ".bin"
         }
-        var guessedName = URLUtil.guessFileName(dataUri, contentDisposition, mimetype)
+
+        val headerPart = parts[0]
+        val regexFilename = Regex("""filename\*?=['"]?(?:UTF-\d['"]*)?([^'";,\s]+)['"]?""", RegexOption.IGNORE_CASE)
+        val matchedName = regexFilename.find(headerPart)?.groupValues?.get(1)
+            ?: regexFilename.find(contentDisposition)?.groupValues?.get(1)
+
+        var guessedName = matchedName ?: URLUtil.guessFileName(dataUri, contentDisposition, mimetype)
         if (guessedName.endsWith(".bin") && ext != ".bin") {
             guessedName = guessedName.removeSuffix(".bin") + ext
         }

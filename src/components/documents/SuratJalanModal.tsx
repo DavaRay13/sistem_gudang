@@ -37,17 +37,32 @@ export const SuratJalanModal: React.FC<SuratJalanModalProps> = ({
   const printRef = useRef<HTMLDivElement>(null);
   const [loadingPdf, setLoadingPdf] = useState(false);
 
-  const generatePdfBlob = async (): Promise<Blob> => {
+  const downloadDataUri = (dataUri: string, filename: string) => {
+    const link = document.createElement('a');
+    link.href = dataUri;
+    link.download = filename;
+    link.setAttribute('download', filename);
+    document.body.appendChild(link);
+    link.click();
+    setTimeout(() => {
+      if (document.body.contains(link)) {
+        document.body.removeChild(link);
+      }
+    }, 1000);
+  };
+
+  const generatePdf = async () => {
     const el = printRef.current;
-    if (!el) throw new Error('Element tidak ditemukan');
+    if (!el) throw new Error('Element dokumen tidak ditemukan');
 
     const canvas = await html2canvas(el, {
       scale: 2,
       useCORS: true,
       backgroundColor: '#ffffff',
+      logging: false,
     });
 
-    const imgData = canvas.toDataURL('image/png');
+    const imgData = canvas.toDataURL('image/jpeg', 0.95);
     const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
     const pageWidth = pdf.internal.pageSize.getWidth();
     const pageHeight = pdf.internal.pageSize.getHeight();
@@ -57,23 +72,28 @@ export const SuratJalanModal: React.FC<SuratJalanModalProps> = ({
     let y = 0;
     while (y < imgHeight) {
       if (y > 0) pdf.addPage();
-      pdf.addImage(imgData, 'PNG', 0, -y, imgWidth, imgHeight);
+      pdf.addImage(imgData, 'JPEG', 0, -y, imgWidth, imgHeight, undefined, 'FAST');
       y += pageHeight;
     }
 
-    return pdf.output('blob');
+    const filename = `${request.do_number || request.request_number || 'Surat_Jalan'}.pdf`;
+    const blob = pdf.output('blob');
+    const rawDataUri = pdf.output('datauristring');
+    const dataUri = rawDataUri.startsWith('data:application/pdf;')
+      ? rawDataUri.replace('data:application/pdf;', `data:application/pdf;filename=${filename};`)
+      : rawDataUri;
+
+    return { blob, dataUri, filename };
   };
 
   const handleDownloadPdf = async () => {
     setLoadingPdf(true);
     try {
-      const blob = await generatePdfBlob();
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `${request.do_number || request.request_number}.pdf`;
-      a.click();
-      URL.revokeObjectURL(url);
+      const { dataUri, filename } = await generatePdf();
+      downloadDataUri(dataUri, filename);
+    } catch (err: any) {
+      console.error('Gagal mengunduh PDF:', err);
+      alert(`Gagal mengunduh PDF: ${err?.message || 'Terjadi kesalahan sistem'}`);
     } finally {
       setLoadingPdf(false);
     }
@@ -82,29 +102,69 @@ export const SuratJalanModal: React.FC<SuratJalanModalProps> = ({
   const handleShareWA = async () => {
     setLoadingPdf(true);
     try {
-      const blob = await generatePdfBlob();
-      const filename = `${request.do_number || request.request_number}.pdf`;
+      const { blob, dataUri, filename } = await generatePdf();
+
+      const totalUnits = request.items.reduce((acc, i) => acc + (i.qty_dispatched || i.qty_approved), 0);
+      const itemsList = request.items.map((item, idx) => {
+        const m = itemMap.get(item.item_id);
+        const qty = item.qty_dispatched || item.qty_approved;
+        return `${idx + 1}. *${m?.name || 'Item #' + item.item_id}* (${qty} ${m?.unit || 'PCS'})`;
+      }).join('\n');
+
+      const waText = 
+`*SURAT JALAN RESMI (DELIVERY ORDER)*
+No. DO: *${request.do_number || 'DO-PENDING'}*
+Ref: ${request.request_number}
+Tgl: ${formatDate(request.dispatched_at || new Date().toISOString())}
+
+*Pengirim:* ${fromLoc?.name || 'Gudang Pusat'}
+*Penerima:* ${toLoc?.name || 'Toko Cabang'}
+*Petugas:* ${approver?.full_name || 'Admin Gudang'}
+
+*Daftar Muatan (${totalUnits} unit):*
+${itemsList}
+
+_Dokumen fisik Surat Jalan telah diterbitkan oleh Sistem Manajemen Gudang._`;
+
       const file = new File([blob], filename, { type: 'application/pdf' });
 
-      if (navigator.canShare && navigator.canShare({ files: [file] })) {
-        // Share API — Android Chrome & iOS Safari 15+
-        await navigator.share({
-          title: `Surat Jalan ${request.do_number || request.request_number}`,
-          text: `Surat Jalan untuk ${toLoc?.name || 'Toko'}`,
-          files: [file],
-        });
-      } else {
-        // Fallback: download PDF dulu, lalu buka WA
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = filename;
-        a.click();
-        URL.revokeObjectURL(url);
-        // Buka WA web setelah download
-        const waMsg = encodeURIComponent(`Surat Jalan ${request.do_number || request.request_number} untuk ${toLoc?.name || 'Toko'} sudah diunduh, silakan lampirkan file PDF.`);
-        setTimeout(() => window.open(`https://wa.me/?text=${waMsg}`, '_blank'), 800);
+      // Coba Web Share API berkas terlebih dahulu jika didukung (misal Android Chrome/iOS Safari HTTPS)
+      if (typeof navigator !== 'undefined' && navigator.canShare && navigator.canShare({ files: [file] })) {
+        try {
+          await navigator.share({
+            title: `Surat Jalan ${request.do_number || request.request_number}`,
+            text: waText,
+            files: [file],
+          });
+          return;
+        } catch (shareErr: any) {
+          if (shareErr.name === 'AbortError') return;
+          console.warn('Web Share dibatalkan/tidak berhasil, beralih ke WhatsApp link:', shareErr);
+        }
       }
+
+      // Fallback:
+      // 1. Unduh berkas PDF ke perangkat pengguna
+      downloadDataUri(dataUri, filename);
+
+      // 2. Buka WhatsApp langsung tanpa delay setTimeout agar lolos popup blocker
+      const encodedMsg = encodeURIComponent(waText);
+      const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+      const waUrl = isMobile 
+        ? `whatsapp://send?text=${encodedMsg}` 
+        : `https://api.whatsapp.com/send?text=${encodedMsg}`;
+
+      if (isMobile) {
+        window.location.href = waUrl;
+      } else {
+        const win = window.open(waUrl, '_blank');
+        if (!win) {
+          window.location.href = waUrl;
+        }
+      }
+    } catch (err: any) {
+      console.error('Gagal membagikan ke WhatsApp:', err);
+      alert(`Gagal membagikan ke WhatsApp: ${err?.message || 'Terjadi kesalahan sistem'}`);
     } finally {
       setLoadingPdf(false);
     }
