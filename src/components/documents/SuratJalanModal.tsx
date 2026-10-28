@@ -60,6 +60,13 @@ export const SuratJalanModal: React.FC<SuratJalanModalProps> = ({
       useCORS: true,
       backgroundColor: '#ffffff',
       logging: false,
+      onclone: (clonedDoc) => {
+        const root = clonedDoc.documentElement;
+        root.style.setProperty('--border', '#e2e8f0');
+        root.style.setProperty('--ring', '#0f172a');
+        root.style.setProperty('--background', '#ffffff');
+        root.style.setProperty('--foreground', '#0f172a');
+      },
     });
 
     const imgData = canvas.toDataURL('image/jpeg', 0.95);
