@@ -37,9 +37,20 @@ export const SuratJalanModal: React.FC<SuratJalanModalProps> = ({
   const printRef = useRef<HTMLDivElement>(null);
   const [loadingPdf, setLoadingPdf] = useState(false);
 
-  const downloadDataUri = (dataUri: string, filename: string) => {
+  const downloadFile = (blob: Blob, dataUri: string, filename: string) => {
+    // 1. Android WebView Native Bridge (jika diakses via APK Gudang)
+    if ((window as any).AndroidApp?.downloadBase64File) {
+      const parts = dataUri.split(',');
+      const base64 = parts.length > 1 ? parts[1] : '';
+      (window as any).AndroidApp.downloadBase64File(base64, filename, 'application/pdf');
+      return;
+    }
+
+    // 2. Browser Desktop & Mobile (Chrome, Safari, Edge, Firefox, dsb)
+    // Gunakan Blob URL resmi dengan ekstensi .pdf pasti dan delay revoke 60s
+    const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
-    link.href = dataUri;
+    link.href = url;
     link.download = filename;
     link.setAttribute('download', filename);
     document.body.appendChild(link);
@@ -48,7 +59,8 @@ export const SuratJalanModal: React.FC<SuratJalanModalProps> = ({
       if (document.body.contains(link)) {
         document.body.removeChild(link);
       }
-    }, 1000);
+      URL.revokeObjectURL(url);
+    }, 60000);
   };
 
   const generatePdf = async () => {
@@ -83,12 +95,10 @@ export const SuratJalanModal: React.FC<SuratJalanModalProps> = ({
       y += pageHeight;
     }
 
-    const filename = `${request.do_number || request.request_number || 'Surat_Jalan'}.pdf`;
+    const safeNumber = (request.do_number || request.request_number || 'Surat_Jalan').replace(/[/\\?%*:|"<>]/g, '_');
+    const filename = `${safeNumber}.pdf`;
     const blob = pdf.output('blob');
-    const rawDataUri = pdf.output('datauristring');
-    const dataUri = rawDataUri.startsWith('data:application/pdf;')
-      ? rawDataUri.replace('data:application/pdf;', `data:application/pdf;filename=${filename};`)
-      : rawDataUri;
+    const dataUri = pdf.output('datauristring');
 
     return { blob, dataUri, filename };
   };
@@ -96,8 +106,8 @@ export const SuratJalanModal: React.FC<SuratJalanModalProps> = ({
   const handleDownloadPdf = async () => {
     setLoadingPdf(true);
     try {
-      const { dataUri, filename } = await generatePdf();
-      downloadDataUri(dataUri, filename);
+      const { blob, dataUri, filename } = await generatePdf();
+      downloadFile(blob, dataUri, filename);
     } catch (err: any) {
       console.error('Gagal mengunduh PDF:', err);
       alert(`Gagal mengunduh PDF: ${err?.message || 'Terjadi kesalahan sistem'}`);
@@ -152,7 +162,7 @@ _Dokumen fisik Surat Jalan telah diterbitkan oleh Sistem Manajemen Gudang._`;
 
       // Fallback:
       // 1. Unduh berkas PDF ke perangkat pengguna
-      downloadDataUri(dataUri, filename);
+      downloadFile(blob, dataUri, filename);
 
       // 2. Buka WhatsApp langsung tanpa delay setTimeout agar lolos popup blocker
       const encodedMsg = encodeURIComponent(waText);

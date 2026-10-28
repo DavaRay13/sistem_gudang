@@ -58,13 +58,18 @@ test.describe('Surat Jalan & Dispatch Feature', () => {
     const modalTitle = page.locator('text=/Surat Jalan \\/ Delivery Order/i').first();
     await expect(modalTitle).toBeVisible({ timeout: 8000 });
 
-    // 7. Klik tombol "Unduh PDF"
+    // 7. Klik tombol "Unduh PDF" dan tangkap event download browser
     const unduhPdfBtn = page.locator('button:has-text("Unduh PDF")');
     await expect(unduhPdfBtn).toBeVisible();
-    await unduhPdfBtn.click();
 
-    // Tunggu proses rendering canvas dan generate PDF selesai
-    await page.waitForTimeout(4000);
+    const [download] = await Promise.all([
+      page.waitForEvent('download', { timeout: 15000 }),
+      unduhPdfBtn.click(),
+    ]);
+
+    // Verifikasi nama berkas berakhiran .pdf asli
+    const downloadedName = download.suggestedFilename();
+    expect(downloadedName.toLowerCase().endsWith('.pdf')).toBe(true);
 
     // 8. Pastikan tidak ada alert dialog error oklch
     expect(dialogError).toBe('');

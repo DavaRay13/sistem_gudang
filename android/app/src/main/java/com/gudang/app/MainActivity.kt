@@ -10,6 +10,7 @@ import android.os.Bundle
 import android.os.Environment
 import android.util.Base64
 import android.webkit.CookieManager
+import android.webkit.JavascriptInterface
 import android.webkit.URLUtil
 import android.webkit.ValueCallback
 import android.webkit.WebChromeClient
@@ -82,6 +83,8 @@ class MainActivity : AppCompatActivity() {
         val cookieManager = CookieManager.getInstance()
         cookieManager.setAcceptCookie(true)
         cookieManager.setAcceptThirdPartyCookies(webView, true)
+
+        webView.addJavascriptInterface(WebAppInterface(), "AndroidApp")
 
         webView.webViewClient = object : WebViewClient() {
             override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {
@@ -227,12 +230,33 @@ class MainActivity : AppCompatActivity() {
         if (guessedName.endsWith(".bin") && ext != ".bin") {
             guessedName = guessedName.removeSuffix(".bin") + ext
         }
-        val fileName = if (guessedName.isNotBlank() && !guessedName.startsWith("downloadfile")) guessedName else "export_${System.currentTimeMillis()}$ext"
+        var fileName = if (guessedName.isNotBlank() && !guessedName.startsWith("downloadfile")) guessedName else "export_${System.currentTimeMillis()}$ext"
+        if (!fileName.endsWith(ext, ignoreCase = true)) {
+            fileName = "$fileName$ext"
+        }
         val downloadDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
         val file = File(downloadDir, fileName)
 
         FileOutputStream(file).use { it.write(bytes) }
         Toast.makeText(this, "Tersimpan di Download/$fileName", Toast.LENGTH_LONG).show()
+    }
+
+    inner class WebAppInterface {
+        @JavascriptInterface
+        fun downloadBase64File(base64Data: String, filename: String, mimetype: String) {
+            runOnUiThread {
+                try {
+                    val bytes = Base64.decode(base64Data, Base64.DEFAULT)
+                    val safeName = if (filename.endsWith(".pdf", ignoreCase = true)) filename else "$filename.pdf"
+                    val downloadDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
+                    val file = File(downloadDir, safeName)
+                    FileOutputStream(file).use { it.write(bytes) }
+                    Toast.makeText(this@MainActivity, "Tersimpan di Download/$safeName", Toast.LENGTH_LONG).show()
+                } catch (e: Exception) {
+                    Toast.makeText(this@MainActivity, "Gagal mengunduh: ${e.message}", Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
     }
 
     override fun onDestroy() {
