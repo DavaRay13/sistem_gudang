@@ -169,8 +169,8 @@ class MainActivity : AppCompatActivity() {
     private fun handleDownload(url: String, contentDisposition: String, mimetype: String) {
         try {
             if (url.startsWith("data:")) {
-                // Handle data: URI (blob/base64 export excel)
-                saveDataUriToFile(url, mimetype)
+                // Handle data: URI (blob/base64 export excel / csv)
+                saveDataUriToFile(url, mimetype, contentDisposition)
                 return
             }
 
@@ -193,14 +193,23 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun saveDataUriToFile(dataUri: String, mimetype: String) {
+    private fun saveDataUriToFile(dataUri: String, mimetype: String, contentDisposition: String = "") {
         val parts = dataUri.split(",")
         if (parts.size < 2) return
 
         val base64Data = parts[1]
         val bytes = Base64.decode(base64Data, Base64.DEFAULT)
-        val ext = if (mimetype.contains("sheet") || dataUri.contains("spreadsheetml")) ".xlsx" else ".bin"
-        val fileName = "export_${System.currentTimeMillis()}$ext"
+        val ext = when {
+            mimetype.contains("sheet") || dataUri.contains("spreadsheetml") || dataUri.contains("vnd.ms-excel") -> ".xlsx"
+            mimetype.contains("csv") || dataUri.contains("text/csv") -> ".csv"
+            mimetype.contains("pdf") || dataUri.contains("application/pdf") -> ".pdf"
+            else -> ".bin"
+        }
+        var guessedName = URLUtil.guessFileName(dataUri, contentDisposition, mimetype)
+        if (guessedName.endsWith(".bin") && ext != ".bin") {
+            guessedName = guessedName.removeSuffix(".bin") + ext
+        }
+        val fileName = if (guessedName.isNotBlank() && !guessedName.startsWith("downloadfile")) guessedName else "export_${System.currentTimeMillis()}$ext"
         val downloadDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
         val file = File(downloadDir, fileName)
 

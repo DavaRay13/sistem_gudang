@@ -1105,6 +1105,20 @@ export function exportTransferRequestsToExcel(
 // -------------------------------------------------------------
 // 5. DOWNLOAD TEMPLATE IMPORT MASTER SKU (EXCEL & CSV)
 // -------------------------------------------------------------
+function downloadDataUri(dataUri: string, filename: string) {
+  const link = document.createElement('a');
+  link.href = dataUri;
+  link.download = filename;
+  link.setAttribute('download', filename);
+  document.body.appendChild(link);
+  link.click();
+  setTimeout(() => {
+    if (document.body.contains(link)) {
+      document.body.removeChild(link);
+    }
+  }, 500);
+}
+
 export function downloadSkuImportTemplateExcel() {
   const wb = XLSX.utils.book_new();
   const ws: any = {};
@@ -1159,7 +1173,11 @@ export function downloadSkuImportTemplateExcel() {
   });
 
   XLSX.utils.book_append_sheet(wb, ws, 'Template_Import_SKU');
-  XLSX.writeFile(wb, 'Template_Import_Master_SKU.xlsx');
+  
+  // Gunakan Base64 data URI agar kompatibel di Android WebView/PWA dan Browser Desktop
+  const base64Data = XLSX.write(wb, { bookType: 'xlsx', type: 'base64' });
+  const dataUri = `data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,${base64Data}`;
+  downloadDataUri(dataUri, 'Template_Import_Master_SKU.xlsx');
 }
 
 export function downloadSkuImportTemplateCsv() {
@@ -1169,17 +1187,14 @@ export function downloadSkuImportTemplateCsv() {
     ['', 'Gula Pasir Kristal Putih 1kg', 'Sembako', 'PACK', '17500', '100'],
     ['ELK-SCAN-2D', 'Wireless Barcode Scanner 2D', 'Elektronik', 'UNIT', '450000', '10'],
   ];
-  const csvLines = [
+  
+  // Tambahkan UTF-8 BOM (\uFEFF) agar Microsoft Excel membaca karakter dengan benar
+  const csvContent = '\uFEFF' + [
     headers.join(','),
     ...sampleRows.map(row => row.map(val => `"${String(val).replace(/"/g, '""')}"`).join(',')),
-  ];
-  const blob = new Blob([csvLines.join('\r\n')], { type: 'text/csv;charset=utf-8;' });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement('a');
-  link.href = url;
-  link.setAttribute('download', 'Template_Import_Master_SKU.csv');
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-  URL.revokeObjectURL(url);
+  ].join('\r\n');
+  
+  const base64Csv = btoa(unescape(encodeURIComponent(csvContent)));
+  const dataUri = `data:text/csv;charset=utf-8;base64,${base64Csv}`;
+  downloadDataUri(dataUri, 'Template_Import_Master_SKU.csv');
 }
