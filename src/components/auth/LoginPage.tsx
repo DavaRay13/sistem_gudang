@@ -39,21 +39,10 @@ export const LoginPage: React.FC = () => {
     }
   };
 
-  const handleQuickFill = async (u: string, p: string) => {
+  const handleQuickFill = (u: string) => {
     setUsername(u);
-    setPassword(p);
+    setPassword('');
     setError('');
-    setIsLoading(true);
-    try {
-      const res = await login(u, p);
-      if (!res.success) {
-        setError(res.message || 'Kredensial demo tidak valid.');
-      }
-    } catch (err: any) {
-      setError(err.message || 'Gangguan koneksi.');
-    } finally {
-      setIsLoading(false);
-    }
   };
 
   return (
@@ -158,7 +147,7 @@ export const LoginPage: React.FC = () => {
               <span className="font-semibold text-foreground text-[11px] uppercase tracking-wider">
                 Akses Cepat Pengujian:
               </span>
-              <Badge variant="outline" className="text-[10px]">Pilih Demo</Badge>
+              <Badge variant="outline" className="text-[10px]">Pilih Akun</Badge>
             </div>
 
             <div className="grid grid-cols-2 gap-2.5 pt-1">
@@ -166,7 +155,7 @@ export const LoginPage: React.FC = () => {
                 type="button"
                 variant="outline"
                 size="sm"
-                onClick={() => handleQuickFill('admin.gudang', 'admin123')}
+                onClick={() => handleQuickFill('admin.gudang')}
                 disabled={isLoading}
                 className="justify-between h-auto py-2.5 px-3 text-left text-xs bg-card/60 hover:bg-card"
               >
@@ -183,7 +172,7 @@ export const LoginPage: React.FC = () => {
                 type="button"
                 variant="outline"
                 size="sm"
-                onClick={() => handleQuickFill('staf.toko1', 'toko123')}
+                onClick={() => handleQuickFill('staf.toko1')}
                 disabled={isLoading}
                 className="justify-between h-auto py-2.5 px-3 text-left text-xs bg-card/60 hover:bg-card"
               >
@@ -192,6 +181,40 @@ export const LoginPage: React.FC = () => {
                     Staf Toko 1
                   </span>
                   <span className="text-[11px] text-muted-foreground font-mono">staf.toko1</span>
+                </div>
+                <ArrowRight className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+              </Button>
+
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => handleQuickFill('staf.toko2')}
+                disabled={isLoading}
+                className="justify-between h-auto py-2.5 px-3 text-left text-xs bg-card/60 hover:bg-card"
+              >
+                <div>
+                  <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 block">
+                    Staf Toko 2
+                  </span>
+                  <span className="text-[11px] text-muted-foreground font-mono">staf.toko2</span>
+                </div>
+                <ArrowRight className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+              </Button>
+
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => handleQuickFill('staf.toko3')}
+                disabled={isLoading}
+                className="justify-between h-auto py-2.5 px-3 text-left text-xs bg-card/60 hover:bg-card"
+              >
+                <div>
+                  <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 block">
+                    Staf Toko 3
+                  </span>
+                  <span className="text-[11px] text-muted-foreground font-mono">staf.toko3</span>
                 </div>
                 <ArrowRight className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
               </Button>
