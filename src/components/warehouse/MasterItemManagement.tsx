@@ -189,6 +189,7 @@ export const MasterItemManagement: React.FC = () => {
     price: number | string;
     safety_stock: number | string;
     is_unlimited: boolean;
+    additional_stock: number | string;
   }>({
     name: '',
     category: 'Elektronik',
@@ -196,6 +197,7 @@ export const MasterItemManagement: React.FC = () => {
     price: 50000,
     safety_stock: 10,
     is_unlimited: false,
+    additional_stock: '',
   });
 
   const openEditModal = (item: Item) => {
@@ -207,6 +209,7 @@ export const MasterItemManagement: React.FC = () => {
       price: item.price,
       safety_stock: item.safety_stock,
       is_unlimited: Boolean(item.is_unlimited),
+      additional_stock: '',
     });
   };
 
@@ -225,6 +228,17 @@ export const MasterItemManagement: React.FC = () => {
         safety_stock: Number(editFormData.safety_stock) || 0,
         is_unlimited: editFormData.is_unlimited,
       });
+
+      const addStock = Number(editFormData.additional_stock) || 0;
+      if (!editFormData.is_unlimited && addStock > 0 && currentUser) {
+        await inboundStock(
+          itemToEdit.id,
+          addStock,
+          'Penambahan stok via edit data barang',
+          currentUser.id
+        );
+      }
+
       setItemToEdit(null);
     } catch {
       // Handled by toast
@@ -1285,7 +1299,14 @@ export const MasterItemManagement: React.FC = () => {
               <input
                 type="checkbox"
                 checked={editFormData.is_unlimited}
-                onChange={e => setEditFormData({ ...editFormData, is_unlimited: e.target.checked })}
+                onChange={e => {
+                  const checked = e.target.checked;
+                  setEditFormData({
+                    ...editFormData,
+                    is_unlimited: checked,
+                    additional_stock: checked ? '' : editFormData.additional_stock,
+                  });
+                }}
                 className="w-4 h-4 rounded text-brand-600 focus:ring-brand-500 border-border"
               />
               <div>
@@ -1293,6 +1314,82 @@ export const MasterItemManagement: React.FC = () => {
                 <span className="text-[11px] text-muted-foreground block">Gudang selalu memiliki stok untuk disetujui tanpa batasan saldo fisik.</span>
               </div>
             </label>
+          </div>
+
+          {/* Tambah Stok Masuk ke Gudang */}
+          <div className={`p-3.5 rounded-2xl border space-y-2.5 transition-all ${
+            editFormData.is_unlimited
+              ? 'bg-slate-100/60 dark:bg-slate-800/40 border-slate-200 dark:border-slate-800 opacity-60'
+              : 'bg-card border-emerald-300 dark:border-emerald-800/80'
+          }`}>
+            <div className="flex items-center justify-between gap-2 flex-wrap">
+              <div className="flex items-center gap-1.5">
+                <Boxes className={`w-4 h-4 ${editFormData.is_unlimited ? 'text-muted-foreground' : 'text-emerald-600 dark:text-emerald-400'}`} />
+                <span className="text-xs font-bold text-foreground">
+                  Tambah Stok Masuk (Gudang Pusat)
+                </span>
+              </div>
+              <span className="text-[10px] font-semibold text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
+                {editFormData.is_unlimited
+                  ? 'Stok Unlimited'
+                  : `Saldo Saat Ini: ${formatNumber(itemToEdit ? getInv(0, itemToEdit.id).stock_available : 0)} ${editFormData.unit || 'PCS'}`}
+              </span>
+            </div>
+
+            {editFormData.is_unlimited ? (
+              <p className="text-[11px] text-muted-foreground italic">
+                Field dinonaktifkan: barang berstatus stok unlimited sehingga penambahan saldo fisik tidak diperlukan.
+              </p>
+            ) : (
+              <>
+                <p className="text-[11px] text-muted-foreground">
+                  Masukkan jumlah unit yang ingin ditambahkan ke stok Gudang Pusat (kosongkan jika hanya ubah info barang).
+                </p>
+                <div className="space-y-2">
+                  <input
+                    type="number"
+                    min="0"
+                    placeholder="0 (Tidak menambah stok)"
+                    disabled={editFormData.is_unlimited}
+                    value={editFormData.additional_stock}
+                    onChange={e => {
+                      const val = e.target.value;
+                      setEditFormData({
+                        ...editFormData,
+                        additional_stock: val === '' ? '' : Math.max(0, parseInt(val) || 0),
+                      });
+                    }}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-background text-foreground text-sm font-bold font-mono focus:ring-2 focus:ring-emerald-500 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
+                  />
+                  {/* Stepper buttons */}
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <span className="text-[10px] font-semibold text-muted-foreground mr-0.5">Tambah cepat:</span>
+                    {[5, 10, 25, 50, 100].map(addQty => (
+                      <button
+                        key={addQty}
+                        type="button"
+                        onClick={() => {
+                          const cur = Number(editFormData.additional_stock) || 0;
+                          setEditFormData({ ...editFormData, additional_stock: cur + addQty });
+                        }}
+                        className="px-2.5 py-1 rounded-lg text-xs font-bold bg-muted text-foreground border border-border hover:bg-muted/80 active:scale-95 transition-all"
+                      >
+                        +{addQty}
+                      </button>
+                    ))}
+                    {Number(editFormData.additional_stock) > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => setEditFormData({ ...editFormData, additional_stock: '' })}
+                        className="px-2 py-1 rounded-lg text-[10px] font-semibold text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-all"
+                      >
+                        Reset
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </>
+            )}
           </div>
 
           <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-end gap-2 pt-4 border-t border-border sticky bottom-0 bg-card py-2 -mx-1 px-1">

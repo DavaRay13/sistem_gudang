@@ -176,7 +176,7 @@ export class SupabaseService {
         const safePrice = Number(itemData.price);
         const safeSafetyStock = Number(itemData.safety_stock);
 
-        const { data, error } = await supabase
+        let { data, error } = await supabase
           .from('items')
           .insert({
             sku: (itemData.sku || '').trim().toUpperCase(),
@@ -189,6 +189,23 @@ export class SupabaseService {
           })
           .select()
           .single();
+
+        if (error && error.message?.includes('is_unlimited')) {
+          const res = await supabase
+            .from('items')
+            .insert({
+              sku: (itemData.sku || '').trim().toUpperCase(),
+              name: (itemData.name || '').trim(),
+              category: itemData.category || 'Umum',
+              unit: (itemData.unit || 'PCS').trim().toUpperCase(),
+              price: Number.isFinite(safePrice) ? Math.max(0, safePrice) : 0,
+              safety_stock: Number.isFinite(safeSafetyStock) ? Math.max(0, Math.floor(safeSafetyStock)) : 0,
+            })
+            .select()
+            .single();
+          data = res.data;
+          error = res.error;
+        }
 
         if (error) {
           if (error.code === '23505') {
@@ -252,12 +269,24 @@ export class SupabaseService {
           updatePayload.is_unlimited = Boolean(itemData.is_unlimited);
         }
 
-        const { data, error } = await supabase
+        let { data, error } = await supabase
           .from('items')
           .update(updatePayload)
           .eq('id', itemId)
           .select()
           .single();
+
+        if (error && error.message?.includes('is_unlimited')) {
+          delete updatePayload.is_unlimited;
+          const retry = await supabase
+            .from('items')
+            .update(updatePayload)
+            .eq('id', itemId)
+            .select()
+            .single();
+          data = retry.data;
+          error = retry.error;
+        }
 
         if (error) {
           if (error.code === '23505') {
