@@ -6,13 +6,13 @@ import { StatusBadge } from '../common/Badge';
 import { SuratJalanModal } from '../documents/SuratJalanModal';
 import { 
   Send, Truck, Printer, Store, 
-  PackageCheck, CheckCircle2, Download
+  PackageCheck, CheckCircle2, Download, Trash2
 } from 'lucide-react';
 import { formatDate } from '../../utils/formatters';
 import { exportTransferRequestsToExcel } from '../../utils/exportHelpers';
 
 export const DispatchManagement: React.FC = () => {
-  const { requests, items, dispatchRequest } = useInventory();
+  const { requests, items, dispatchRequest, deleteRequest } = useInventory();
   const { currentUser, locations, users } = useAuth();
 
   const [activeSuratJalan, setActiveSuratJalan] = useState<TransferRequest | null>(null);
@@ -122,7 +122,21 @@ export const DispatchManagement: React.FC = () => {
                         </span>
                       </div>
                     </div>
-                    <StatusBadge status={req.status} size="sm" />
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      <StatusBadge status={req.status} size="sm" />
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          if (confirm(`Hapus dokumen permintaan ${req.request_number}?`)) {
+                            await deleteRequest(req.id);
+                          }
+                        }}
+                        className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors"
+                        title="Hapus Permintaan"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
                   </div>
 
                   {/* Rincian Ringkas */}
@@ -195,7 +209,21 @@ export const DispatchManagement: React.FC = () => {
                       </span>
                       <span className="text-xs text-slate-500">Ref: {req.request_number}</span>
                     </div>
-                    <StatusBadge status={req.status} size="sm" />
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      <StatusBadge status={req.status} size="sm" />
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          if (confirm(`Hapus dokumen pengiriman ${req.do_number || req.request_number}?`)) {
+                            await deleteRequest(req.id);
+                          }
+                        }}
+                        className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors"
+                        title="Hapus Pengiriman"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
                   </div>
 
                   <div className="p-2.5 bg-blue-50/50 dark:bg-blue-950/20 rounded-xl border border-blue-100 dark:border-blue-900/40 text-xs">

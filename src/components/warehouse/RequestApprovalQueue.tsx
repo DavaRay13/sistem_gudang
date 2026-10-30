@@ -7,12 +7,12 @@ import { StatusBadge } from '../common/Badge';
 import { 
   ClipboardList, CheckCircle2, AlertTriangle, 
   XCircle, Store, 
-  AlertCircle, FileText, Plus, Minus, Download
+  AlertCircle, FileText, Plus, Minus, Download, Trash2
 } from 'lucide-react';
 import { exportTransferRequestsToExcel } from '../../utils/exportHelpers';
 
 export const RequestApprovalQueue: React.FC = () => {
-  const { requests, items, inventories, authorizeRequest } = useInventory();
+  const { requests, items, inventories, authorizeRequest, deleteRequest } = useInventory();
   const { currentUser, locations, users } = useAuth();
 
   const [selectedStoreFilter, setSelectedStoreFilter] = useState<number | 'ALL'>('ALL');
@@ -222,6 +222,18 @@ export const RequestApprovalQueue: React.FC = () => {
                       <span>{requester?.full_name?.split(' ')[0]}</span>
                     </div>
                   </div>
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      if (confirm(`Hapus dokumen permintaan ${req.request_number}?`)) {
+                        await deleteRequest(req.id);
+                      }
+                    }}
+                    className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors shrink-0"
+                    title="Hapus Permintaan"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
                 </div>
 
                 {/* Items in Request */}

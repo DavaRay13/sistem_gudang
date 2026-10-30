@@ -6,11 +6,12 @@ import { Modal } from '../common/Modal';
 import { StatusBadge } from '../common/Badge';
 import { SuratJalanModal } from '../documents/SuratJalanModal';
 import { NavigationTab } from '../layout/Sidebar';
+import { Button } from '@/components/ui/button';
 import {
   CheckCircle2, AlertTriangle,
   XCircle, Store, AlertCircle, FileText,
   Plus, Minus, Send, Printer, Truck,
-  PackageCheck, Download, Info
+  PackageCheck, Download, Info, Trash2, Archive
 } from 'lucide-react';
 import { formatDate } from '../../utils/formatters';
 import { exportTransferRequestsToExcel } from '../../utils/exportHelpers';
@@ -20,7 +21,7 @@ interface WarehousePipelineProps {
 }
 
 export const WarehousePipeline: React.FC<WarehousePipelineProps> = ({ onNavigate: _onNavigate }) => {
-  const { requests, items, inventories, authorizeRequest, dispatchRequest } = useInventory();
+  const { requests, items, inventories, authorizeRequest, dispatchRequest, deleteRequest } = useInventory();
   const { currentUser, locations, users } = useAuth();
 
   const [selectedStoreFilter, setSelectedStoreFilter] = useState<number | 'ALL'>('ALL');
@@ -30,6 +31,8 @@ export const WarehousePipeline: React.FC<WarehousePipelineProps> = ({ onNavigate
   const [notes, setNotes] = useState<string>('');
   const [activeSuratJalan, setActiveSuratJalan] = useState<TransferRequest | null>(null);
   const [dispatchingId, setDispatchingId] = useState<number | null>(null);
+  const [requestToDelete, setRequestToDelete] = useState<TransferRequest | null>(null);
+  const [isDeletingRequest, setIsDeletingRequest] = useState(false);
 
   const itemMap = new Map(items.map(i => [i.id, i]));
   const locMap = new Map(locations.map(l => [l.id, l]));
@@ -48,6 +51,21 @@ export const WarehousePipeline: React.FC<WarehousePipelineProps> = ({ onNavigate
   const pendingRequests = filterByStore(requests.filter(r => r.status === 'PENDING'));
   const readyToDispatch = filterByStore(requests.filter(r => r.status === 'APPROVED' || r.status === 'PARTIAL'));
   const inTransit = filterByStore(requests.filter(r => r.status === 'IN_TRANSIT'));
+  const completedRequests = filterByStore(requests.filter(r => r.status === 'COMPLETED' || r.status === 'DISCREPANCY' || r.status === 'REJECTED'));
+
+  const handleDeleteRequest = async () => {
+    if (!requestToDelete) return;
+    setIsDeletingRequest(true);
+    try {
+      await deleteRequest(requestToDelete.id);
+      if (activeSuratJalan?.id === requestToDelete.id) setActiveSuratJalan(null);
+      setRequestToDelete(null);
+    } catch (err: any) {
+      alert(err?.message || 'Gagal menghapus permintaan');
+    } finally {
+      setIsDeletingRequest(false);
+    }
+  };
 
   const handleApproveFull = async (req: TransferRequest) => {
     if (!currentUser) return;
@@ -174,14 +192,15 @@ export const WarehousePipeline: React.FC<WarehousePipelineProps> = ({ onNavigate
         </div>
       </div>
 
-      {/* Alur proses visual: 3 tahap (Responsive Grid di mobile & desktop) */}
-      <div className="grid grid-cols-3 gap-2 mb-2">
+      {/* Alur proses visual: 4 tahap (Responsive Grid di mobile & desktop) */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-2">
         {[
           { step: 1, label: 'Masuk', fullLabel: 'Permintaan Masuk', count: pendingRequests.length, color: 'bg-gradient-to-r from-amber-50 to-amber-100/70 text-amber-800 border-amber-300 dark:from-amber-950/60 dark:to-amber-900/40 dark:text-amber-300 dark:border-amber-700/60 shadow-2xs' },
           { step: 2, label: 'Siap Kirim', fullLabel: 'Siap Dikirim', count: readyToDispatch.length, color: 'bg-gradient-to-r from-emerald-50 to-emerald-100/70 text-emerald-800 border-emerald-300 dark:from-emerald-950/60 dark:to-emerald-900/40 dark:text-emerald-300 dark:border-emerald-700/60 shadow-2xs' },
           { step: 3, label: 'Di Jalan', fullLabel: 'Dalam Perjalanan', count: inTransit.length, color: 'bg-gradient-to-r from-sky-50 to-blue-100/70 text-sky-800 border-sky-300 dark:from-sky-950/60 dark:to-blue-900/40 dark:text-sky-300 dark:border-sky-700/60 shadow-2xs' },
+          { step: 4, label: 'Riwayat', fullLabel: 'Riwayat Selesai', count: completedRequests.length, color: 'bg-gradient-to-r from-slate-50 to-slate-100/70 text-slate-700 border-slate-300 dark:from-slate-900 dark:to-slate-800/40 dark:text-slate-300 dark:border-slate-700 shadow-2xs' },
         ].map(s => (
-          <div key={s.step} className={`flex flex-col sm:flex-row sm:items-center justify-between p-2 sm:px-4 sm:py-2.5 rounded-xl border text-xs font-medium ${s.color}`}>
+          <div key={s.step} className={`flex flex-col sm:flex-row sm:items-center justify-between p-2 sm:px-3 sm:py-2 rounded-xl border text-xs font-medium ${s.color}`}>
             <div className="flex items-center gap-1.5 min-w-0">
               <span className="w-4 h-4 rounded-full bg-black/10 dark:bg-white/10 flex items-center justify-center font-mono font-bold text-[10px] shrink-0">{s.step}</span>
               <span className="truncate hidden sm:inline">{s.fullLabel}</span>
@@ -233,6 +252,14 @@ export const WarehousePipeline: React.FC<WarehousePipelineProps> = ({ onNavigate
                         <span>{formatDate(req.created_at)}</span>
                       </div>
                     </div>
+                    <button
+                      type="button"
+                      onClick={() => setRequestToDelete(req)}
+                      className="p-1.5 rounded-lg text-muted-foreground hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors shrink-0"
+                      title="Hapus Permintaan"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
                   </div>
 
                   {/* Barang yang diminta */}
@@ -324,7 +351,7 @@ export const WarehousePipeline: React.FC<WarehousePipelineProps> = ({ onNavigate
               const totalQty = req.items.reduce((s, i) => s + i.qty_approved, 0);
               return (
                 <div key={req.id} className="bg-white dark:bg-[#16171A] rounded-xl border border-[#D4E5D3] dark:border-[#223F25] overflow-hidden">
-                  <div className="px-4 py-3 bg-[#EDF3EC] dark:bg-[#172B19] border-b border-[#D4E5D3] dark:border-[#223F25] flex items-center justify-between">
+                  <div className="px-4 py-3 bg-[#EDF3EC] dark:bg-[#172B19] border-b border-[#D4E5D3] dark:border-[#223F25] flex items-center justify-between gap-2">
                     <div>
                       <span className="font-mono font-bold text-sm text-[#111111] dark:text-[#ECECED]">{req.request_number}</span>
                       <div className="flex items-center gap-1.5 text-[11px] text-[#787774] dark:text-[#A1A09E] mt-0.5">
@@ -332,7 +359,17 @@ export const WarehousePipeline: React.FC<WarehousePipelineProps> = ({ onNavigate
                         <span className="font-medium text-[#346538] dark:text-[#96D99C]">{dest?.name}</span>
                       </div>
                     </div>
-                    <StatusBadge status={req.status} size="sm" />
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      <StatusBadge status={req.status} size="sm" />
+                      <button
+                        type="button"
+                        onClick={() => setRequestToDelete(req)}
+                        className="p-1.5 rounded-lg text-muted-foreground hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors"
+                        title="Hapus Permintaan"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
                   </div>
 
                   <div className="p-4 space-y-2">
@@ -396,7 +433,7 @@ export const WarehousePipeline: React.FC<WarehousePipelineProps> = ({ onNavigate
               const totalDispatched = req.items.reduce((s, i) => s + i.qty_dispatched, 0);
               return (
                 <div key={req.id} className="bg-white dark:bg-[#16171A] rounded-xl border border-[#C8E7FD] dark:border-[#1E3B52] overflow-hidden">
-                  <div className="px-4 py-3 bg-[#E1F3FE] dark:bg-[#142838] border-b border-[#C8E7FD] dark:border-[#1E3B52] flex items-center justify-between">
+                  <div className="px-4 py-3 bg-[#E1F3FE] dark:bg-[#142838] border-b border-[#C8E7FD] dark:border-[#1E3B52] flex items-center justify-between gap-2">
                     <div>
                       <div className="flex items-center gap-2">
                         <span className="font-mono font-bold text-xs text-[#1F6C9F] dark:text-[#97D2FB]">{req.do_number}</span>
@@ -407,7 +444,17 @@ export const WarehousePipeline: React.FC<WarehousePipelineProps> = ({ onNavigate
                         <span className="font-medium text-[#1F6C9F] dark:text-[#97D2FB]">Menuju {dest?.name}</span>
                       </div>
                     </div>
-                    <StatusBadge status={req.status} size="sm" />
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      <StatusBadge status={req.status} size="sm" />
+                      <button
+                        type="button"
+                        onClick={() => setRequestToDelete(req)}
+                        className="p-1.5 rounded-lg text-muted-foreground hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors"
+                        title="Hapus Pengiriman"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
                   </div>
 
                   <div className="p-4 space-y-1">
@@ -429,6 +476,96 @@ export const WarehousePipeline: React.FC<WarehousePipelineProps> = ({ onNavigate
                       <span>Lihat / Cetak Surat Jalan</span>
                     </button>
                   </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </section>
+
+      {/* ===== TAHAP 4: RIWAYAT PERMINTAAN SELESAI & DITOLAK ===== */}
+      <section className="space-y-3">
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <div className="w-6 h-6 rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 flex items-center justify-center text-[11px] font-mono font-bold text-slate-700 dark:text-slate-300 shrink-0">4</div>
+            <div>
+              <h2 className="text-sm font-bold text-[#111111] dark:text-[#ECECED]">Riwayat Permintaan Selesai & Ditolak</h2>
+              <p className="text-[11px] text-[#787774] dark:text-[#A1A09E]">Daftar permintaan yang telah diterima oleh toko cabang atau ditolak.</p>
+            </div>
+          </div>
+          <span className="text-xs text-muted-foreground font-mono">{completedRequests.length} riwayat</span>
+        </div>
+
+        {completedRequests.length === 0 ? (
+          <div className="p-6 text-center bg-white dark:bg-[#16171A] rounded-xl border border-[#EAEAEA] dark:border-[#26282E]">
+            <Archive className="w-8 h-8 text-[#A1A09E] dark:text-[#787774] mx-auto mb-2" />
+            <p className="text-xs text-[#787774] dark:text-[#A1A09E]">Belum ada riwayat permintaan selesai.</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {completedRequests.map(req => {
+              const dest = locMap.get(req.to_location_id);
+              const totalItems = req.items.reduce((s, i) => s + (i.qty_received || i.qty_dispatched || i.qty_approved || i.qty_requested), 0);
+              return (
+                <div key={req.id} className="bg-white dark:bg-[#16171A] rounded-xl border border-[#EAEAEA] dark:border-[#26282E] overflow-hidden">
+                  <div className="px-4 py-3 bg-[#FBFBFA] dark:bg-[#191A1E] border-b border-[#EAEAEA] dark:border-[#26282E] flex items-center justify-between gap-2">
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="font-mono font-bold text-xs text-[#111111] dark:text-[#ECECED]">{req.do_number || req.request_number}</span>
+                        {req.do_number && <span className="text-[10px] text-[#787774] dark:text-[#A1A09E]">/ {req.request_number}</span>}
+                      </div>
+                      <div className="flex items-center gap-1.5 text-[11px] text-[#787774] dark:text-[#A1A09E] mt-0.5">
+                        <Store className="w-3 h-3" />
+                        <span className="font-medium text-[#111111] dark:text-[#ECECED]">{dest?.name}</span>
+                        <span>·</span>
+                        <span>{formatDate(req.received_at || req.created_at)}</span>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      <StatusBadge status={req.status} size="sm" />
+                      <button
+                        type="button"
+                        onClick={() => setRequestToDelete(req)}
+                        className="p-1.5 rounded-lg text-muted-foreground hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors"
+                        title="Hapus Riwayat Permintaan"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="p-4 space-y-2">
+                    <div className="text-xs text-[#787774] dark:text-[#A1A09E]">
+                      <strong className="text-[#111111] dark:text-[#ECECED]">{totalItems} unit</strong> ({req.items.length} item)
+                    </div>
+                    {req.items.map(item => {
+                      const master = itemMap.get(item.item_id);
+                      const finalQty = item.qty_received ?? item.qty_dispatched ?? item.qty_approved ?? item.qty_requested;
+                      return (
+                        <div key={item.id} className="flex justify-between text-[11px]">
+                          <span className="text-[#787774] dark:text-[#A1A09E] truncate max-w-[180px]">{master?.name}</span>
+                          <span className="font-bold text-[#111111] dark:text-[#ECECED] font-mono">{finalQty} {master?.unit}</span>
+                        </div>
+                      );
+                    })}
+                    {req.rejection_notes && (
+                      <div className="text-[11px] text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/40 p-2 rounded-lg border border-rose-200 dark:border-rose-900/40">
+                        Catatan Tolak: {req.rejection_notes}
+                      </div>
+                    )}
+                  </div>
+
+                  {req.do_number && (
+                    <div className="px-4 pb-4">
+                      <button
+                        onClick={() => setActiveSuratJalan(req)}
+                        className="w-full flex items-center justify-center gap-1.5 py-2.5 rounded-lg text-xs font-medium border border-[#EAEAEA] dark:border-[#26282E] bg-white dark:bg-[#16171A] text-[#111111] dark:text-[#ECECED] hover:bg-[#F7F6F3] dark:hover:bg-[#1C1E22] active:scale-[0.98] transition-all"
+                      >
+                        <Printer className="w-3.5 h-3.5" />
+                        <span>Lihat / Cetak Surat Jalan</span>
+                      </button>
+                    </div>
+                  )}
                 </div>
               );
             })}
@@ -548,6 +685,50 @@ export const WarehousePipeline: React.FC<WarehousePipelineProps> = ({ onNavigate
           users={users}
         />
       )}
+
+      {/* Modal Konfirmasi Hapus Permintaan */}
+      <Modal
+        isOpen={!!requestToDelete}
+        onClose={() => setRequestToDelete(null)}
+        title="Konfirmasi Hapus Riwayat Permintaan"
+        subtitle={`Nomor: ${requestToDelete?.do_number || requestToDelete?.request_number}`}
+        maxWidth="sm"
+      >
+        <div className="space-y-4">
+          <div className="p-3 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/50 rounded-xl text-xs text-rose-800 dark:text-rose-300 space-y-1">
+            <p className="font-bold flex items-center gap-1.5">
+              <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
+              Tindakan permanen
+            </p>
+            <p>
+              Riwayat dokumen permintaan barang ini akan dihapus dari sistem. Jika barang masih dalam status antrean atau perjalanan, stok gudang akan otomatis dipulihkan.
+            </p>
+          </div>
+
+          <div className="flex gap-2 justify-end pt-2">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setRequestToDelete(null)}
+              disabled={isDeletingRequest}
+            >
+              Batal
+            </Button>
+            <Button
+              type="button"
+              variant="destructive"
+              size="sm"
+              onClick={handleDeleteRequest}
+              disabled={isDeletingRequest}
+              className="gap-1.5"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+              <span>{isDeletingRequest ? 'Menghapus...' : 'Ya, Hapus'}</span>
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 };
