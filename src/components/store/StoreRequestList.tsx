@@ -7,16 +7,18 @@ import { ReceivingHandshakeModal } from './ReceivingHandshakeModal';
 import { SuratJalanModal } from '../documents/SuratJalanModal';
 import { 
   ClipboardList, CheckSquare, Printer, Clock, 
-  ChevronDown, ChevronUp
+  ChevronDown, ChevronUp, XCircle
 } from 'lucide-react';
 import { formatDate } from '../../utils/formatters';
+import { Modal } from '../common/Modal';
+import { Button } from '@/components/ui/button';
 
 interface StoreRequestListProps {
   initialFilter?: 'ALL' | 'IN_TRANSIT' | 'PENDING' | 'COMPLETED';
 }
 
 export const StoreRequestList: React.FC<StoreRequestListProps> = ({ initialFilter = 'ALL' }) => {
-  const { requests, items } = useInventory();
+  const { requests, items, deleteRequest } = useInventory();
   const { currentLocation, locations, users } = useAuth();
 
   const [statusFilter, setStatusFilter] = useState<string>(initialFilter);
@@ -25,6 +27,21 @@ export const StoreRequestList: React.FC<StoreRequestListProps> = ({ initialFilte
   // Modals state
   const [receivingRequest, setReceivingRequest] = useState<TransferRequest | null>(null);
   const [activeSuratJalan, setActiveSuratJalan] = useState<TransferRequest | null>(null);
+  const [requestToCancel, setRequestToCancel] = useState<TransferRequest | null>(null);
+  const [isCancelling, setIsCancelling] = useState(false);
+
+  const handleCancelRequest = async () => {
+    if (!requestToCancel) return;
+    setIsCancelling(true);
+    try {
+      await deleteRequest(requestToCancel.id);
+      if (receivingRequest?.id === requestToCancel.id) setReceivingRequest(null);
+      if (activeSuratJalan?.id === requestToCancel.id) setActiveSuratJalan(null);
+      setRequestToCancel(null);
+    } finally {
+      setIsCancelling(false);
+    }
+  };
 
   const itemMap = new Map(items.map(i => [i.id, i]));
   const myLocationId = currentLocation?.id;
@@ -117,12 +134,25 @@ export const StoreRequestList: React.FC<StoreRequestListProps> = ({ initialFilte
                       </div>
                     </div>
 
-                    <button
-                      onClick={() => toggleExpand(req.id)}
-                      className="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-lg active:scale-90"
-                    >
-                      {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-                    </button>
+                    <div className="flex items-center gap-1.5">
+                      {(req.status === 'PENDING' || req.status === 'APPROVED' || req.status === 'PARTIAL') && (
+                        <button
+                          type="button"
+                          onClick={() => setRequestToCancel(req)}
+                          className="px-2 py-1 text-[11px] font-semibold text-rose-600 hover:text-rose-700 bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/40 dark:hover:bg-rose-900/50 rounded-lg flex items-center gap-1 transition-colors"
+                          title="Batalkan Permintaan"
+                        >
+                          <XCircle className="w-3.5 h-3.5" />
+                          <span>Batal</span>
+                        </button>
+                      )}
+                      <button
+                        onClick={() => toggleExpand(req.id)}
+                        className="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-lg active:scale-90"
+                      >
+                        {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                      </button>
+                    </div>
                   </div>
 
                   {/* Quick Summary of items */}
@@ -233,6 +263,53 @@ export const StoreRequestList: React.FC<StoreRequestListProps> = ({ initialFilte
           users={users}
         />
       )}
+
+      {/* Modal Konfirmasi Batalkan Permintaan */}
+      <Modal
+        isOpen={Boolean(requestToCancel)}
+        onClose={() => setRequestToCancel(null)}
+        title="Batalkan Permintaan Stok"
+        maxWidth="sm"
+      >
+        <div className="space-y-4">
+          <p className="text-xs text-muted-foreground leading-relaxed">
+            Apakah Anda yakin ingin membatalkan dokumen permintaan{' '}
+            <strong className="text-foreground font-mono">
+              {requestToCancel?.do_number || requestToCancel?.request_number}
+            </strong>?
+            {(requestToCancel?.status === 'APPROVED' || requestToCancel?.status === 'PARTIAL') && (
+              <span className="block mt-2 p-2 rounded-lg bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-300 font-medium">
+                ⚠️ Permintaan ini sudah disetujui gudang. Pembatalan akan otomatis mengembalikan alokasi stok ke saldo Gudang Pusat.
+              </span>
+            )}
+            {requestToCancel?.status === 'PENDING' && (
+              <span className="block mt-2 text-[11px] text-muted-foreground">
+                Permintaan ini belum diproses oleh Admin Gudang dan akan langsung dihapus.
+              </span>
+            )}
+          </p>
+          <div className="flex items-center justify-end gap-2 pt-3 border-t border-border">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setRequestToCancel(null)}
+              disabled={isCancelling}
+              className="text-xs"
+            >
+              Kembali
+            </Button>
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={handleCancelRequest}
+              disabled={isCancelling}
+              className="text-xs font-bold"
+            >
+              {isCancelling ? 'Membatalkan...' : 'Ya, Batalkan Permintaan'}
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 };

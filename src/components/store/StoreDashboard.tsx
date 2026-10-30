@@ -10,20 +10,21 @@ import { NavigationTab } from '../layout/Sidebar';
 import { TransferRequest } from '../../types';
 import { 
   Package, Truck, Boxes, PlusCircle, CheckSquare, 
-  Search, ChevronRight
+  Search, ChevronRight, XCircle
 } from 'lucide-react';
 import { formatNumber, formatRupiah, formatDate } from '../../utils/formatters';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
+import { Modal } from '../common/Modal';
 
 interface StoreDashboardProps {
   onNavigate: (tab: NavigationTab) => void;
 }
 
 export const StoreDashboard: React.FC<StoreDashboardProps> = ({ onNavigate }) => {
-  const { items, inventories, requests } = useInventory();
+  const { items, inventories, requests, deleteRequest } = useInventory();
   const { currentLocation, locations, users } = useAuth();
 
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -31,8 +32,23 @@ export const StoreDashboard: React.FC<StoreDashboardProps> = ({ onNavigate }) =>
   const [activeReceivingReq, setActiveReceivingReq] = useState<TransferRequest | null>(null);
   const [trackingReq, setTrackingReq] = useState<TransferRequest | null>(null);
   const [suratJalanReq, setSuratJalanReq] = useState<TransferRequest | null>(null);
+  const [requestToCancel, setRequestToCancel] = useState<TransferRequest | null>(null);
+  const [isCancelling, setIsCancelling] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [stockFilter, setStockFilter] = useState<'ALL' | 'LOW' | 'OUT'>('ALL');
+
+  const handleCancelRequest = async () => {
+    if (!requestToCancel) return;
+    setIsCancelling(true);
+    try {
+      await deleteRequest(requestToCancel.id);
+      if (trackingReq?.id === requestToCancel.id) setTrackingReq(null);
+      if (suratJalanReq?.id === requestToCancel.id) setSuratJalanReq(null);
+      setRequestToCancel(null);
+    } finally {
+      setIsCancelling(false);
+    }
+  };
 
   const myLocationId = currentLocation?.id || 1;
 
@@ -244,6 +260,18 @@ export const StoreDashboard: React.FC<StoreDashboardProps> = ({ onNavigate }) =>
                       <Truck className="w-3 h-3 mr-1" />
                       Lacak
                     </Button>
+                    {(req.status === 'PENDING' || req.status === 'APPROVED' || req.status === 'PARTIAL') && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setRequestToCancel(req)}
+                        className="h-7 text-[11px] text-rose-600 border-rose-200 dark:border-rose-900/60 hover:bg-rose-50 dark:hover:bg-rose-950/40"
+                        title="Batalkan Permintaan Stok"
+                      >
+                        <XCircle className="w-3 h-3 mr-1" />
+                        Batal
+                      </Button>
+                    )}
                     {req.status === 'IN_TRANSIT' && (
                       <Button
                         size="sm"
@@ -439,6 +467,53 @@ export const StoreDashboard: React.FC<StoreDashboardProps> = ({ onNavigate }) =>
           users={users}
         />
       )}
+
+      {/* Modal Konfirmasi Batalkan Permintaan */}
+      <Modal
+        isOpen={Boolean(requestToCancel)}
+        onClose={() => setRequestToCancel(null)}
+        title="Batalkan Permintaan Stok"
+        maxWidth="sm"
+      >
+        <div className="space-y-4">
+          <p className="text-xs text-muted-foreground leading-relaxed">
+            Apakah Anda yakin ingin membatalkan dokumen permintaan{' '}
+            <strong className="text-foreground font-mono">
+              {requestToCancel?.do_number || requestToCancel?.request_number}
+            </strong>?
+            {(requestToCancel?.status === 'APPROVED' || requestToCancel?.status === 'PARTIAL') && (
+              <span className="block mt-2 p-2 rounded-lg bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-300 font-medium">
+                ⚠️ Permintaan ini sudah disetujui gudang. Pembatalan akan otomatis mengembalikan alokasi stok ke saldo Gudang Pusat.
+              </span>
+            )}
+            {requestToCancel?.status === 'PENDING' && (
+              <span className="block mt-2 text-[11px] text-muted-foreground">
+                Permintaan ini belum diproses oleh Admin Gudang dan akan langsung dihapus.
+              </span>
+            )}
+          </p>
+          <div className="flex items-center justify-end gap-2 pt-3 border-t border-border">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setRequestToCancel(null)}
+              disabled={isCancelling}
+              className="text-xs"
+            >
+              Kembali
+            </Button>
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={handleCancelRequest}
+              disabled={isCancelling}
+              className="text-xs font-bold"
+            >
+              {isCancelling ? 'Membatalkan...' : 'Ya, Batalkan Permintaan'}
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 };
