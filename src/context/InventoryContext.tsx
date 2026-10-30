@@ -35,6 +35,7 @@ interface InventoryContextType {
   authorizeRequest: (requestId: number, adminUserId: string, decision: 'APPROVE_FULL' | 'APPROVE_PARTIAL' | 'REJECT', options?: { approvedItems?: Array<{ itemId: number; qtyApproved: number }>; rejectionNotes?: string }) => Promise<void>;
   dispatchRequest: (requestId: number, adminUserId: string, dispatchInfo?: { driverName?: string; vehiclePlate?: string }) => Promise<void>;
   receiveTransfer: (requestId: number, storeUserId: string, receivedItems: Array<{ itemId: number; qtyReceived: number; discrepancyReason?: string }>) => Promise<void>;
+  deleteRequest: (requestId: number) => Promise<void>;
   markNotificationRead: (id: string) => void;
   loadSampleDataPreset: () => Promise<void>;
   resetToClean: () => void;
@@ -404,6 +405,17 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     }
   };
 
+  const deleteRequest = async (requestId: number): Promise<void> => {
+    try {
+      await SupabaseService.deleteTransferRequest(requestId);
+      await refreshData();
+      showToast('success', 'Riwayat Dihapus', 'Riwayat pengiriman/permintaan berhasil dihapus.');
+    } catch (err: any) {
+      showToast('error', 'Gagal Menghapus', err.message || 'Terjadi kesalahan saat menghapus data.');
+      throw err;
+    }
+  };
+
   const markNotificationRead = (id: string) => {
     StorageRepository.markNotificationAsRead(id);
     refreshData();
@@ -454,6 +466,7 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         authorizeRequest,
         dispatchRequest,
         receiveTransfer,
+        deleteRequest,
         markNotificationRead,
         loadSampleDataPreset,
         resetToClean,

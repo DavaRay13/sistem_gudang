@@ -657,6 +657,56 @@ export class SupabaseService {
     StorageRepository.receiveTransfer(requestId, storeUserId, receivedItems);
   }
 
+  static async deleteTransferRequest(requestId: number): Promise<void> {
+    StorageRepository.deleteRequest(requestId);
+
+    if (isSupabaseConfigured && supabase) {
+      try {
+        const { data: req } = await supabase
+          .from('transfer_requests')
+          .select('*, items:transfer_request_items(*)')
+          .eq('id', requestId)
+          .single();
+
+        if (req && (req.status === 'IN_TRANSIT' || req.status === 'APPROVED' || req.status === 'PARTIAL')) {
+          const items = await this.getItems();
+          for (const item of (req.items || [])) {
+            const itemObj = items.find(it => it.id === item.item_id);
+            if (itemObj?.is_unlimited) continue;
+
+            const { data: inv } = await supabase
+              .from('inventories')
+              .select('*')
+              .eq('location_id', 0)
+              .eq('item_id', item.item_id)
+              .single();
+
+            if (inv) {
+              const qtyToRestore = req.status === 'IN_TRANSIT' ? (item.qty_dispatched || 0) : (item.qty_approved || 0);
+              const newReserved = req.status !== 'IN_TRANSIT' ? Math.max(0, (inv.stock_reserved || 0) - qtyToRestore) : inv.stock_reserved;
+              const newInTransit = req.status === 'IN_TRANSIT' ? Math.max(0, (inv.stock_in_transit || 0) - qtyToRestore) : inv.stock_in_transit;
+              const newAvailable = (inv.stock_available || 0) + qtyToRestore;
+
+              await supabase
+                .from('inventories')
+                .update({
+                  stock_available: newAvailable,
+                  stock_reserved: newReserved,
+                  stock_in_transit: newInTransit,
+                  updated_at: new Date().toISOString(),
+                })
+                .eq('id', inv.id);
+            }
+          }
+        }
+
+        await supabase.from('transfer_requests').delete().eq('id', requestId);
+      } catch (err: any) {
+        console.warn('Supabase deleteTransferRequest error:', err.message);
+      }
+    }
+  }
+
   // --- INVENTORY MUTATIONS (BUKU BESAR MUTASI) ---
   static async getMutations(): Promise<InventoryMutation[]> {
     if (isSupabaseConfigured && supabase) {

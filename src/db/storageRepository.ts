@@ -680,6 +680,46 @@ export class StorageRepository {
     return req;
   }
 
+  static deleteRequest(requestId: number): boolean {
+    const requests = this.getRequests();
+    const req = requests.find(r => r.id === requestId);
+    if (!req) return false;
+
+    const inventories = this.getInventories();
+    const items = this.getItems();
+    const warehouseId = 0;
+
+    // Rollback reserved or in-transit stock if request was active
+    if (req.status === 'IN_TRANSIT') {
+      for (const reqItem of req.items) {
+        const itemObj = items.find(it => it.id === reqItem.item_id);
+        if (itemObj?.is_unlimited) continue;
+        const inv = inventories.find(i => i.location_id === warehouseId && i.item_id === reqItem.item_id);
+        if (inv) {
+          inv.stock_in_transit = Math.max(0, inv.stock_in_transit - (reqItem.qty_dispatched || 0));
+          inv.stock_available += reqItem.qty_dispatched || 0;
+          inv.updated_at = new Date().toISOString();
+        }
+      }
+    } else if (req.status === 'APPROVED' || req.status === 'PARTIAL') {
+      for (const reqItem of req.items) {
+        const itemObj = items.find(it => it.id === reqItem.item_id);
+        if (itemObj?.is_unlimited) continue;
+        const inv = inventories.find(i => i.location_id === warehouseId && i.item_id === reqItem.item_id);
+        if (inv) {
+          inv.stock_reserved = Math.max(0, inv.stock_reserved - (reqItem.qty_approved || 0));
+          inv.stock_available += reqItem.qty_approved || 0;
+          inv.updated_at = new Date().toISOString();
+        }
+      }
+    }
+
+    const updatedRequests = requests.filter(r => r.id !== requestId);
+    setStorage(STORAGE_KEYS.INVENTORIES, inventories);
+    setStorage(STORAGE_KEYS.REQUESTS, updatedRequests);
+    return true;
+  }
+
   // --- MUTATIONS LEDGER ---
   static getMutations(): InventoryMutation[] {
     return getStorage<InventoryMutation[]>(STORAGE_KEYS.MUTATIONS, INITIAL_MUTATIONS);

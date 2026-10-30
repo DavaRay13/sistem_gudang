@@ -11,8 +11,9 @@ import { TransferRequest } from '../../types';
 import { 
   Package, Boxes, Truck, Clock, 
   Store, ClipboardList, 
-  FileText, PlusCircle
+  FileText, PlusCircle, Trash2
 } from 'lucide-react';
+import { Modal } from '../common/Modal';
 import { formatNumber } from '../../utils/formatters';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
@@ -23,11 +24,26 @@ interface WarehouseDashboardProps {
 }
 
 export const WarehouseDashboard: React.FC<WarehouseDashboardProps> = ({ onNavigate }) => {
-  const { items, inventories, requests } = useInventory();
+  const { items, inventories, requests, deleteRequest } = useInventory();
   const { locations, users } = useAuth();
 
   const [trackingReq, setTrackingReq] = useState<TransferRequest | null>(null);
   const [suratJalanReq, setSuratJalanReq] = useState<TransferRequest | null>(null);
+  const [requestToDelete, setRequestToDelete] = useState<TransferRequest | null>(null);
+  const [isDeletingRequest, setIsDeletingRequest] = useState(false);
+
+  const handleDeleteRequest = async () => {
+    if (!requestToDelete) return;
+    setIsDeletingRequest(true);
+    try {
+      await deleteRequest(requestToDelete.id);
+      if (trackingReq?.id === requestToDelete.id) setTrackingReq(null);
+      if (suratJalanReq?.id === requestToDelete.id) setSuratJalanReq(null);
+      setRequestToDelete(null);
+    } finally {
+      setIsDeletingRequest(false);
+    }
+  };
 
   const locMap = new Map(locations.map(l => [l.id, l]));
 
@@ -127,6 +143,16 @@ export const WarehouseDashboard: React.FC<WarehouseDashboardProps> = ({ onNaviga
                   >
                     <FileText className="w-3.5 h-3.5 mr-1" />
                     Surat Jalan DO
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setRequestToDelete(req)}
+                    className="text-xs h-8 text-rose-600 border-rose-200 dark:border-rose-900/50 hover:bg-rose-50 dark:hover:bg-rose-950/40"
+                    title="Hapus Riwayat Pengiriman"
+                  >
+                    <Trash2 className="w-3.5 h-3.5 mr-1" />
+                    Hapus
                   </Button>
                 </div>
               </div>
@@ -295,11 +321,19 @@ export const WarehouseDashboard: React.FC<WarehouseDashboardProps> = ({ onNaviga
                           Total: <strong className="font-mono text-foreground">{totalQty}</strong> Unit ({req.items.length} item)
                         </span>
                       </div>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-1.5">
                         <StatusBadge status={req.status} size="sm" />
-                        <span className="text-[10px] font-bold text-orange-600 opacity-0 group-hover:opacity-100 transition-opacity">
-                          Lacak &rarr;
-                        </span>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setRequestToDelete(req);
+                          }}
+                          className="p-1.5 rounded-lg text-muted-foreground hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors"
+                          title="Hapus riwayat pengiriman"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
                       </div>
                     </div>
                   );
@@ -408,6 +442,53 @@ export const WarehouseDashboard: React.FC<WarehouseDashboardProps> = ({ onNaviga
           users={users}
         />
       )}
+
+      {/* Modal Konfirmasi Hapus Riwayat Pengiriman */}
+      <Modal
+        isOpen={Boolean(requestToDelete)}
+        onClose={() => setRequestToDelete(null)}
+        title="Hapus Riwayat Pengiriman"
+        maxWidth="sm"
+      >
+        <div className="space-y-4">
+          <p className="text-xs text-muted-foreground leading-relaxed">
+            Apakah Anda yakin ingin menghapus data pengiriman{' '}
+            <strong className="text-foreground font-mono">
+              {requestToDelete?.do_number || requestToDelete?.request_number}
+            </strong>?
+            {requestToDelete?.status === 'IN_TRANSIT' && (
+              <span className="block mt-2 p-2 rounded-lg bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-300 font-medium">
+                ⚠️ Pengiriman sedang dalam perjalanan (In-Transit). Menghapus data ini akan otomatis mengembalikan saldo stok ke Gudang Pusat.
+              </span>
+            )}
+            {requestToDelete?.status === 'APPROVED' && (
+              <span className="block mt-2 p-2 rounded-lg bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-300 font-medium">
+                ⚠️ Pesanan telah disetujui (Reserved). Menghapus data ini akan membatalkan alokasi dan mengembalikan stok ke saldo bebas Gudang Pusat.
+              </span>
+            )}
+          </p>
+          <div className="flex items-center justify-end gap-2 pt-3 border-t border-border">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setRequestToDelete(null)}
+              disabled={isDeletingRequest}
+              className="text-xs"
+            >
+              Batal
+            </Button>
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={handleDeleteRequest}
+              disabled={isDeletingRequest}
+              className="text-xs font-bold"
+            >
+              {isDeletingRequest ? 'Menghapus...' : 'Ya, Hapus Riwayat'}
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 };
