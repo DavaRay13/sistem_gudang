@@ -220,7 +220,6 @@ export const CreateRequestModal: React.FC<CreateRequestModalProps> = ({
     if (activeItems[0]) return [{ itemId: activeItems[0].id, qtyRequested: 10 }];
     return [];
   });
-  const [priority, setPriority] = useState<'EXPRESS' | 'REGULAR' | 'SCHEDULED'>('EXPRESS');
   const [notes, setNotes] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -291,8 +290,7 @@ export const CreateRequestModal: React.FC<CreateRequestModalProps> = ({
 
     setIsSubmitting(true);
     try {
-      const priorityLabel = priority === 'EXPRESS' ? '[Prioritas: Express ⚡]' : priority === 'REGULAR' ? '[Prioritas: Reguler 🚚]' : '[Prioritas: Jadwal Rutin 🏢]';
-      const finalNotes = `${priorityLabel} ${notes}`.trim();
+      const finalNotes = notes.trim();
       await createRequest(myLocationId, currentUser.id, validRows, finalNotes);
       onClose();
       setRows([{ itemId: items[0]?.id || 1, qtyRequested: 10 }]);
@@ -480,68 +478,10 @@ export const CreateRequestModal: React.FC<CreateRequestModalProps> = ({
           </div>
         </div>
 
-        {/* Section 2: Prioritas Pengiriman & Jadwal */}
+        {/* Section 2: Ringkasan Permintaan Mutasi */}
         <div className="space-y-2 pt-2 border-t border-border">
           <div className="flex items-center gap-1.5 text-xs font-bold text-foreground">
             <span className="w-5 h-5 rounded-md bg-orange-500/10 text-orange-600 flex items-center justify-center text-[11px]">2</span>
-            <span>Prioritas Pengiriman & Jadwal</span>
-          </div>
-
-          <div className="grid grid-cols-3 gap-2">
-            {/* Express Card */}
-            <button
-              type="button"
-              onClick={() => setPriority('EXPRESS')}
-              className={`p-2.5 rounded-xl border text-center transition-all ${
-                priority === 'EXPRESS'
-                  ? 'bg-orange-50/80 dark:bg-orange-950/40 border-orange-500 text-orange-600 dark:text-orange-400 shadow-2xs font-bold'
-                  : 'bg-card border-border text-muted-foreground hover:bg-muted/40'
-              }`}
-            >
-              <span className="text-base block mb-0.5">⚡</span>
-              <span className="text-xs font-bold block">Express</span>
-              <span className="text-[10px] opacity-75 block">Hari Ini</span>
-              <span className={`text-[10px] block mt-1 ${priority === 'EXPRESS' ? 'text-orange-600 font-bold' : 'text-muted-foreground/50'}`}>●</span>
-            </button>
-
-            {/* Regular Card */}
-            <button
-              type="button"
-              onClick={() => setPriority('REGULAR')}
-              className={`p-2.5 rounded-xl border text-center transition-all ${
-                priority === 'REGULAR'
-                  ? 'bg-orange-50/80 dark:bg-orange-950/40 border-orange-500 text-orange-600 dark:text-orange-400 shadow-2xs font-bold'
-                  : 'bg-card border-border text-muted-foreground hover:bg-muted/40'
-              }`}
-            >
-              <span className="text-base block mb-0.5">🚚</span>
-              <span className="text-xs font-bold block">Reguler</span>
-              <span className="text-[10px] opacity-75 block">1-2 Hari</span>
-              <span className={`text-[10px] block mt-1 ${priority === 'REGULAR' ? 'text-orange-600 font-bold' : 'text-muted-foreground/50'}`}>●</span>
-            </button>
-
-            {/* Scheduled Card */}
-            <button
-              type="button"
-              onClick={() => setPriority('SCHEDULED')}
-              className={`p-2.5 rounded-xl border text-center transition-all ${
-                priority === 'SCHEDULED'
-                  ? 'bg-orange-50/80 dark:bg-orange-950/40 border-orange-500 text-orange-600 dark:text-orange-400 shadow-2xs font-bold'
-                  : 'bg-card border-border text-muted-foreground hover:bg-muted/40'
-              }`}
-            >
-              <span className="text-base block mb-0.5">🏢</span>
-              <span className="text-xs font-bold block">Rutin</span>
-              <span className="text-[10px] opacity-75 block">Mingguan</span>
-              <span className={`text-[10px] block mt-1 ${priority === 'SCHEDULED' ? 'text-orange-600 font-bold' : 'text-muted-foreground/50'}`}>●</span>
-            </button>
-          </div>
-        </div>
-
-        {/* Section 3: Ringkasan Permintaan Mutasi */}
-        <div className="space-y-2 pt-2 border-t border-border">
-          <div className="flex items-center gap-1.5 text-xs font-bold text-foreground">
-            <span className="w-5 h-5 rounded-md bg-orange-500/10 text-orange-600 flex items-center justify-center text-[11px]">3</span>
             <span>Ringkasan Permintaan Mutasi</span>
           </div>
 
