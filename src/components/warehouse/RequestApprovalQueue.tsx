@@ -97,8 +97,9 @@ export const RequestApprovalQueue: React.FC = () => {
 
         // Validasi ketersediaan stok fisik gudang
         for (const ai of approvedItems) {
-          const stock = getWarehouseStock(ai.itemId);
           const master = itemMap.get(ai.itemId);
+          if (master?.is_unlimited) continue;
+          const stock = getWarehouseStock(ai.itemId);
           if (ai.qtyApproved > stock) {
             alert(`Kuantiti disetujui untuk "${master?.name || 'Barang'}" (${ai.qtyApproved} unit) melebihi stok fisik di Gudang Pusat (${stock} unit).\n\nSilakan sesuaikan jumlah atau lakukan Tambah Stok (Inbound) terlebih dahulu.`);
             return;
@@ -327,13 +328,14 @@ export const RequestApprovalQueue: React.FC = () => {
               <div className="space-y-2">
                 {activeRequest.items.map(item => {
                   const masterItem = itemMap.get(item.item_id);
+                  const isUnlimited = Boolean(masterItem?.is_unlimited);
                   const available = getWarehouseStock(item.item_id);
                   const currentApproved = partialQtys[item.item_id] !== undefined
                     ? partialQtys[item.item_id]
-                    : Math.min(item.qty_requested, Math.max(0, available));
+                    : (isUnlimited ? item.qty_requested : Math.min(item.qty_requested, Math.max(0, available)));
                   const numApproved = Number(currentApproved) || 0;
-                  const isZeroStock = available <= 0;
-                  const isOverStock = numApproved > available;
+                  const isZeroStock = !isUnlimited && available <= 0;
+                  const isOverStock = !isUnlimited && numApproved > available;
 
                   return (
                     <div key={item.id} className="p-3.5 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 space-y-2.5">
@@ -347,8 +349,8 @@ export const RequestApprovalQueue: React.FC = () => {
                           <span className="text-[11px] font-medium text-slate-500 block">
                             Diminta Toko: <strong className="font-bold text-slate-800 dark:text-slate-200">{item.qty_requested}</strong>
                           </span>
-                          <span className={`text-[11px] font-bold ${isZeroStock ? 'text-rose-600 dark:text-rose-400' : 'text-emerald-600 dark:text-emerald-400'}`}>
-                            Stok Gudang: {available} unit
+                          <span className={`text-[11px] font-bold ${isUnlimited ? 'text-emerald-600 dark:text-emerald-400' : isZeroStock ? 'text-rose-600 dark:text-rose-400' : 'text-emerald-600 dark:text-emerald-400'}`}>
+                            Stok Gudang: {isUnlimited ? '∞ Unlimited' : `${available} unit`}
                           </span>
                         </div>
                       </div>

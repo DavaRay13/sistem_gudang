@@ -94,9 +94,11 @@ export const WarehousePipeline: React.FC<WarehousePipelineProps> = ({ onNavigate
           return { itemId: item.item_id, qtyApproved };
         });
         for (const ai of approvedItems) {
+          const itemObj = itemMap.get(ai.itemId);
+          if (itemObj?.is_unlimited) continue;
           const stock = getWarehouseStock(ai.itemId);
           if (ai.qtyApproved > stock) {
-            alert(`Kuantiti melebihi stok gudang untuk "${itemMap.get(ai.itemId)?.name}" (tersedia: ${stock} unit).`);
+            alert(`Kuantiti melebihi stok gudang untuk "${itemObj?.name}" (tersedia: ${stock} unit).`);
             return;
           }
         }
@@ -451,16 +453,19 @@ export const WarehousePipeline: React.FC<WarehousePipelineProps> = ({ onNavigate
               {activeRequest.items.map(item => {
                 const master = itemMap.get(item.item_id);
                 const available = getWarehouseStock(item.item_id);
-                const current = partialQtys[item.item_id] !== undefined ? partialQtys[item.item_id] : Math.min(item.qty_requested, available);
+                const isUnlimited = Boolean(master?.is_unlimited);
+                const current = partialQtys[item.item_id] !== undefined
+                  ? partialQtys[item.item_id]
+                  : (isUnlimited ? item.qty_requested : Math.min(item.qty_requested, available));
                 const numVal = Number(current) || 0;
-                const isOver = numVal > available;
+                const isOver = !isUnlimited && numVal > available;
 
                 return (
                   <div key={item.id} className="p-3 rounded-lg border border-[#EAEAEA] dark:border-[#26282E] bg-[#FBFBFA] dark:bg-[#191A1E] space-y-2">
                     <div className="flex justify-between text-xs">
                       <span className="font-semibold text-[#111111] dark:text-[#ECECED]">{master?.name}</span>
-                      <span className={`font-medium ${available <= 0 ? 'text-[#9F2F2D] dark:text-[#F8A4A4]' : 'text-[#346538] dark:text-[#96D99C]'}`}>
-                        Stok gudang: {available} unit
+                      <span className={`font-medium ${isUnlimited ? 'text-[#346538] dark:text-[#96D99C]' : available <= 0 ? 'text-[#9F2F2D] dark:text-[#F8A4A4]' : 'text-[#346538] dark:text-[#96D99C]'}`}>
+                        {isUnlimited ? 'Stok gudang: ∞ Unlimited' : `Stok gudang: ${available} unit`}
                       </span>
                     </div>
                     <div className="flex items-center gap-2">

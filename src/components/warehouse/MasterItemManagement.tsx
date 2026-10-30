@@ -8,7 +8,7 @@ import { ImportSkuModal } from './ImportSkuModal';
 import { 
   Package, Plus, ArrowDownRight, ArrowUpRight, Search, 
   ShieldAlert, Boxes, Download, Upload, Trash2, Pencil, Sparkles,
-  LayoutList, LayoutGrid
+  LayoutList, LayoutGrid, ChevronDown, Check
 } from 'lucide-react';
 import { Item } from '../../types';
 import { formatNumber, formatRupiah } from '../../utils/formatters';
@@ -49,6 +49,117 @@ const COMMON_ITEM_CATALOG: ItemPreset[] = [
 const QUICK_CATEGORIES = ['Sembako', 'Makanan', 'Minuman', 'Kebersihan', 'Perlengkapan Kasir', 'Logistik', 'Elektronik', 'Umum'];
 const QUICK_UNITS = ['DUS', 'PACK', 'PCS', 'KARTON', 'RENCENG', 'BOX', 'KARUNG', 'POUCH'];
 
+interface CategoryComboboxProps {
+  value: string;
+  onChange: (val: string) => void;
+  categories: string[];
+}
+
+const CategoryCombobox: React.FC<CategoryComboboxProps> = ({ value, onChange, categories }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [search, setSearch] = useState('');
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const trimmedSearch = search.trim();
+  const filtered = categories.filter(c =>
+    c.toLowerCase().includes(trimmedSearch.toLowerCase())
+  );
+  const exactMatch = categories.some(
+    c => c.toLowerCase() === trimmedSearch.toLowerCase()
+  );
+
+  return (
+    <div ref={containerRef} className="relative">
+      <button
+        type="button"
+        onClick={() => {
+          setIsOpen(!isOpen);
+          setSearch('');
+        }}
+        className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-background text-foreground text-xs font-medium flex items-center justify-between gap-2 focus:ring-2 focus:ring-brand-500 focus:outline-none"
+      >
+        <span className={value ? 'text-foreground font-semibold' : 'text-muted-foreground'}>
+          {value || 'Pilih atau cari kategori...'}
+        </span>
+        <ChevronDown className={`w-3.5 h-3.5 text-muted-foreground transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+      </button>
+
+      {isOpen && (
+        <div className="absolute z-50 left-0 right-0 mt-1 p-2 rounded-xl border border-border bg-card shadow-xl space-y-1.5 animate-in fade-in zoom-in-95 duration-100">
+          {/* Kolom Search */}
+          <div className="relative">
+            <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
+            <input
+              type="text"
+              autoFocus
+              placeholder="Cari atau ketik nama kategori..."
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              className="w-full pl-8 pr-2.5 py-1.5 rounded-lg border border-border bg-background text-foreground text-xs focus:ring-2 focus:ring-brand-500 focus:outline-none"
+            />
+          </div>
+
+          {/* List Kategori */}
+          <div className="max-h-44 overflow-y-auto space-y-0.5 divide-y divide-border/30">
+            {filtered.map(cat => {
+              const isSelected = value.toLowerCase() === cat.toLowerCase();
+              return (
+                <button
+                  key={cat}
+                  type="button"
+                  onClick={() => {
+                    onChange(cat);
+                    setIsOpen(false);
+                  }}
+                  className={`w-full px-2.5 py-2 rounded-lg text-xs font-medium flex items-center justify-between text-left transition-colors ${
+                    isSelected
+                      ? 'bg-brand-50 dark:bg-brand-950/40 text-brand-700 dark:text-brand-300 font-bold'
+                      : 'hover:bg-muted text-foreground'
+                  }`}
+                >
+                  <span>{cat}</span>
+                  {isSelected && <Check className="w-3.5 h-3.5 text-brand-600 dark:text-brand-400" />}
+                </button>
+              );
+            })}
+
+            {filtered.length === 0 && !trimmedSearch && (
+              <div className="py-2 text-center text-xs text-muted-foreground">
+                Tidak ada kategori terdaftar
+              </div>
+            )}
+          </div>
+
+          {/* Opsi Tambah Kategori Baru */}
+          {trimmedSearch && !exactMatch && (
+            <button
+              type="button"
+              onClick={() => {
+                onChange(trimmedSearch);
+                setIsOpen(false);
+              }}
+              className="w-full px-2.5 py-2 rounded-lg text-xs font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200/60 dark:border-emerald-800/60 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 flex items-center gap-1.5 transition-all text-left"
+            >
+              <Plus className="w-3.5 h-3.5 shrink-0" />
+              <span className="truncate">Tambah kategori baru: <strong className="underline">{trimmedSearch}</strong></span>
+            </button>
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
+
 export const MasterItemManagement: React.FC = () => {
   const { items, inventories, addNewItem, updateItem, deleteItem, inboundStock } = useInventory();
   const { locations, currentUser } = useAuth();
@@ -77,12 +188,14 @@ export const MasterItemManagement: React.FC = () => {
     unit: string;
     price: number | string;
     safety_stock: number | string;
+    is_unlimited: boolean;
   }>({
     name: '',
     category: 'Elektronik',
     unit: 'PCS',
     price: 50000,
     safety_stock: 10,
+    is_unlimited: false,
   });
 
   const openEditModal = (item: Item) => {
@@ -93,6 +206,7 @@ export const MasterItemManagement: React.FC = () => {
       unit: item.unit,
       price: item.price,
       safety_stock: item.safety_stock,
+      is_unlimited: Boolean(item.is_unlimited),
     });
   };
 
@@ -109,6 +223,7 @@ export const MasterItemManagement: React.FC = () => {
         unit: editFormData.unit.trim().toUpperCase(),
         price: Number(editFormData.price) || 0,
         safety_stock: Number(editFormData.safety_stock) || 0,
+        is_unlimited: editFormData.is_unlimited,
       });
       setItemToEdit(null);
     } catch {
@@ -129,8 +244,9 @@ export const MasterItemManagement: React.FC = () => {
 
   const activeItems = items.filter(i => !i.is_archived);
 
-  const emptyStockCount = activeItems.filter(i => getInv(0, i.id).stock_available <= 0).length;
+  const emptyStockCount = activeItems.filter(i => !i.is_unlimited && getInv(0, i.id).stock_available <= 0).length;
   const lowStockCount = activeItems.filter(i => {
+    if (i.is_unlimited) return false;
     const avail = getInv(0, i.id).stock_available;
     return avail > 0 && avail <= i.safety_stock;
   }).length;
@@ -155,12 +271,14 @@ export const MasterItemManagement: React.FC = () => {
     unit: string;
     price: number | string;
     initial_stock: number | string;
+    is_unlimited: boolean;
   }>({
     name: '',
     category: 'Sembako',
     unit: 'DUS',
     price: '',
     initial_stock: '',
+    is_unlimited: false,
   });
 
   const [showNameSuggestions, setShowNameSuggestions] = useState(false);
@@ -212,6 +330,12 @@ export const MasterItemManagement: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const categories = ['ALL', ...Array.from(new Set(activeItems.map(i => i.category || 'Umum')))];
+  const registeredCategories = Array.from(
+    new Set([
+      ...QUICK_CATEGORIES,
+      ...activeItems.map(i => i.category?.trim()).filter(Boolean) as string[],
+    ])
+  ).sort((a, b) => a.localeCompare(b));
 
   const filteredItems = activeItems.filter(item => {
     const itemName = item?.name || '';
@@ -220,12 +344,12 @@ export const MasterItemManagement: React.FC = () => {
     if (!matchSearch || !matchCategory) return false;
 
     const hubInv = getInv(0, item.id);
-    const isOut = hubInv.stock_available <= 0;
-    const isLow = !isOut && hubInv.stock_available <= item.safety_stock;
+    const isOut = !item.is_unlimited && hubInv.stock_available <= 0;
+    const isLow = !item.is_unlimited && !isOut && hubInv.stock_available <= item.safety_stock;
 
     if (statusFilter === 'EMPTY') return isOut;
     if (statusFilter === 'LOW') return isLow;
-    if (statusFilter === 'AVAILABLE') return !isOut && !isLow;
+    if (statusFilter === 'AVAILABLE') return item.is_unlimited || (!isOut && !isLow);
 
     return true;
   });
@@ -245,11 +369,12 @@ export const MasterItemManagement: React.FC = () => {
         unit: formData.unit.trim().toUpperCase() || 'PCS',
         price: Number(formData.price) || 0,
         safety_stock: 0,
+        is_unlimited: formData.is_unlimited,
       });
 
-      // Otomatis catat saldo stok awal ke database jika kuantiti diisi
+      // Otomatis catat saldo stok awal ke database jika kuantiti diisi dan bukan unlimited
       const initStock = Number(formData.initial_stock) || 0;
-      if (initStock > 0 && currentUser) {
+      if (!formData.is_unlimited && initStock > 0 && currentUser) {
         await inboundStock(
           created.id,
           initStock,
@@ -266,6 +391,7 @@ export const MasterItemManagement: React.FC = () => {
         unit: 'DUS',
         price: '',
         initial_stock: '',
+        is_unlimited: false,
       });
     } catch {
       // Handled by toast
@@ -506,8 +632,8 @@ export const MasterItemManagement: React.FC = () => {
             const store2Inv = getInv(2, item.id);
             const store3Inv = getInv(3, item.id);
 
-            const isOutOfStock = hubInv.stock_available <= 0;
-            const isLowStockInHub = !isOutOfStock && hubInv.stock_available <= item.safety_stock;
+            const isOutOfStock = !item.is_unlimited && hubInv.stock_available <= 0;
+            const isLowStockInHub = !item.is_unlimited && !isOutOfStock && hubInv.stock_available <= item.safety_stock;
 
             return (
               <div
@@ -519,13 +645,15 @@ export const MasterItemManagement: React.FC = () => {
                   <div className="flex items-center gap-2 min-w-0 flex-1">
                     <span
                       className={`w-2 h-2 rounded-full shrink-0 ${
-                        isOutOfStock
-                          ? 'bg-rose-500 animate-pulse'
-                          : isLowStockInHub
-                            ? 'bg-amber-500'
-                            : 'bg-emerald-500'
+                        item.is_unlimited
+                          ? 'bg-emerald-500'
+                          : isOutOfStock
+                            ? 'bg-rose-500 animate-pulse'
+                            : isLowStockInHub
+                              ? 'bg-amber-500'
+                              : 'bg-emerald-500'
                       }`}
-                      title={isOutOfStock ? 'Stok Kosong' : isLowStockInHub ? 'Stok Menipis' : 'Stok Tersedia'}
+                      title={item.is_unlimited ? 'Stok Unlimited' : isOutOfStock ? 'Stok Kosong' : isLowStockInHub ? 'Stok Menipis' : 'Stok Tersedia'}
                     />
                     <div className="min-w-0 flex-1">
                       <h3 className="font-bold text-xs sm:text-sm text-foreground leading-tight truncate">
@@ -543,18 +671,22 @@ export const MasterItemManagement: React.FC = () => {
 
                   {/* Stock counter on mobile sits on top-right */}
                   <div className="sm:hidden text-right shrink-0 px-2 py-1 rounded-lg bg-muted/60">
-                    <div className="flex items-baseline justify-end gap-1">
-                      <span className={`text-xs font-black font-mono tabular-nums leading-none ${
-                        isOutOfStock
-                          ? 'text-rose-600 dark:text-rose-400'
-                          : isLowStockInHub
-                            ? 'text-amber-600 dark:text-amber-400'
-                            : 'text-foreground'
-                      }`}>
-                        {formatNumber(hubInv.stock_available)}
-                      </span>
-                      <span className="text-[9px] text-muted-foreground font-bold uppercase">{item.unit || 'PCS'}</span>
-                    </div>
+                    {item.is_unlimited ? (
+                      <span className="text-[11px] font-black text-emerald-600 dark:text-emerald-400">∞ Unlimited</span>
+                    ) : (
+                      <div className="flex items-baseline justify-end gap-1">
+                        <span className={`text-xs font-black font-mono tabular-nums leading-none ${
+                          isOutOfStock
+                            ? 'text-rose-600 dark:text-rose-400'
+                            : isLowStockInHub
+                              ? 'text-amber-600 dark:text-amber-400'
+                              : 'text-foreground'
+                        }`}>
+                          {formatNumber(hubInv.stock_available)}
+                        </span>
+                        <span className="text-[9px] text-muted-foreground font-bold uppercase">{item.unit || 'PCS'}</span>
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -562,18 +694,24 @@ export const MasterItemManagement: React.FC = () => {
                 <div className="flex items-center justify-between sm:justify-end gap-2 pt-1.5 sm:pt-0 border-t sm:border-t-0 border-border/60">
                   {/* Stock counter desktop */}
                   <div className="hidden sm:block text-right shrink-0 px-2.5 py-1 rounded-lg bg-muted/50">
-                    <div className="flex items-baseline justify-end gap-1">
-                      <span className={`text-sm font-black font-mono tabular-nums leading-none ${
-                        isOutOfStock
-                          ? 'text-rose-600 dark:text-rose-400'
-                          : isLowStockInHub
-                            ? 'text-amber-600 dark:text-amber-400'
-                            : 'text-foreground'
-                      }`}>
-                        {formatNumber(hubInv.stock_available)}
-                      </span>
-                      <span className="text-[9px] text-muted-foreground font-bold uppercase">{item.unit || 'PCS'}</span>
-                    </div>
+                    {item.is_unlimited ? (
+                      <div className="flex items-baseline justify-end gap-1">
+                        <span className="text-xs font-black text-emerald-600 dark:text-emerald-400">∞ Unlimited</span>
+                      </div>
+                    ) : (
+                      <div className="flex items-baseline justify-end gap-1">
+                        <span className={`text-sm font-black font-mono tabular-nums leading-none ${
+                          isOutOfStock
+                            ? 'text-rose-600 dark:text-rose-400'
+                            : isLowStockInHub
+                              ? 'text-amber-600 dark:text-amber-400'
+                              : 'text-foreground'
+                        }`}>
+                          {formatNumber(hubInv.stock_available)}
+                        </span>
+                        <span className="text-[9px] text-muted-foreground font-bold uppercase">{item.unit || 'PCS'}</span>
+                      </div>
+                    )}
                     <div className="text-[9px] text-muted-foreground font-mono mt-0.5 whitespace-nowrap">
                       T1:{store1Inv.stock_available} T2:{store2Inv.stock_available} T3:{store3Inv.stock_available}
                     </div>
@@ -662,7 +800,11 @@ export const MasterItemManagement: React.FC = () => {
                     </div>
                     {/* Status Badge */}
                     <div className="shrink-0">
-                      {isOutOfStock ? (
+                      {item.is_unlimited ? (
+                        <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-1 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+                          <span className="text-xs">∞</span> Unlimited
+                        </span>
+                      ) : isOutOfStock ? (
                         <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-1 rounded-lg bg-rose-500/10 text-rose-600 dark:text-rose-400">
                           <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse"></span>
                           Kosong
@@ -685,15 +827,21 @@ export const MasterItemManagement: React.FC = () => {
                 <div className="mx-3.5 p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/50">
                   <div className="grid grid-cols-3 gap-2 text-center">
                     <div>
-                      <span className={`text-lg font-black font-mono tabular-nums block leading-none ${
-                        isOutOfStock
-                          ? 'text-rose-600 dark:text-rose-400'
-                          : isLowStockInHub
-                            ? 'text-amber-600 dark:text-amber-400'
-                            : 'text-slate-900 dark:text-white'
-                      }`}>
-                        {formatNumber(hubInv.stock_available)}
-                      </span>
+                      {item.is_unlimited ? (
+                        <span className="text-xs font-black text-emerald-600 dark:text-emerald-400 block leading-tight py-1">
+                          ∞ Unlimited
+                        </span>
+                      ) : (
+                        <span className={`text-lg font-black font-mono tabular-nums block leading-none ${
+                          isOutOfStock
+                            ? 'text-rose-600 dark:text-rose-400'
+                            : isLowStockInHub
+                              ? 'text-amber-600 dark:text-amber-400'
+                              : 'text-slate-900 dark:text-white'
+                        }`}>
+                          {formatNumber(hubInv.stock_available)}
+                        </span>
+                      )}
                       <span className="text-[9px] text-slate-400 uppercase font-semibold mt-0.5 block">Tersedia</span>
                     </div>
                     <div>
@@ -849,25 +997,22 @@ export const MasterItemManagement: React.FC = () => {
             )}
           </div>
 
-          {/* Kategori (Bisa Ketik Bebas + Chip Cepat) */}
+          {/* Kategori (Dropdown Search + Tambah Baru) */}
           <div>
             <div className="flex items-center justify-between mb-1.5">
               <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
-                Kategori (Ketik Bebas)
+                Kategori
               </label>
-              <span className="text-[10px] text-slate-400">atau klik pilihan cepat</span>
+              <span className="text-[10px] text-slate-400">Pilih, cari, atau tambah baru</span>
             </div>
-            <input
-              type="text"
-              required
-              placeholder="Contoh: Sembako, Makanan, Minuman, Logistik..."
+            <CategoryCombobox
               value={formData.category}
-              onChange={e => setFormData({ ...formData, category: e.target.value })}
-              className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs font-medium focus:ring-2 focus:ring-brand-500 focus:outline-none"
+              onChange={cat => setFormData({ ...formData, category: cat })}
+              categories={registeredCategories}
             />
             {/* Quick Category Chips */}
-            <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
-              {QUICK_CATEGORIES.map(cat => {
+            <div className="flex items-center gap-1.5 mt-2 flex-wrap">
+              {QUICK_CATEGORIES.slice(0, 5).map(cat => {
                 const isSelected = formData.category.toLowerCase() === cat.toLowerCase();
                 return (
                   <button
@@ -951,51 +1096,67 @@ export const MasterItemManagement: React.FC = () => {
 
           {/* Jumlah Stok Masuk ke Gudang Pusat */}
           <div className="p-3.5 rounded-2xl bg-card border border-emerald-300 dark:border-emerald-800/80 space-y-2.5">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between gap-2 flex-wrap">
               <div className="flex items-center gap-1.5">
                 <Boxes className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
                 <span className="text-xs font-bold text-foreground">
                   Jumlah Stok Masuk (Gudang Pusat)
                 </span>
               </div>
-              <span className="text-[10px] font-semibold text-emerald-800 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-900/50 px-2 py-0.5 rounded-full">
-                Saldo Awal
-              </span>
+              <label className="flex items-center gap-1.5 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={formData.is_unlimited}
+                  onChange={e => setFormData({ ...formData, is_unlimited: e.target.checked })}
+                  className="w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500 border-border"
+                />
+                <span className="text-[11px] font-bold text-emerald-700 dark:text-emerald-300">Stok Unlimited</span>
+              </label>
             </div>
-            <p className="text-[11px] text-muted-foreground">
-              Kuantitas barang yang langsung tersedia di Gudang Pusat saat disimpan.
-            </p>
 
-            <div className="space-y-2">
-              <input
-                type="number"
-                min="0"
-                placeholder="0"
-                value={formData.initial_stock}
-                onChange={e => {
-                  const val = e.target.value;
-                  setFormData({ ...formData, initial_stock: val === '' ? '' : Math.max(0, parseInt(val) || 0) });
-                }}
-                className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-background text-foreground text-sm font-bold font-mono focus:ring-2 focus:ring-emerald-500 focus:outline-none"
-              />
-              {/* Stepper buttons wrapped for mobile */}
-              <div className="flex items-center gap-1.5 flex-wrap">
-                <span className="text-[10px] font-semibold text-muted-foreground mr-0.5">Tambah cepat:</span>
-                {[5, 10, 25, 50, 100].map(addQty => (
-                  <button
-                    key={addQty}
-                    type="button"
-                    onClick={() => {
-                      const cur = Number(formData.initial_stock) || 0;
-                      setFormData({ ...formData, initial_stock: cur + addQty });
-                    }}
-                    className="px-2.5 py-1 rounded-lg text-xs font-bold bg-muted text-foreground border border-border hover:bg-muted/80 active:scale-95 transition-all"
-                  >
-                    +{addQty}
-                  </button>
-                ))}
+            {formData.is_unlimited ? (
+              <div className="p-2.5 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 rounded-xl text-xs text-emerald-700 dark:text-emerald-300 flex items-center gap-2 font-medium">
+                <span className="text-base font-black">∞</span>
+                <span>Stok tanpa batas. Toko cabang bebas mengajukan permohonan tanpa dibatasi ketersediaan stok fisik gudang.</span>
               </div>
-            </div>
+            ) : (
+              <>
+                <p className="text-[11px] text-muted-foreground">
+                  Kuantitas barang yang langsung tersedia di Gudang Pusat saat disimpan.
+                </p>
+
+                <div className="space-y-2">
+                  <input
+                    type="number"
+                    min="0"
+                    placeholder="0"
+                    value={formData.initial_stock}
+                    onChange={e => {
+                      const val = e.target.value;
+                      setFormData({ ...formData, initial_stock: val === '' ? '' : Math.max(0, parseInt(val) || 0) });
+                    }}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-background text-foreground text-sm font-bold font-mono focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+                  />
+                  {/* Stepper buttons wrapped for mobile */}
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <span className="text-[10px] font-semibold text-muted-foreground mr-0.5">Tambah cepat:</span>
+                    {[5, 10, 25, 50, 100].map(addQty => (
+                      <button
+                        key={addQty}
+                        type="button"
+                        onClick={() => {
+                          const cur = Number(formData.initial_stock) || 0;
+                          setFormData({ ...formData, initial_stock: cur + addQty });
+                        }}
+                        className="px-2.5 py-1 rounded-lg text-xs font-bold bg-muted text-foreground border border-border hover:bg-muted/80 active:scale-95 transition-all"
+                      >
+                        +{addQty}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </>
+            )}
           </div>
 
           <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-end gap-2 pt-3 border-t border-border sticky bottom-0 bg-card py-2 -mx-1 px-1">
@@ -1048,13 +1209,10 @@ export const MasterItemManagement: React.FC = () => {
               <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">
                 Kategori
               </label>
-              <input
-                type="text"
-                required
-                placeholder="Elektronik"
+              <CategoryCombobox
                 value={editFormData.category}
-                onChange={e => setEditFormData({ ...editFormData, category: e.target.value })}
-                className="w-full px-3.5 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs font-medium focus:ring-2 focus:ring-brand-500 focus:outline-none"
+                onChange={cat => setEditFormData({ ...editFormData, category: cat })}
+                categories={registeredCategories}
               />
             </div>
 
@@ -1120,6 +1278,21 @@ export const MasterItemManagement: React.FC = () => {
                 className="w-full px-3.5 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs font-bold focus:ring-2 focus:ring-brand-500 focus:outline-none"
               />
             </div>
+          </div>
+
+          <div className="pt-1">
+            <label className="flex items-center gap-2.5 cursor-pointer select-none p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/30 hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-colors">
+              <input
+                type="checkbox"
+                checked={editFormData.is_unlimited}
+                onChange={e => setEditFormData({ ...editFormData, is_unlimited: e.target.checked })}
+                className="w-4 h-4 rounded text-brand-600 focus:ring-brand-500 border-border"
+              />
+              <div>
+                <span className="text-xs font-bold text-slate-800 dark:text-slate-200 block">Stok Unlimited (Tanpa Batas)</span>
+                <span className="text-[11px] text-muted-foreground block">Gudang selalu memiliki stok untuk disetujui tanpa batasan saldo fisik.</span>
+              </div>
+            </label>
           </div>
 
           <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-end gap-2 pt-4 border-t border-border sticky bottom-0 bg-card py-2 -mx-1 px-1">

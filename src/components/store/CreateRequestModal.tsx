@@ -184,11 +184,11 @@ const SearchableItemPicker: React.FC<SearchableItemPickerProps> = ({
 
                     <div className="flex items-center gap-2 shrink-0">
                       <span className={`text-[10px] font-mono px-2 py-0.5 rounded-full ${
-                        stock > 0 
+                        item.is_unlimited || stock > 0 
                           ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-400 font-medium' 
                           : 'bg-rose-50 text-rose-700 dark:bg-rose-950/50 dark:text-rose-400'
                       }`}>
-                        Gudang: {formatNumber(stock)} {item.unit}
+                        Gudang: {item.is_unlimited ? '∞ Unlimited' : `${formatNumber(stock)} ${item.unit}`}
                       </span>
                       {isSelected && (
                         <Check className="w-3.5 h-3.5 text-brand-600 dark:text-brand-400" />

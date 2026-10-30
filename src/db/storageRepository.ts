@@ -207,6 +207,7 @@ export class StorageRepository {
       unit: itemData.unit !== undefined ? itemData.unit.trim().toUpperCase() : items[idx].unit,
       price: itemData.price !== undefined ? Math.max(0, Number(itemData.price) || 0) : items[idx].price,
       safety_stock: itemData.safety_stock !== undefined ? Math.max(0, Math.floor(Number(itemData.safety_stock) || 0)) : items[idx].safety_stock,
+      is_unlimited: itemData.is_unlimited !== undefined ? Boolean(itemData.is_unlimited) : items[idx].is_unlimited,
     };
 
     items[idx] = updatedItem;
@@ -434,8 +435,11 @@ export class StorageRepository {
 
     // Atomic Stock Check & Reservation
     let isPartial = false;
+    const allItems = this.getItems();
 
     for (const reqItem of req.items) {
+      const itemInfo = allItems.find(it => it.id === reqItem.item_id);
+      const isUnlimited = Boolean(itemInfo?.is_unlimited);
       const inv = inventories.find(i => i.location_id === warehouseId && i.item_id === reqItem.item_id);
       const available = inv ? inv.stock_available : 0;
 
@@ -448,7 +452,7 @@ export class StorageRepository {
         }
       }
 
-      if (approvedQty > available) {
+      if (!isUnlimited && approvedQty > available) {
         throw new Error(`Stok gudang tidak mencukupi untuk item ID ${reqItem.item_id}. Tersedia: ${available}, Diminta: ${approvedQty}`);
       }
 
@@ -458,9 +462,11 @@ export class StorageRepository {
 
       reqItem.qty_approved = approvedQty;
 
-      // Atomic Reservation: Kurangi stock_available, tambah stock_reserved
+      // Atomic Reservation: Kurangi stock_available jika bukan unlimited, tambah stock_reserved
       if (inv && approvedQty > 0) {
-        inv.stock_available -= approvedQty;
+        if (!isUnlimited) {
+          inv.stock_available -= approvedQty;
+        }
         inv.stock_reserved += approvedQty;
         inv.updated_at = new Date().toISOString();
       }

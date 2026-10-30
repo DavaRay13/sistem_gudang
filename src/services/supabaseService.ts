@@ -185,6 +185,7 @@ export class SupabaseService {
             unit: (itemData.unit || 'PCS').trim().toUpperCase(),
             price: Number.isFinite(safePrice) ? Math.max(0, safePrice) : 0,
             safety_stock: Number.isFinite(safeSafetyStock) ? Math.max(0, Math.floor(safeSafetyStock)) : 0,
+            is_unlimited: Boolean(itemData.is_unlimited),
           })
           .select()
           .single();
@@ -246,6 +247,9 @@ export class SupabaseService {
         if (itemData.safety_stock !== undefined) {
           const s = Number(itemData.safety_stock);
           updatePayload.safety_stock = Number.isFinite(s) ? Math.max(0, Math.floor(s)) : 0;
+        }
+        if (itemData.is_unlimited !== undefined) {
+          updatePayload.is_unlimited = Boolean(itemData.is_unlimited);
         }
 
         const { data, error } = await supabase

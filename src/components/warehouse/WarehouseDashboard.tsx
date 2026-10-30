@@ -42,8 +42,9 @@ export const WarehouseDashboard: React.FC<WarehouseDashboardProps> = ({ onNaviga
   const readyDispatch = requests.filter(r => r.status === 'APPROVED' || r.status === 'PARTIAL');
   const inTransitShipments = requests.filter(r => r.status === 'IN_TRANSIT');
 
-  // Low stock items in Central Warehouse
+  // Low stock items in Central Warehouse (exclude unlimited stock items)
   const lowStockItems = items.filter(item => {
+    if (item.is_unlimited || item.is_archived) return false;
     const inv = hubInventories.find(i => i.item_id === item.id);
     const available = inv ? inv.stock_available : 0;
     return available <= item.safety_stock;
