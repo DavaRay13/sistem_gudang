@@ -44,8 +44,9 @@ export const StoreDashboard: React.FC<StoreDashboardProps> = ({ onNavigate }) =>
   const storeRequests = requests.filter(r => r.to_location_id === myLocationId);
   const inTransitRequests = storeRequests.filter(r => r.status === 'IN_TRANSIT');
 
-  // Low stock calculation
+  // Low stock calculation (exclude unlimited)
   const lowStockItems = items.filter(item => {
+    if (item.is_unlimited || item.is_archived) return false;
     const inv = myInventories.find(i => i.item_id === item.id);
     const available = inv ? inv.stock_available : 0;
     return available > 0 && available <= item.safety_stock;
@@ -53,9 +54,15 @@ export const StoreDashboard: React.FC<StoreDashboardProps> = ({ onNavigate }) =>
 
   // Filtered Items for Catalog Table
   const filteredItems = items.filter(item => {
+    if (item.is_archived) return false;
     const q = searchTerm.toLowerCase();
     const nameMatch = item.name.toLowerCase().includes(q) || item.sku.toLowerCase().includes(q);
     if (!nameMatch) return false;
+
+    if (item.is_unlimited) {
+      if (stockFilter === 'LOW' || stockFilter === 'OUT') return false;
+      return true;
+    }
 
     const inv = myInventories.find(i => i.item_id === item.id);
     const available = inv ? inv.stock_available : 0;
@@ -317,8 +324,8 @@ export const StoreDashboard: React.FC<StoreDashboardProps> = ({ onNavigate }) =>
               {filteredItems.map(item => {
                 const inv = myInventories.find(i => i.item_id === item.id);
                 const available = inv ? inv.stock_available : 0;
-                const isOutOfStock = available <= 0;
-                const isLow = !isOutOfStock && available <= item.safety_stock;
+                const isOutOfStock = !item.is_unlimited && available <= 0;
+                const isLow = !item.is_unlimited && !isOutOfStock && available <= item.safety_stock;
 
                 return (
                   <div
@@ -328,6 +335,7 @@ export const StoreDashboard: React.FC<StoreDashboardProps> = ({ onNavigate }) =>
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2">
                         <span className={`w-2 h-2 rounded-full shrink-0 ${
+                          item.is_unlimited ? 'bg-emerald-500 ring-2 ring-emerald-500/20' :
                           isOutOfStock ? 'bg-rose-500' : isLow ? 'bg-amber-500' : 'bg-emerald-500'
                         }`} />
                         <span className="font-bold text-foreground truncate block">
@@ -347,16 +355,18 @@ export const StoreDashboard: React.FC<StoreDashboardProps> = ({ onNavigate }) =>
                     <div className="flex items-center gap-2 shrink-0">
                       <div className="text-right">
                         <span className={`font-mono tabular-nums text-xs font-bold block ${
+                          item.is_unlimited ? 'text-emerald-600 dark:text-emerald-400' :
                           isOutOfStock ? 'text-rose-600' : 'text-foreground'
                         }`}>
-                          {formatNumber(available)} {item.unit}
+                          {item.is_unlimited ? '∞ Tersedia' : `${formatNumber(available)} ${item.unit}`}
                         </span>
                         <Badge variant="outline" className={`text-[8.5px] font-bold ${
+                          item.is_unlimited ? 'text-emerald-600 border-emerald-300 dark:border-emerald-800 bg-emerald-50/50 dark:bg-emerald-950/30' :
                           isOutOfStock ? 'text-rose-600 border-rose-300' :
                           isLow ? 'text-amber-600 border-amber-300' :
                           'text-emerald-600 border-emerald-300'
                         }`}>
-                          {isOutOfStock ? 'Habis' : isLow ? 'Menipis' : 'Aman'}
+                          {item.is_unlimited ? 'Aman (Unlimited)' : isOutOfStock ? 'Habis' : isLow ? 'Menipis' : 'Aman'}
                         </Badge>
                       </div>
 
