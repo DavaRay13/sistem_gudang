@@ -189,6 +189,39 @@ class MainActivity : AppCompatActivity() {
                 return
             }
 
+            if (url.startsWith("blob:")) {
+                // DownloadManager tidak mendukung skema blob:. Konversi blob via WebView JavaScript ke Base64
+                val filename = URLUtil.guessFileName(url, contentDisposition, mimetype)
+                val safeFilename = filename.replace("'", "\\'")
+                val safeMime = mimetype.replace("'", "\\'")
+                val js = """
+                    (function() {
+                        try {
+                            var xhr = new XMLHttpRequest();
+                            xhr.open('GET', '$url', true);
+                            xhr.responseType = 'blob';
+                            xhr.onload = function() {
+                                if (this.status === 200 || this.status === 0) {
+                                    var reader = new FileReader();
+                                    reader.onloadend = function() {
+                                        if (window.AndroidApp && window.AndroidApp.downloadBase64File) {
+                                            var b64 = (reader.result || '').split(',')[1] || '';
+                                            window.AndroidApp.downloadBase64File(b64, '$safeFilename', '$safeMime');
+                                        }
+                                    };
+                                    reader.readAsDataURL(this.response);
+                                }
+                            };
+                            xhr.send();
+                        } catch (e) {
+                            console.error('Gagal mengambil blob di WebView:', e);
+                        }
+                    })();
+                """.trimIndent()
+                webView.evaluateJavascript(js, null)
+                return
+            }
+
             val request = DownloadManager.Request(Uri.parse(url)).apply {
                 setMimeType(mimetype)
                 addRequestHeader("cookie", CookieManager.getInstance().getCookie(url))

@@ -114,18 +114,17 @@ export async function saveFileUniversal(
   filename: string,
   mimeType: string
 ): Promise<void> {
-
-  // 1. Android APK Native Bridge (jika diakses via WebView APK Gudang)
+  // 1. Android APK Native Bridge (jika diakses via WebView APK Gudang com.gudang.app)
   if ((window as any).AndroidApp?.downloadBase64File) {
     return new Promise((resolve) => {
       const reader = new FileReader();
       reader.onloadend = () => {
         try {
-          const res = reader.result as string;
-          const base64Data = res ? res.split(',')[1] : '';
+          const res = (reader.result as string) || '';
+          const base64Data = res.split(',')[1] || '';
           (window as any).AndroidApp.downloadBase64File(base64Data, filename, mimeType);
         } catch (e) {
-          console.error('Gagal bridge AndroidApp download:', e);
+          console.warn('Gagal bridge AndroidApp download:', e);
         }
         resolve();
       };
@@ -133,8 +132,9 @@ export async function saveFileUniversal(
     });
   }
 
-  // 2. Mobile Browser Web Share API (Safari iOS & Chrome Android)
-  const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+  // 2. Mobile Browser & PWA (Android Chrome, iOS Safari, PWA Standalone)
+  // Coba Web Share API secara instan (tanpa await sebelum navigator.share) agar user gesture aktif
+  const isMobile = typeof navigator !== 'undefined' && /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
   if (isMobile && typeof navigator !== 'undefined' && navigator.share && navigator.canShare) {
     try {
       const file = new File([blob], filename, { type: mimeType });
@@ -147,19 +147,21 @@ export async function saveFileUniversal(
       }
     } catch (err: any) {
       if (err.name === 'AbortError') {
-        // User menutup dialog share, tidak perlu fallback
+        // User menutup dialog share
         return;
       }
+      console.warn('Web Share API tidak dapat digunakan, fallback ke Blob URL:', err);
     }
   }
 
-  // 3. Standar Browser Anchor Download (Blob URL)
+  // 3. Fallback Browser & PWA Download via Object URL (Blob)
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
   link.style.display = 'none';
   link.href = url;
   link.download = filename;
   link.setAttribute('download', filename);
+  link.rel = 'noopener';
   document.body.appendChild(link);
   link.click();
 

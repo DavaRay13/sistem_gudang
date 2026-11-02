@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { useRegisterSW } from 'virtual:pwa-register/react';
 
 export function PWAUpdatePrompt() {
@@ -6,10 +7,21 @@ export function PWAUpdatePrompt() {
     updateServiceWorker,
   } = useRegisterSW({
     onRegisteredSW(_swUrl, r) {
-      // ponytail: check for updates every hour; shorten if critical updates are frequent
-      r && setInterval(() => r.update(), 60 * 60 * 1000);
+      // Cek update service worker setiap 5 menit
+      r && setInterval(() => r.update(), 5 * 60 * 1000);
     },
   });
+
+  useEffect(() => {
+    // Saat aplikasi PWA dibuka dari background, periksa update terbaru
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible' && 'serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistration().then(reg => reg?.update());
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, []);
 
   if (!needRefresh) return null;
 
