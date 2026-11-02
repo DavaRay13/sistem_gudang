@@ -247,7 +247,17 @@ class MainActivity : AppCompatActivity() {
             runOnUiThread {
                 try {
                     val bytes = Base64.decode(base64Data, Base64.DEFAULT)
-                    val safeName = if (filename.endsWith(".pdf", ignoreCase = true)) filename else "$filename.pdf"
+                    val hasExt = filename.contains(".")
+                    val safeName = if (hasExt) {
+                        filename
+                    } else {
+                        when {
+                            mimetype.contains("sheet") || mimetype.contains("excel") -> "$filename.xlsx"
+                            mimetype.contains("pdf") -> "$filename.pdf"
+                            mimetype.contains("csv") -> "$filename.csv"
+                            else -> "$filename.bin"
+                        }
+                    }
                     val downloadDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
                     val file = File(downloadDir, safeName)
                     FileOutputStream(file).use { it.write(bytes) }

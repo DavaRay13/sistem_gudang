@@ -424,13 +424,17 @@ export const MasterItemManagement: React.FC = () => {
     setIsOutboundOpen(true);
   };
 
-  const handleExportExcel = () => {
-    exportMasterItemsToExcel(
-      filteredItems,
-      inventories,
-      locations,
-      currentUser?.full_name || 'Admin Gudang Pusat'
-    );
+  const handleExportExcel = async () => {
+    try {
+      await exportMasterItemsToExcel(
+        filteredItems,
+        inventories,
+        locations,
+        currentUser?.full_name || 'Admin Gudang Pusat'
+      );
+    } catch (err) {
+      console.error('Gagal export Master SKU:', err);
+    }
   };
 
   return (

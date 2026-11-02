@@ -107,6 +107,71 @@ function makeTotalCell(
 }
 
 // -------------------------------------------------------------
+// HELPER DOWNLOAD UNIVERSAL (MOBILE, APK WEBVIEW, PWA, DESKTOP)
+// -------------------------------------------------------------
+export async function saveFileUniversal(
+  blob: Blob,
+  filename: string,
+  mimeType: string
+): Promise<void> {
+
+  // 1. Android APK Native Bridge (jika diakses via WebView APK Gudang)
+  if ((window as any).AndroidApp?.downloadBase64File) {
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        try {
+          const res = reader.result as string;
+          const base64Data = res ? res.split(',')[1] : '';
+          (window as any).AndroidApp.downloadBase64File(base64Data, filename, mimeType);
+        } catch (e) {
+          console.error('Gagal bridge AndroidApp download:', e);
+        }
+        resolve();
+      };
+      reader.readAsDataURL(blob);
+    });
+  }
+
+  // 2. Mobile Browser Web Share API (Safari iOS & Chrome Android)
+  const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+  if (isMobile && typeof navigator !== 'undefined' && navigator.share && navigator.canShare) {
+    try {
+      const file = new File([blob], filename, { type: mimeType });
+      if (navigator.canShare({ files: [file] })) {
+        await navigator.share({
+          files: [file],
+          title: filename,
+        });
+        return;
+      }
+    } catch (err: any) {
+      if (err.name === 'AbortError') {
+        // User menutup dialog share, tidak perlu fallback
+        return;
+      }
+    }
+  }
+
+  // 3. Standar Browser Anchor Download (Blob URL)
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.style.display = 'none';
+  link.href = url;
+  link.download = filename;
+  link.setAttribute('download', filename);
+  document.body.appendChild(link);
+  link.click();
+
+  setTimeout(() => {
+    if (document.body.contains(link)) {
+      document.body.removeChild(link);
+    }
+    URL.revokeObjectURL(url);
+  }, 60000);
+}
+
+// -------------------------------------------------------------
 // 1. EXPORT BUKU BESAR MUTASI STOK
 // -------------------------------------------------------------
 export interface MutationExportMeta {
@@ -116,14 +181,14 @@ export interface MutationExportMeta {
   adminName?: string;
 }
 
-export function exportMutationsToExcel(
+export async function exportMutationsToExcel(
   mutations: InventoryMutation[],
   items: Item[],
   locations: Location[],
   users: User[],
   meta?: MutationExportMeta,
   filename = 'Buku_Besar_Mutasi_Stok.xlsx'
-) {
+): Promise<void> {
   const itemMap = new Map(items.map(i => [i.id, i]));
   const locMap = new Map(locations.map(l => [l.id, l]));
   const userMap = new Map(users.map(u => [u.id, u]));
@@ -338,20 +403,24 @@ export function exportMutationsToExcel(
   };
 
   XLSX.utils.book_append_sheet(wb, ws, 'Buku Besar Mutasi');
-  XLSX.writeFile(wb, filename);
+  const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+  const blob = new Blob([wbout], {
+    type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  });
+  await saveFileUniversal(blob, filename, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
 }
 
 // -------------------------------------------------------------
 // 1B. EXPORT BUKU BESAR MUTASI STOK KE PDF
 // -------------------------------------------------------------
-export function exportMutationsToPdf(
+export async function exportMutationsToPdf(
   mutations: InventoryMutation[],
   items: Item[],
   locations: Location[],
   users: User[],
   meta?: MutationExportMeta,
   filename = 'Buku_Besar_Mutasi_Stok.pdf'
-) {
+): Promise<void> {
   const itemMap = new Map(items.map(i => [i.id, i]));
   const locMap = new Map(locations.map(l => [l.id, l]));
   const userMap = new Map(users.map(u => [u.id, u]));
@@ -625,19 +694,20 @@ export function exportMutationsToPdf(
     doc.text(`Halaman ${p} dari ${totalPages}`, marginX + contentWidth, 205, { align: 'right' });
   }
 
-  doc.save(filename);
+  const blob = doc.output('blob');
+  await saveFileUniversal(blob, filename, 'application/pdf');
 }
 
 // -------------------------------------------------------------
 // 2. EXPORT MASTER SKU & STOK MULTI-LOKASI
 // -------------------------------------------------------------
-export function exportMasterItemsToExcel(
+export async function exportMasterItemsToExcel(
   items: Item[],
   inventories: Inventory[],
   locations: Location[],
   adminName = 'Admin Gudang Pusat',
   filename = 'Master_SKU_dan_Posisi_Stok.xlsx'
-) {
+): Promise<void> {
   const wb = XLSX.utils.book_new();
   const ws: any = {};
 
@@ -883,20 +953,24 @@ export function exportMasterItemsToExcel(
   };
 
   XLSX.utils.book_append_sheet(wb, ws, 'Master Stok Barang');
-  XLSX.writeFile(wb, filename);
+  const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+  const blob = new Blob([wbout], {
+    type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  });
+  await saveFileUniversal(blob, filename, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
 }
 
 // -------------------------------------------------------------
 // 3. EXPORT REKAP PERMINTAAN & DISPATCH TOKO
 // -------------------------------------------------------------
-export function exportTransferRequestsToExcel(
+export async function exportTransferRequestsToExcel(
   requests: TransferRequest[],
   items: Item[],
   locations: Location[],
   users: User[],
   adminName = 'Admin Gudang Pusat',
   filename = 'Rekap_Permintaan_Transfer_Toko.xlsx'
-) {
+): Promise<void> {
   const itemMap = new Map(items.map(i => [i.id, i]));
   const locMap = new Map(locations.map(l => [l.id, l]));
   const userMap = new Map(users.map(u => [u.id, u]));
@@ -1099,27 +1173,17 @@ export function exportTransferRequestsToExcel(
   };
 
   XLSX.utils.book_append_sheet(wb, ws, 'Rekap Permintaan Toko');
-  XLSX.writeFile(wb, filename);
+  const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+  const blob = new Blob([wbout], {
+    type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  });
+  await saveFileUniversal(blob, filename, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
 }
 
 // -------------------------------------------------------------
 // 5. DOWNLOAD TEMPLATE IMPORT MASTER SKU (EXCEL & CSV)
 // -------------------------------------------------------------
-function downloadDataUri(dataUri: string, filename: string) {
-  const link = document.createElement('a');
-  link.href = dataUri;
-  link.download = filename;
-  link.setAttribute('download', filename);
-  document.body.appendChild(link);
-  link.click();
-  setTimeout(() => {
-    if (document.body.contains(link)) {
-      document.body.removeChild(link);
-    }
-  }, 500);
-}
-
-export function downloadSkuImportTemplateExcel() {
+export async function downloadSkuImportTemplateExcel(): Promise<void> {
   const wb = XLSX.utils.book_new();
   const ws: any = {};
   
@@ -1174,13 +1238,14 @@ export function downloadSkuImportTemplateExcel() {
 
   XLSX.utils.book_append_sheet(wb, ws, 'Template_Import_SKU');
   
-  // Gunakan Base64 data URI agar kompatibel di Android WebView/PWA dan Browser Desktop
-  const base64Data = XLSX.write(wb, { bookType: 'xlsx', type: 'base64' });
-  const dataUri = `data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,${base64Data}`;
-  downloadDataUri(dataUri, 'Template_Import_Master_SKU.xlsx');
+  const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+  const blob = new Blob([wbout], {
+    type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  });
+  await saveFileUniversal(blob, 'Template_Import_Master_SKU.xlsx', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
 }
 
-export function downloadSkuImportTemplateCsv() {
+export async function downloadSkuImportTemplateCsv(): Promise<void> {
   const headers = ['sku', 'name', 'category', 'unit', 'price', 'initial_stock'];
   const sampleRows = [
     ['SKU-SMP-001', 'Minyak Goreng Sawit 2L', 'Sembako', 'POUCH', '34000', '50'],
@@ -1194,7 +1259,6 @@ export function downloadSkuImportTemplateCsv() {
     ...sampleRows.map(row => row.map(val => `"${String(val).replace(/"/g, '""')}"`).join(',')),
   ].join('\r\n');
   
-  const base64Csv = btoa(unescape(encodeURIComponent(csvContent)));
-  const dataUri = `data:text/csv;charset=utf-8;base64,${base64Csv}`;
-  downloadDataUri(dataUri, 'Template_Import_Master_SKU.csv');
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  await saveFileUniversal(blob, 'Template_Import_Master_SKU.csv', 'text/csv');
 }

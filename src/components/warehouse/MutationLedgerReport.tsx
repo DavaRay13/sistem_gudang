@@ -23,6 +23,7 @@ export const MutationLedgerReport: React.FC = () => {
   const [timeRange, setTimeRange] = useState<'ALL' | 'TODAY' | '7DAYS' | '30DAYS'>('ALL');
   const [searchTerm, setSearchTerm] = useState('');
   const [isExportingPdf, setIsExportingPdf] = useState(false);
+  const [isExportingExcel, setIsExportingExcel] = useState(false);
   const [mutationToDelete, setMutationToDelete] = useState<InventoryMutation | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
@@ -129,22 +130,26 @@ export const MutationLedgerReport: React.FC = () => {
     };
   };
 
-  const handleExportExcel = () => {
-    exportMutationsToExcel(filteredMutations, items, locations, users, getExportMeta());
+  const handleExportExcel = async () => {
+    try {
+      setIsExportingExcel(true);
+      await exportMutationsToExcel(filteredMutations, items, locations, users, getExportMeta());
+    } catch (err) {
+      console.error('Gagal export Excel mutasi:', err);
+    } finally {
+      setIsExportingExcel(false);
+    }
   };
 
-  const handleExportPdf = () => {
-    setIsExportingPdf(true);
-    // Timeout microtask to let UI reflect loading state immediately
-    setTimeout(() => {
-      try {
-        exportMutationsToPdf(filteredMutations, items, locations, users, getExportMeta());
-      } catch (err) {
-        console.error('Gagal export PDF mutasi:', err);
-      } finally {
-        setIsExportingPdf(false);
-      }
-    }, 50);
+  const handleExportPdf = async () => {
+    try {
+      setIsExportingPdf(true);
+      await exportMutationsToPdf(filteredMutations, items, locations, users, getExportMeta());
+    } catch (err) {
+      console.error('Gagal export PDF mutasi:', err);
+    } finally {
+      setIsExportingPdf(false);
+    }
   };
 
   const handlePrint = () => {
@@ -193,11 +198,15 @@ export const MutationLedgerReport: React.FC = () => {
           {/* Tombol Export Excel */}
           <button
             onClick={handleExportExcel}
-            disabled={filteredMutations.length === 0}
+            disabled={isExportingExcel || filteredMutations.length === 0}
             className="flex-1 sm:flex-initial flex items-center justify-center gap-1 px-3 py-2 rounded-xl text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-500 shadow-sm active:scale-95 disabled:opacity-50 transition-all whitespace-nowrap"
             title="Download Spreadsheet Excel Data Mutasi"
           >
-            <Download className="w-3.5 h-3.5" />
+            {isExportingExcel ? (
+              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+            ) : (
+              <Download className="w-3.5 h-3.5" />
+            )}
             <span>Excel</span>
           </button>
         </div>
