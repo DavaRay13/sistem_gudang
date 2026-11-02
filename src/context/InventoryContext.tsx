@@ -36,6 +36,7 @@ interface InventoryContextType {
   dispatchRequest: (requestId: number, adminUserId: string, dispatchInfo?: { driverName?: string; vehiclePlate?: string }) => Promise<void>;
   receiveTransfer: (requestId: number, storeUserId: string, receivedItems: Array<{ itemId: number; qtyReceived: number; discrepancyReason?: string }>) => Promise<void>;
   deleteRequest: (requestId: number) => Promise<void>;
+  deleteMutation: (mutationId: number) => Promise<void>;
   markNotificationRead: (id: string) => void;
   loadSampleDataPreset: () => Promise<void>;
   resetToClean: () => void;
@@ -416,6 +417,17 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     }
   };
 
+  const deleteMutation = async (mutationId: number): Promise<void> => {
+    try {
+      await SupabaseService.deleteMutation(mutationId);
+      await refreshData();
+      showToast('success', 'Riwayat Dihapus', 'Catatan riwayat keluar masuk berhasil dihapus.');
+    } catch (err: any) {
+      showToast('error', 'Gagal Menghapus', err.message || 'Terjadi kesalahan saat menghapus mutasi.');
+      throw err;
+    }
+  };
+
   const markNotificationRead = (id: string) => {
     StorageRepository.markNotificationAsRead(id);
     refreshData();
@@ -467,6 +479,7 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         dispatchRequest,
         receiveTransfer,
         deleteRequest,
+        deleteMutation,
         markNotificationRead,
         loadSampleDataPreset,
         resetToClean,

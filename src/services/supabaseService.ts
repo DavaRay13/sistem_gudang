@@ -728,6 +728,25 @@ export class SupabaseService {
     return StorageRepository.getMutations();
   }
 
+  static async deleteMutation(id: number): Promise<{ success: boolean; message: string }> {
+    if (isSupabaseConfigured && supabase) {
+      try {
+        const { error } = await supabase
+          .from('inventory_mutations')
+          .delete()
+          .eq('id', id);
+
+        if (error) {
+          throw error;
+        }
+      } catch (err: any) {
+        console.warn('Supabase deleteMutation fallback to local:', err?.message || err);
+      }
+    }
+    StorageRepository.deleteMutation(id);
+    return { success: true, message: 'Riwayat mutasi berhasil dihapus' };
+  }
+
   // --- SEED SAMPLE DATA KE SUPABASE ---
   static async seedSampleData(): Promise<{ success: boolean; message: string }> {
     if (!isSupabaseConfigured || !supabase) {

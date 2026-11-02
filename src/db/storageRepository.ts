@@ -729,6 +729,13 @@ export class StorageRepository {
     setStorage(STORAGE_KEYS.MUTATIONS, mutations);
   }
 
+  static deleteMutation(id: number): boolean {
+    const list = this.getMutations();
+    const updated = list.filter(m => m.id !== id);
+    this.setMutations(updated);
+    return true;
+  }
+
   // --- NOTIFICATIONS ---
   static getNotifications(): Notification[] {
     return getStorage<Notification[]>(STORAGE_KEYS.NOTIFICATIONS, []);
