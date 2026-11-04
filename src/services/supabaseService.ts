@@ -476,6 +476,87 @@ export class SupabaseService {
     StorageRepository.addStockOutbound(itemId, qty, reasonType, notes, userId);
   }
 
+  // --- ADJUST STOCK (KOREKSI STOK / OPNAME TERMASUK KE 0) ---
+  static async adjustStock(
+    itemId: number,
+    targetStock: number,
+    notes: string,
+    userId: string
+  ): Promise<void> {
+    if (targetStock < 0) throw new Error('Stok tidak boleh bernilai negatif');
+
+    if (isSupabaseConfigured && supabase) {
+      try {
+        const validUserId = resolveUuid(userId, DEFAULT_ADMIN_UUID);
+
+        const { data: inv, error: invError } = await supabase
+          .from('inventories')
+          .select('*')
+          .eq('location_id', 0)
+          .eq('item_id', itemId)
+          .maybeSingle();
+
+        if (invError) throw invError;
+        const currentStock = inv?.stock_available || 0;
+        const diff = targetStock - currentStock;
+
+        if (diff !== 0) {
+          if (!inv) {
+            const { error: insError } = await supabase
+              .from('inventories')
+              .insert({
+                location_id: 0,
+                item_id: itemId,
+                stock_available: targetStock,
+                stock_reserved: 0,
+                stock_in_transit: 0,
+                updated_at: new Date().toISOString(),
+              });
+            if (insError) throw insError;
+          } else {
+            const { error: updateError } = await supabase
+              .from('inventories')
+              .update({
+                stock_available: targetStock,
+                updated_at: new Date().toISOString(),
+              })
+              .eq('id', inv.id);
+            if (updateError) throw updateError;
+          }
+
+          const { error: mutError } = await supabase
+            .from('inventory_mutations')
+            .insert({
+              item_id: itemId,
+              from_location_id: diff < 0 ? 0 : null,
+              to_location_id: diff > 0 ? 0 : null,
+              qty: Math.abs(diff),
+              transaction_type: 'MANUAL_ADJUSTMENT',
+              notes: notes || `Koreksi stok opname: ${currentStock} -> ${targetStock}`,
+              created_by: validUserId,
+            });
+          if (mutError) throw mutError;
+        }
+
+        try {
+          StorageRepository.adjustStock(itemId, targetStock, notes, userId);
+        } catch {
+          // ignore
+        }
+        return;
+      } catch (err: any) {
+        console.warn('Supabase adjustStock error:', err.message);
+        if (isNetworkOrConnectionError(err)) {
+          console.warn('Network unreachable, fallback to local storage');
+          StorageRepository.adjustStock(itemId, targetStock, notes, userId);
+          return;
+        }
+        throw err;
+      }
+    }
+    StorageRepository.adjustStock(itemId, targetStock, notes, userId);
+  }
+
   // --- TRANSFER REQUESTS (PERMINTAAN TRANSFER TOKO) ---
   static async getRequests(): Promise<TransferRequest[]> {
     if (isSupabaseConfigured && supabase) {

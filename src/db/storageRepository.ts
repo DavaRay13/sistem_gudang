@@ -339,6 +339,64 @@ export class StorageRepository {
     return { inventory: inv!, mutation };
   }
 
+  // --- ADJUST STOCK (KOREKSI STOK / OPNAME TERMASUK KE 0) ---
+  static adjustStock(
+    itemId: number,
+    targetStock: number,
+    notes: string,
+    userId: string
+  ): { inventory: Inventory; mutation?: InventoryMutation } {
+    if (targetStock < 0) throw new Error('Stok tidak boleh bernilai negatif');
+
+    const inventories = this.getInventories();
+    const warehouseId = 0; // Gudang Pusat
+
+    let inv = inventories.find(i => i.location_id === warehouseId && i.item_id === itemId);
+    if (!inv) {
+      const nextId = inventories.length > 0 ? Math.max(...inventories.map(i => i.id)) + 1 : 1;
+      inv = {
+        id: nextId,
+        location_id: warehouseId,
+        item_id: itemId,
+        stock_available: 0,
+        stock_reserved: 0,
+        stock_in_transit: 0,
+        updated_at: new Date().toISOString(),
+      };
+      inventories.push(inv);
+    }
+
+    const currentStock = inv.stock_available;
+    const diff = targetStock - currentStock;
+
+    if (diff === 0) {
+      return { inventory: inv };
+    }
+
+    inv.stock_available = targetStock;
+    inv.updated_at = new Date().toISOString();
+    setStorage(STORAGE_KEYS.INVENTORIES, inventories);
+
+    const mutations = this.getMutations();
+    const nextMutId = mutations.length > 0 ? Math.max(...mutations.map(m => m.id)) + 1 : 1;
+    const mutation: InventoryMutation = {
+      id: nextMutId,
+      item_id: itemId,
+      from_location_id: diff < 0 ? warehouseId : null,
+      to_location_id: diff > 0 ? warehouseId : null,
+      qty: Math.abs(diff),
+      transaction_type: 'MANUAL_ADJUSTMENT',
+      notes: notes || `Koreksi stok opname: ${currentStock} -> ${targetStock}`,
+      created_by: userId,
+      created_at: new Date().toISOString(),
+    };
+
+    mutations.push(mutation);
+    setStorage(STORAGE_KEYS.MUTATIONS, mutations);
+
+    return { inventory: inv, mutation };
+  }
+
   // --- TRANSFER REQUESTS (LIFECYCLE) ---
   static getRequests(): TransferRequest[] {
     return getStorage<TransferRequest[]>(STORAGE_KEYS.REQUESTS, INITIAL_REQUESTS);

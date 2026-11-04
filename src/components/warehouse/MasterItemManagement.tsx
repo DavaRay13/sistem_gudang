@@ -161,7 +161,7 @@ const CategoryCombobox: React.FC<CategoryComboboxProps> = ({ value, onChange, ca
 };
 
 export const MasterItemManagement: React.FC = () => {
-  const { items, inventories, addNewItem, updateItem, deleteItem, inboundStock } = useInventory();
+  const { items, inventories, addNewItem, updateItem, deleteItem, inboundStock, adjustStock } = useInventory();
   const { locations, currentUser } = useAuth();
 
   const [searchTerm, setSearchTerm] = useState('');
@@ -189,6 +189,8 @@ export const MasterItemManagement: React.FC = () => {
     price: number | string;
     safety_stock: number | string;
     is_unlimited: boolean;
+    stock_mode: 'SET' | 'ADD';
+    target_stock: number | string;
     additional_stock: number | string;
   }>({
     name: '',
@@ -197,11 +199,14 @@ export const MasterItemManagement: React.FC = () => {
     price: 50000,
     safety_stock: 10,
     is_unlimited: false,
+    stock_mode: 'SET',
+    target_stock: 0,
     additional_stock: '',
   });
 
   const openEditModal = (item: Item) => {
     setItemToEdit(item);
+    const curStock = getInv(0, item.id).stock_available;
     setEditFormData({
       name: item.name,
       category: item.category,
@@ -209,6 +214,8 @@ export const MasterItemManagement: React.FC = () => {
       price: item.price,
       safety_stock: item.safety_stock,
       is_unlimited: Boolean(item.is_unlimited),
+      stock_mode: 'SET',
+      target_stock: curStock,
       additional_stock: '',
     });
   };
@@ -229,14 +236,29 @@ export const MasterItemManagement: React.FC = () => {
         is_unlimited: editFormData.is_unlimited,
       });
 
-      const addStock = Number(editFormData.additional_stock) || 0;
-      if (!editFormData.is_unlimited && addStock > 0 && currentUser) {
-        await inboundStock(
-          itemToEdit.id,
-          addStock,
-          'Penambahan stok via edit data barang',
-          currentUser.id
-        );
+      if (!editFormData.is_unlimited && currentUser) {
+        const curStock = getInv(0, itemToEdit.id).stock_available;
+        if (editFormData.stock_mode === 'SET' && editFormData.target_stock !== '') {
+          const target = Math.max(0, parseInt(String(editFormData.target_stock)) || 0);
+          if (target !== curStock) {
+            await adjustStock(
+              itemToEdit.id,
+              target,
+              target === 0 ? 'Koreksi stok opname menjadi 0' : `Koreksi stok via edit barang (${curStock} -> ${target})`,
+              currentUser.id
+            );
+          }
+        } else if (editFormData.stock_mode === 'ADD') {
+          const addStock = Number(editFormData.additional_stock) || 0;
+          if (addStock > 0) {
+            await inboundStock(
+              itemToEdit.id,
+              addStock,
+              'Penambahan stok via edit data barang',
+              currentUser.id
+            );
+          }
+        }
       }
 
       setItemToEdit(null);
@@ -1320,17 +1342,17 @@ export const MasterItemManagement: React.FC = () => {
             </label>
           </div>
 
-          {/* Tambah Stok Masuk ke Gudang */}
-          <div className={`p-3.5 rounded-2xl border space-y-2.5 transition-all ${
+          {/* Kelola Saldo Stok Gudang Pusat */}
+          <div className={`p-3.5 rounded-2xl border space-y-3 transition-all ${
             editFormData.is_unlimited
               ? 'bg-slate-100/60 dark:bg-slate-800/40 border-slate-200 dark:border-slate-800 opacity-60'
-              : 'bg-card border-emerald-300 dark:border-emerald-800/80'
+              : 'bg-card border-brand-300 dark:border-brand-800/80'
           }`}>
             <div className="flex items-center justify-between gap-2 flex-wrap">
               <div className="flex items-center gap-1.5">
-                <Boxes className={`w-4 h-4 ${editFormData.is_unlimited ? 'text-muted-foreground' : 'text-emerald-600 dark:text-emerald-400'}`} />
+                <Boxes className={`w-4 h-4 ${editFormData.is_unlimited ? 'text-muted-foreground' : 'text-brand-600 dark:text-brand-400'}`} />
                 <span className="text-xs font-bold text-foreground">
-                  Tambah Stok Masuk (Gudang Pusat)
+                  Kelola Stok (Gudang Pusat)
                 </span>
               </div>
               <span className="text-[10px] font-semibold text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
@@ -1346,52 +1368,120 @@ export const MasterItemManagement: React.FC = () => {
               </p>
             ) : (
               <>
-                <p className="text-[11px] text-muted-foreground">
-                  Masukkan jumlah unit yang ingin ditambahkan ke stok Gudang Pusat (kosongkan jika hanya ubah info barang).
-                </p>
-                <div className="space-y-2">
-                  <input
-                    type="number"
-                    min="0"
-                    placeholder="0 (Tidak menambah stok)"
-                    disabled={editFormData.is_unlimited}
-                    value={editFormData.additional_stock}
-                    onChange={e => {
-                      const val = e.target.value;
-                      setEditFormData({
-                        ...editFormData,
-                        additional_stock: val === '' ? '' : Math.max(0, parseInt(val) || 0),
-                      });
-                    }}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-background text-foreground text-sm font-bold font-mono focus:ring-2 focus:ring-emerald-500 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
-                  />
-                  {/* Stepper buttons */}
-                  <div className="flex items-center gap-1.5 flex-wrap">
-                    <span className="text-[10px] font-semibold text-muted-foreground mr-0.5">Tambah cepat:</span>
-                    {[5, 10, 25, 50, 100].map(addQty => (
-                      <button
-                        key={addQty}
-                        type="button"
-                        onClick={() => {
-                          const cur = Number(editFormData.additional_stock) || 0;
-                          setEditFormData({ ...editFormData, additional_stock: cur + addQty });
+                {/* Switch Mode: Atur Saldo Langsung vs Tambah Stok */}
+                <div className="flex rounded-xl bg-muted p-1 gap-1 text-xs font-semibold">
+                  <button
+                    type="button"
+                    onClick={() => setEditFormData(prev => ({ ...prev, stock_mode: 'SET' }))}
+                    className={`flex-1 py-1.5 px-2 rounded-lg text-xs font-bold transition-all ${
+                      editFormData.stock_mode === 'SET'
+                        ? 'bg-background shadow-xs text-foreground'
+                        : 'text-muted-foreground hover:text-foreground'
+                    }`}
+                  >
+                    Atur Stok Langsung (Bisa 0)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setEditFormData(prev => ({ ...prev, stock_mode: 'ADD' }))}
+                    className={`flex-1 py-1.5 px-2 rounded-lg text-xs font-bold transition-all ${
+                      editFormData.stock_mode === 'ADD'
+                        ? 'bg-background shadow-xs text-foreground'
+                        : 'text-muted-foreground hover:text-foreground'
+                    }`}
+                  >
+                    + Tambah Stok
+                  </button>
+                </div>
+
+                {editFormData.stock_mode === 'SET' ? (
+                  <div className="space-y-2">
+                    <p className="text-[11px] text-muted-foreground">
+                      Ubah saldo fisik gudang langsung ke target angka (termasuk 0 untuk stok habis).
+                    </p>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="number"
+                        min="0"
+                        value={editFormData.target_stock}
+                        onChange={e => {
+                          const val = e.target.value;
+                          setEditFormData({
+                            ...editFormData,
+                            target_stock: val === '' ? '' : Math.max(0, parseInt(val) || 0),
+                          });
                         }}
-                        className="px-2.5 py-1 rounded-lg text-xs font-bold bg-muted text-foreground border border-border hover:bg-muted/80 active:scale-95 transition-all"
-                      >
-                        +{addQty}
-                      </button>
-                    ))}
-                    {Number(editFormData.additional_stock) > 0 && (
+                        placeholder="0"
+                        className="flex-1 px-3.5 py-2.5 rounded-xl border border-border bg-background text-foreground text-sm font-bold font-mono focus:ring-2 focus:ring-brand-500 focus:outline-none"
+                      />
                       <button
                         type="button"
-                        onClick={() => setEditFormData({ ...editFormData, additional_stock: '' })}
-                        className="px-2 py-1 rounded-lg text-[10px] font-semibold text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-all"
+                        onClick={() => setEditFormData({ ...editFormData, target_stock: 0 })}
+                        className="px-3.5 py-2.5 rounded-xl text-xs font-bold bg-rose-50 hover:bg-rose-100 text-rose-700 dark:bg-rose-950/40 dark:hover:bg-rose-900/60 dark:text-rose-300 border border-rose-200 dark:border-rose-800 transition-all active:scale-95 whitespace-nowrap shadow-xs"
+                        title="Set stok langsung jadi 0"
                       >
-                        Reset
+                        Set 0 (Habis)
                       </button>
+                    </div>
+
+                    {itemToEdit && editFormData.target_stock !== '' && Number(editFormData.target_stock) !== getInv(0, itemToEdit.id).stock_available && (
+                      <div className="p-2 rounded-lg bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/60 text-[11px] font-medium text-amber-800 dark:text-amber-300 flex items-center justify-between">
+                        <span>
+                          {Number(editFormData.target_stock) === 0 ? '⚠️ Stok akan dikosongkan (menjadi 0)' : 'Perubahan stok opname:'}
+                        </span>
+                        <span className="font-mono font-bold">
+                          {getInv(0, itemToEdit.id).stock_available} → {editFormData.target_stock} ({Number(editFormData.target_stock) - getInv(0, itemToEdit.id).stock_available > 0 ? `+${Number(editFormData.target_stock) - getInv(0, itemToEdit.id).stock_available}` : Number(editFormData.target_stock) - getInv(0, itemToEdit.id).stock_available})
+                        </span>
+                      </div>
                     )}
                   </div>
-                </div>
+                ) : (
+                  <div className="space-y-2">
+                    <p className="text-[11px] text-muted-foreground">
+                      Masukkan jumlah unit yang ingin ditambahkan ke stok Gudang Pusat.
+                    </p>
+                    <input
+                      type="number"
+                      min="0"
+                      placeholder="0 (Tidak menambah stok)"
+                      value={editFormData.additional_stock}
+                      onChange={e => {
+                        const val = e.target.value;
+                        setEditFormData({
+                          ...editFormData,
+                          additional_stock: val === '' ? '' : Math.max(0, parseInt(val) || 0),
+                        });
+                      }}
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-background text-foreground text-sm font-bold font-mono focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+                    />
+                    {/* Stepper buttons */}
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <span className="text-[10px] font-semibold text-muted-foreground mr-0.5">Tambah cepat:</span>
+                      {[5, 10, 25, 50, 100].map(addQty => (
+                        <button
+                          key={addQty}
+                          type="button"
+                          onClick={() => {
+                            const cur = Number(editFormData.additional_stock) || 0;
+                            setEditFormData({ ...editFormData, additional_stock: cur + addQty });
+                          }}
+                          className="px-2.5 py-1 rounded-lg text-xs font-bold bg-muted text-foreground border border-border hover:bg-muted/80 active:scale-95 transition-all"
+                        >
+                          +{addQty}
+                        </button>
+                      ))}
+                      {Number(editFormData.additional_stock) > 0 && (
+                        <button
+                          type="button"
+                          onClick={() => setEditFormData({ ...editFormData, additional_stock: '' })}
+                          className="px-2 py-1 rounded-lg text-[10px] font-semibold text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-all"
+                        >
+                          Reset
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                )}
               </>
             )}
           </div>

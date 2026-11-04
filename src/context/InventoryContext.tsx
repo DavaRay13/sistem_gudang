@@ -31,6 +31,7 @@ interface InventoryContextType {
   bulkImportItems: (parsedItems: ParsedImportItem[], userId: string, onProgress?: (current: number, total: number) => void) => Promise<BulkImportSummary>;
   inboundStock: (itemId: number, qty: number, notes: string, userId: string, supplierName?: string) => Promise<void>;
   outboundStock: (itemId: number, qty: number, reasonType: TransactionType, notes: string, userId: string) => Promise<void>;
+  adjustStock: (itemId: number, targetStock: number, notes: string, userId: string) => Promise<void>;
   createRequest: (toLocationId: number, requestedByUserId: string, itemsData: Array<{ itemId: number; qtyRequested: number }>, notes?: string) => Promise<TransferRequest>;
   authorizeRequest: (requestId: number, adminUserId: string, decision: 'APPROVE_FULL' | 'APPROVE_PARTIAL' | 'REJECT', options?: { approvedItems?: Array<{ itemId: number; qtyApproved: number }>; rejectionNotes?: string }) => Promise<void>;
   dispatchRequest: (requestId: number, adminUserId: string, dispatchInfo?: { driverName?: string; vehiclePlate?: string }) => Promise<void>;
@@ -310,6 +311,24 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     }
   };
 
+  const adjustStock = async (itemId: number, targetStock: number, notes: string, userId: string): Promise<void> => {
+    try {
+      await SupabaseService.adjustStock(itemId, targetStock, notes, userId);
+      const targetItem = items.find(i => i.id === itemId);
+      StorageRepository.addNotification({
+        title: 'Penyesuaian Stok (Opname)',
+        message: `Saldo stok ${targetItem?.sku || itemId} diatur menjadi ${targetStock} ${targetItem?.unit || 'unit'}.`,
+        type: 'info',
+        targetRole: 'ADMIN_GUDANG',
+      });
+      await refreshData();
+      showToast('success', 'Stok Berhasil Disesuaikan', `Saldo stok berhasil diatur menjadi ${targetStock} unit.`);
+    } catch (err: any) {
+      showToast('error', 'Gagal Menyesuaikan Stok', err.message);
+      throw err;
+    }
+  };
+
   const createRequest = async (
     toLocationId: number,
     requestedByUserId: string,
@@ -474,6 +493,7 @@ export const InventoryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         bulkImportItems,
         inboundStock,
         outboundStock,
+        adjustStock,
         createRequest,
         authorizeRequest,
         dispatchRequest,
